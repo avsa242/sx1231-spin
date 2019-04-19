@@ -30,6 +30,12 @@ CON
     MOD_FSK                 = 0
     MOD_OOK                 = 1
 
+' Gaussian modulation shaping filters
+    BT_NONE                 = 0
+    BT_1_0                  = 1
+    BT_0_5                  = 2
+    BT_0_3                  = 3
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -95,6 +101,28 @@ PUB DataMode(mode) | tmp
     tmp &= core#MASK_DATAMODE
     tmp := (tmp | mode) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
+
+PUB GaussianFilter(BT) | tmp
+' Set Gaussian filter/data shaping parameters
+'   Valid values:
+'       BT_NONE (0): No shaping
+'       BT_1_0 (1): Gaussian filter, BT = 1.0
+'       BT_0_5 (2): Gaussian filter, BT = 0.5
+'       BT_0_3 (3): Gaussian filter, BT = 0.3
+
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#DATAMODUL, 1, @tmp)
+    case BT
+        BT_NONE..BT_0_3:
+            BT := BT << core#FLD_MODULATIONSHAPING
+        OTHER:
+            result := (tmp >> core#FLD_MODULATIONSHAPING) & core#BITS_MODULATIONSHAPING
+            return result
+
+    tmp &= core#MASK_MODULATIONSHAPING
+    tmp := (tmp | BT) & core#DATAMODUL_MASK
+    writeRegX (core#DATAMODUL, 1, @tmp)
+
 
 PUB Listen(enabled) | tmp
 ' Enable listen mode

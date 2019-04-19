@@ -21,9 +21,9 @@ CON
     CS_PIN      = 3
 
     COL_REG     = 0
-    COL_SET     = 16
-    COL_READ    = 24
-    COL_PF      = 40
+    COL_SET     = 20
+    COL_READ    = 28
+    COL_PF      = 44
 
 OBJ
 
@@ -40,12 +40,21 @@ PUB Main
 
     Setup
 
+    Test_MODULATIONSHAPING (1)
     Test_MODULATIONTYPE (1)
     Test_DATAMODE (1)
     Test_MODE (1)
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_MODULATIONSHAPING(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from sx#BT_NONE to sx#BT_0_3
+            sx.GaussianFilter (tmp)
+            read := sx.GaussianFilter (-2)
+            Message (string("MODULATIONSHAPING"), tmp, read)
 
 PUB Test_MODULATIONTYPE(reps) | tmp, read
 
