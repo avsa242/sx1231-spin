@@ -40,8 +40,17 @@ PUB Main
 
     Setup
 
+    Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_LISTENON(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 0 to -1
+            sx.Listen (tmp)
+            read := sx.Listen (-2)
+            Message (string("LISTENON"), tmp, read)
 
 PUB Test_SEQUENCEROFF(reps) | tmp, read
 

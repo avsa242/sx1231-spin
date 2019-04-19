@@ -56,7 +56,24 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
 
     return FALSE                                                'If we got here, something went wrong
 
-pub Sequencer(mode) | tmp
+PUB Listen(enabled) | tmp
+' Enable listen mode
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Should be enable when in standby mode
+    readRegX (core#OPMODE, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := (||enabled) << core#FLD_LISTENON
+        OTHER:
+            result := ((tmp >> core#FLD_LISTENON) & %1) * TRUE
+            return result
+
+    tmp &= core#MASK_LISTENON
+    tmp := (tmp | enabled) & core#OPMODE_MASK
+    writeRegX (core#OPMODE, 1, @tmp)
+
+PUB Sequencer(mode) | tmp
 ' Control automatic sequencer
 '   Valid values:
 '       *OPMODE_AUTO (0): Automatic sequence, as selected by OperatingMode
