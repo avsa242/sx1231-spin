@@ -22,8 +22,8 @@ CON
 
     COL_REG     = 0
     COL_SET     = 20
-    COL_READ    = 28
-    COL_PF      = 44
+    COL_READ    = 34
+    COL_PF      = 52
 
 OBJ
 
@@ -40,6 +40,7 @@ PUB Main
 
     Setup
 
+    Test_BITRATE (1)
     Test_MODULATIONSHAPING (1)
     Test_MODULATIONTYPE (1)
     Test_DATAMODE (1)
@@ -47,6 +48,14 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_BITRATE(reps) | tmp, read
+' For now, ignore failures past 9600bps
+    repeat reps
+        repeat tmp from 1 to 9
+            sx.BitRate (lookup(tmp: 1200, 2400, 4800, 9600, 19_200, 38_400, 76_800, 115_200, 300_000))
+            read := sx.BitRate (-2)
+            Message (string("BITRATE"), lookup(tmp: 1200, 2400, 4800, 9600, 19_200, 38_400, 76_800, 115_200, 300_000), read)
 
 PUB Test_MODULATIONSHAPING(reps) | tmp, read
 

@@ -12,6 +12,9 @@
 
 CON
 
+' SX1231 Oscillator Frequency
+    FXOSC                   = 32_000_000
+
 ' Sequencer operating modes
     OPMODE_AUTO             = 0
     OPMODE_MANUAL           = 1
@@ -82,6 +85,27 @@ PUB AbortListen | tmp
     tmp &= core#MASK_LISTENABORT
     tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
+
+PUB BitRate(bps) | tmp
+' Set on-air data rate, in bits per second
+'   Valid values:
+'       1_200..300_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Result will be rounded
+'   NOTE: Effective data rate will be halved if Manchester encoding is used
+    readRegX (core#BITRATEMSB, 2, @tmp)
+    case bps
+        1_200..300_000:
+            bps := FXOSC / bps
+            bps := SwapByteOrder (bps)
+        OTHER:
+            tmp := SwapByteOrder (tmp)
+            result := tmp
+            return FXOSC / result
+
+    tmp := bps & core#BITS_BITRATE
+    writeRegX (core#BITRATEMSB, 2, @tmp)
+    return tmp
 
 PUB DataMode(mode) | tmp
 ' Set data processing mode
@@ -210,6 +234,10 @@ PUB Version
 '       $23:    V2c
 '       $24:    ???
     readRegX (core#VERSION, 1, @result)
+
+PUB SwapByteOrder(in_word)
+
+    result := (in_word >> 8) | ((in_word << 8) & $FFFF)
 
 PUB readRegX(reg, nr_bytes, buf_addr) | i
 ' Read nr_bytes from register 'reg' to address 'buf_addr'

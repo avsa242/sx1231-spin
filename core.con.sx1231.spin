@@ -49,6 +49,9 @@ CON
 
     BITRATEMSB                  = $03
     BITRATELSB                  = $04
+    BITRATE_MASK                = $FF
+        BITS_BITRATE            = $FFFF
+
     FDEVMSB                     = $05
     FDEVLSB                     = $06
     FRFMSB                      = $07
