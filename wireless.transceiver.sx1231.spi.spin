@@ -235,6 +235,23 @@ PUB Listen(enabled) | tmp
     tmp := (tmp | enabled) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+PUB LowBattLevel(mV) | tmp
+' Set low battery threshold, in millivolts
+'   Valid values:
+'       1695, 1764, *1835, 1905, 1976, 2045, 2116, 2185
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#LOWBAT, 1, @tmp)
+    case mV := lookdown(mV: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
+        1..8:
+            mV := (mV-1) & core#BITS_LOWBATTRIM
+        OTHER:
+            result := tmp & core#BITS_LOWBATTRIM
+            return lookupz(result: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
+
+    tmp &= core#MASK_LOWBATTRIM
+    tmp := (tmp | mV) & core#LOWBAT_MASK
+    writeRegX (core#LOWBAT, 1, @tmp)
+
 PUB LowBattMon(enabled) | tmp
 ' Enable low battery detector signal
 '   Valid values: TRUE (-1 or 1), FALSE (0)

@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_LOWBATTRIM (1)
     Test_LOWBATON (1)
     Test_AFCCTRL (1)
     Test_OSC1 (1)
@@ -55,6 +56,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_LOWBATTRIM(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 1 to 8
+            sx.LowBattLevel (lookup(tmp: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185))
+            read := sx.LowBattLevel  (-2)
+            Message (string("LOWBATTRIM"), lookup(tmp: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185), read)
 
 PUB Test_LOWBATON(reps) | tmp, read
 
