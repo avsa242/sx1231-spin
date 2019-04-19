@@ -15,6 +15,11 @@ CON
 ' Sequencer operating modes
     OPMODE_AUTO     = 0
     OPMODE_MANUAL   = 1
+    OPMODE_SLEEP    = 0
+    OPMODE_STDBY    = 1
+    OPMODE_FS       = 2
+    OPMODE_TX       = 3
+    OPMODE_RX       = 4
 
 VAR
 
@@ -78,6 +83,26 @@ PUB Listen(enabled) | tmp
 
     tmp &= core#MASK_LISTENON
     tmp := (tmp | enabled) & core#OPMODE_MASK
+    writeRegX (core#OPMODE, 1, @tmp)
+
+PUB OpMode(mode) | tmp
+' Set operating mode
+'   Valid values:
+'       OPMODE_SLEEP (0): Sleep mode
+'       OPMODE_STDBY (1): Standby mode
+'       OPMODE_FS (2): Frequency Synthesizer mode
+'       OPMODE_TX (3): Transmitter mode
+'       OPMODE_RX (4): Receiver mode
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#OPMODE, 1, @tmp)
+    case mode
+        %000..%100:
+            mode := mode << core#FLD_MODE
+        OTHER:
+            return (tmp >> core#FLD_MODE) & core#BITS_MODE
+
+    tmp &= core#MASK_MODE
+    tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
 PUB Sequencer(mode) | tmp

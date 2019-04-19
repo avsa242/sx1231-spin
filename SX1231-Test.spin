@@ -21,7 +21,7 @@ CON
     CS_PIN      = 3
 
     COL_REG     = 0
-    COL_SET     = 12
+    COL_SET     = 13
     COL_READ    = 24
     COL_PF      = 40
 
@@ -40,9 +40,21 @@ PUB Main
 
     Setup
 
+    Test_MODE (1)
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_MODE(reps) | tmp, read
+
+    sx.Sequencer (sx#OPMODE_MANUAL) ' Must first set sequencer to manual mode to switch operating modes
+    time.MSleep (10)
+    repeat reps
+        repeat tmp from 0 to 4
+            sx.OpMode (tmp)
+            read := sx.OpMode (-2)
+            Message (string("MODE"), tmp, read)
+    sx.Sequencer (sx#OPMODE_AUTO)   ' Restore automatic sequencer mode
 
 PUB Test_LISTENON(reps) | tmp, read
 
