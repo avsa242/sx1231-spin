@@ -22,8 +22,8 @@ CON
 
     COL_REG     = 0
     COL_SET     = 20
-    COL_READ    = 34
-    COL_PF      = 52
+    COL_READ    = 36
+    COL_PF      = 56
 
 OBJ
 
@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_FRF (1)
     Test_FDEV (1)
     Test_BITRATE (1)
     Test_MODULATIONSHAPING (1)
@@ -51,6 +52,26 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_FRF(reps) | tmp, read
+' For now, ignore failures
+' 290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
+    _row++
+    repeat reps
+        repeat tmp from 290_000_000 to 340_000_000 step 10_000_000
+            sx.CarrierFreq (tmp)
+            read := sx.CarrierFreq (-2)
+            Message (string("FRF"), tmp, read)
+
+        repeat tmp from 424_000_000 to 510_000_000 step 10_000_000
+            sx.CarrierFreq (tmp)
+            read := sx.CarrierFreq (-2)
+            Message (string("FRF"), tmp, read)
+
+        repeat tmp from 862_000_000 to 1_020_000_000 step 10_000_000
+            sx.CarrierFreq (tmp)
+            read := sx.CarrierFreq (-2)
+            Message (string("FRF"), tmp, read)
 
 PUB Test_FDEV(reps) | tmp, read
 ' For now, ignore failures

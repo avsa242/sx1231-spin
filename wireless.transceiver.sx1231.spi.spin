@@ -108,6 +108,30 @@ PUB BitRate(bps) | tmp
     writeRegX (core#BITRATEMSB, 2, @tmp)
     return tmp
 
+PUB CarrierFreq(Hz) | tmp
+' Set Carrier frequency, in Hz
+'   Valid values:
+'       290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Set value will be rounded
+    readRegX (core#FRFMSB, 3, @tmp)
+    case Hz
+        290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
+            Hz := Hz / FSTEP
+            Hz.byte[3] := Hz.byte[0]
+            Hz.byte[0] := Hz.byte[2]
+            Hz.byte[2] := Hz.byte[3]
+            Hz &= core#BITS_FRF
+        OTHER:
+            tmp.byte[3] := tmp.byte[0]
+            tmp.byte[0] := tmp.byte[2]
+            tmp.byte[2] := tmp.byte[3]
+            tmp &= core#BITS_FRF
+            return tmp * FSTEP
+
+    tmp := Hz & core#BITS_FRF
+    writeRegX (core#FRFMSB, 3, @tmp)
+
 PUB DataMode(mode) | tmp
 ' Set data processing mode
 '   Valid values:

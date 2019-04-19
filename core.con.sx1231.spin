@@ -58,6 +58,8 @@ CON
     FRFMSB                      = $07
     FRFMID                      = $08
     FRFLSB                      = $09
+        BITS_FRF                = $FF_FF_FF
+
     OSC1                        = $0A
     AFCCTRL                     = $0B
     LOWBAT                      = $0C
