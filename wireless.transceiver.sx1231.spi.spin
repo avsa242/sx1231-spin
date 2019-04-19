@@ -26,6 +26,10 @@ CON
     DATAMODE_CONT_W_SYNC    = 2
     DATAMODE_CONT_WO_SYNC   = 3
 
+' Modulation types
+    MOD_FSK                 = 0
+    MOD_OOK                 = 1
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -108,6 +112,24 @@ PUB Listen(enabled) | tmp
     tmp &= core#MASK_LISTENON
     tmp := (tmp | enabled) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
+
+PUB Modulation(type) | tmp
+' Set modulation type
+'   Valid values:
+'       MOD_FSK (0): Frequency Shift Keyed
+'       MOD_OOK (1): On-Off Keyed
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#DATAMODUL, 1, @tmp)
+    case type
+        MOD_FSK, MOD_OOK:
+            type := type << core#FLD_MODULATIONTYPE
+        OTHER:
+            result := (tmp >> core#FLD_MODULATIONTYPE) & core#BITS_MODULATIONTYPE
+            return result
+
+    tmp &= core#MASK_MODULATIONTYPE
+    tmp := (tmp | type) & core#DATAMODUL_MASK
+    writeRegX (core#DATAMODUL, 1, @tmp)
 
 PUB OpMode(mode) | tmp
 ' Set operating mode

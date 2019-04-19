@@ -21,7 +21,7 @@ CON
     CS_PIN      = 3
 
     COL_REG     = 0
-    COL_SET     = 13
+    COL_SET     = 16
     COL_READ    = 24
     COL_PF      = 40
 
@@ -40,11 +40,20 @@ PUB Main
 
     Setup
 
+    Test_MODULATIONTYPE (1)
     Test_DATAMODE (1)
     Test_MODE (1)
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_MODULATIONTYPE(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from sx#MOD_FSK to sx#MOD_OOK
+            sx.Modulation (tmp)
+            read := sx.Modulation (-2)
+            Message (string("MODULATIONTYPE"), tmp, read)
 
 PUB Test_DATAMODE(reps) | tmp, read
 
