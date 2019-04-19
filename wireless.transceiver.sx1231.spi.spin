@@ -56,6 +56,13 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
 
     return FALSE                                                'If we got here, something went wrong
 
+PUB AbortListen | tmp
+' Abort listen mode when used together with Listen(FALSE)
+    readRegX (core#OPMODE, 1, @tmp)
+    tmp &= core#MASK_LISTENABORT
+    tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
+    writeRegX (core#OPMODE, 1, @tmp)
+
 PUB Listen(enabled) | tmp
 ' Enable listen mode
 '   Valid values: TRUE (-1 or 1), FALSE (0)
