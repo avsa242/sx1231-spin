@@ -61,6 +61,10 @@ CON
         BITS_FRF                = $FF_FF_FF
 
     OSC1                        = $0A
+    OSC1_MASK                   = $80
+        FLD_RCCALSTART          = 7
+        FLD_RCCALDONE           = 6
+
     AFCCTRL                     = $0B
     LOWBAT                      = $0C
     LISTEN1                     = $0D

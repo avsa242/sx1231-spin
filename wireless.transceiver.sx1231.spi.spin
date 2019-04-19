@@ -108,6 +108,25 @@ PUB BitRate(bps) | tmp
     writeRegX (core#BITRATEMSB, 2, @tmp)
     return tmp
 
+PUB RCOscCal(enabled) | tmp
+' Trigger calibration of RC oscillator
+'   Valid values:
+'       TRUE (-1 or 1)
+'   Any other value polls the chip and returns the current calibration status
+'   Returns:
+'       FALSE: RC calibration in progress
+'       TRUE: RC calibration complete
+    readRegX (core#OSC1, 1, @tmp)
+    case ||enabled
+        1:
+            enabled := (||enabled) << core#FLD_RCCALSTART
+        OTHER:
+            result := ((tmp >> core#FLD_RCCALDONE) & %1) * TRUE
+            return result
+
+    tmp := (tmp | enabled) & core#OSC1_MASK
+    writeRegX (core#OSC1, 1, @tmp)
+
 PUB CarrierFreq(Hz) | tmp
 ' Set Carrier frequency, in Hz
 '   Valid values:
