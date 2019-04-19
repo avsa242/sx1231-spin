@@ -14,6 +14,7 @@ CON
 
 ' SX1231 Oscillator Frequency
     FXOSC                   = 32_000_000
+    FSTEP                   = FXOSC / (1 << 19)
 
 ' Sequencer operating modes
     OPMODE_AUTO             = 0
@@ -125,6 +126,25 @@ PUB DataMode(mode) | tmp
     tmp &= core#MASK_DATAMODE
     tmp := (tmp | mode) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
+
+PUB Deviation(Hz) | tmp
+' Set carrier deviation, in Hz
+'   Valid values:
+'       600..300_000
+'       Default is 5_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Set value will be rounded
+    tmp := 0
+    readRegX (core#FDEVMSB, 2, @tmp)
+    case Hz
+        600..300_000:
+            Hz := Hz / FSTEP
+        OTHER:
+            tmp := SwapByteOrder (tmp) & core#BITS_FDEV
+            return tmp * FSTEP
+
+    tmp := SwapByteOrder (Hz)
+    writeRegX (core#FDEVMSB, 2, @tmp)
 
 PUB GaussianFilter(BT) | tmp
 ' Set Gaussian filter/data shaping parameters

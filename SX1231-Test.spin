@@ -34,12 +34,15 @@ OBJ
 
 VAR
 
-    byte _ser_cog
+    long _fails, _expanded
+    byte _ser_cog, _row
 
 PUB Main
 
     Setup
 
+    _row := 2
+    Test_FDEV (1)
     Test_BITRATE (1)
     Test_MODULATIONSHAPING (1)
     Test_MODULATIONTYPE (1)
@@ -49,8 +52,18 @@ PUB Main
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
 
+PUB Test_FDEV(reps) | tmp, read
+' For now, ignore failures
+    _row++
+    repeat reps
+        repeat tmp from 600 to 300_000 step 10000
+            sx.Deviation (tmp)
+            read := sx.Deviation (-2)
+            Message (string("FDEV"), tmp, read)
+
 PUB Test_BITRATE(reps) | tmp, read
 ' For now, ignore failures past 9600bps
+    _row++
     repeat reps
         repeat tmp from 1 to 9
             sx.BitRate (lookup(tmp: 1200, 2400, 4800, 9600, 19_200, 38_400, 76_800, 115_200, 300_000))
@@ -59,6 +72,7 @@ PUB Test_BITRATE(reps) | tmp, read
 
 PUB Test_MODULATIONSHAPING(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from sx#BT_NONE to sx#BT_0_3
             sx.GaussianFilter (tmp)
@@ -67,6 +81,7 @@ PUB Test_MODULATIONSHAPING(reps) | tmp, read
 
 PUB Test_MODULATIONTYPE(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from sx#MOD_FSK to sx#MOD_OOK
             sx.Modulation (tmp)
@@ -75,6 +90,7 @@ PUB Test_MODULATIONTYPE(reps) | tmp, read
 
 PUB Test_DATAMODE(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from sx#DATAMODE_PACKET to sx#DATAMODE_CONT_WO_SYNC
             if tmp == %01   'Not a valid mode, skip it
@@ -85,6 +101,7 @@ PUB Test_DATAMODE(reps) | tmp, read
 
 PUB Test_MODE(reps) | tmp, read
 
+    _row++
     sx.Sequencer (sx#OPMODE_MANUAL) ' Must first set sequencer to manual mode to switch operating modes
     time.MSleep (10)
     repeat reps
@@ -96,6 +113,7 @@ PUB Test_MODE(reps) | tmp, read
 
 PUB Test_LISTENON(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to -1
             sx.Listen (tmp)
@@ -104,6 +122,7 @@ PUB Test_LISTENON(reps) | tmp, read
 
 PUB Test_SEQUENCEROFF(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to 1
             sx.Sequencer (tmp)
@@ -112,20 +131,40 @@ PUB Test_SEQUENCEROFF(reps) | tmp, read
 
 PUB Message(field, arg1, arg2)
 
-    ser.PositionX ( COL_REG)
-    ser.Str (field)
+    case _expanded
+        TRUE:
+            ser.PositionX (COL_REG)
+            ser.Str (field)
 
-    ser.PositionX ( COL_SET)
-    ser.Str (string("SET: "))
-    ser.Dec (arg1)
+            ser.PositionX (COL_SET)
+            ser.Str (string("SET: "))
+            ser.Dec (arg1)
 
-    ser.PositionX ( COL_READ)
-    ser.Str (string("   READ: "))
-    ser.Dec (arg2)
+            ser.PositionX (COL_READ)
+            ser.Str (string("READ: "))
+            ser.Dec (arg2)
+            ser.Chars (32, 3)
+            ser.PositionX (COL_PF)
+            PassFail (arg1 == arg2)
+            ser.NewLine
 
-    ser.PositionX (COL_PF)
-    PassFail (arg1 == arg2)
-    ser.NewLine
+        FALSE:
+            ser.Position (COL_REG, _row)
+            ser.Str (field)
+
+            ser.Position (COL_SET, _row)
+            ser.Str (string("SET: "))
+            ser.Dec (arg1)
+
+            ser.Position (COL_READ, _row)
+            ser.Str (string("READ: "))
+            ser.Dec (arg2)
+
+            ser.Position (COL_PF, _row)
+            PassFail (arg1 == arg2)
+            ser.NewLine
+        OTHER:
+            ser.Str (string("DEADBEEF"))
 
 PUB PassFail(num)
 
