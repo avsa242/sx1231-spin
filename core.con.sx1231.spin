@@ -66,6 +66,9 @@ CON
         FLD_RCCALDONE           = 6
 
     AFCCTRL                     = $0B
+    AFCCTRL_MASK                = $20
+        FLD_AFCLOWBETAON        = 5
+
     LOWBAT                      = $0C
     LISTEN1                     = $0D
     LISTEN2                     = $0E

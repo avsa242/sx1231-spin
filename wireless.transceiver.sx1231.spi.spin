@@ -40,6 +40,10 @@ CON
     BT_0_5                  = 2
     BT_0_3                  = 3
 
+' AFC method/routine
+    AFC_STANDARD            = 0
+    AFC_IMPROVED            = 1
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -87,6 +91,22 @@ PUB AbortListen | tmp
     tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+PUB AFCMethod(method) | tmp
+' Set AFC method/routine
+'   Valid values:
+'       AFC_STANDARD (0): Standard AFC routine
+'       AFC_IMPROVED (1): Improved AFC routine, for signals with modulation index < 2
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#AFCCTRL, 1, @tmp)
+    case method
+        AFC_STANDARD, AFC_IMPROVED:
+            method := method << core#FLD_AFCLOWBETAON
+        OTHER:
+            return (tmp >> core#FLD_AFCLOWBETAON) & %1
+
+    tmp := (tmp | method) & core#AFCCTRL_MASK
+    writeRegX (core#AFCCTRL, 1, @tmp)
+
 PUB BitRate(bps) | tmp
 ' Set on-air data rate, in bits per second
 '   Valid values:
@@ -107,25 +127,6 @@ PUB BitRate(bps) | tmp
     tmp := bps & core#BITS_BITRATE
     writeRegX (core#BITRATEMSB, 2, @tmp)
     return tmp
-
-PUB RCOscCal(enabled) | tmp
-' Trigger calibration of RC oscillator
-'   Valid values:
-'       TRUE (-1 or 1)
-'   Any other value polls the chip and returns the current calibration status
-'   Returns:
-'       FALSE: RC calibration in progress
-'       TRUE: RC calibration complete
-    readRegX (core#OSC1, 1, @tmp)
-    case ||enabled
-        1:
-            enabled := (||enabled) << core#FLD_RCCALSTART
-        OTHER:
-            result := ((tmp >> core#FLD_RCCALDONE) & %1) * TRUE
-            return result
-
-    tmp := (tmp | enabled) & core#OSC1_MASK
-    writeRegX (core#OSC1, 1, @tmp)
 
 PUB CarrierFreq(Hz) | tmp
 ' Set Carrier frequency, in Hz
@@ -265,6 +266,25 @@ PUB OpMode(mode) | tmp
     tmp &= core#MASK_MODE
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
+
+PUB RCOscCal(enabled) | tmp
+' Trigger calibration of RC oscillator
+'   Valid values:
+'       TRUE (-1 or 1)
+'   Any other value polls the chip and returns the current calibration status
+'   Returns:
+'       FALSE: RC calibration in progress
+'       TRUE: RC calibration complete
+    readRegX (core#OSC1, 1, @tmp)
+    case ||enabled
+        1:
+            enabled := (||enabled) << core#FLD_RCCALSTART
+        OTHER:
+            result := ((tmp >> core#FLD_RCCALDONE) & %1) * TRUE
+            return result
+
+    tmp := (tmp | enabled) & core#OSC1_MASK
+    writeRegX (core#OSC1, 1, @tmp)
 
 PUB Sequencer(mode) | tmp
 ' Control automatic sequencer

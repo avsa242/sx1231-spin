@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_AFCCTRL (1)
     Test_OSC1 (1)
     Test_FRF (1)
     Test_FDEV (1)
@@ -53,6 +54,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_AFCCTRL(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from sx#AFC_STANDARD to sx#AFC_IMPROVED
+            sx.AFCMethod (tmp)
+            read := sx.AFCMethod (-2)
+            Message (string("AFCCTRL"), tmp, read)
 
 PUB Test_OSC1(reps) | tmp, read
 ' For now, ignore failures
