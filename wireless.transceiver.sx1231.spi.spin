@@ -12,6 +12,9 @@
 
 CON
 
+' Sequencer operating modes
+    OPMODE_AUTO     = 0
+    OPMODE_MANUAL   = 1
 
 VAR
 
@@ -53,6 +56,24 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
 
     return FALSE                                                'If we got here, something went wrong
 
+pub Sequencer(mode) | tmp
+' Control automatic sequencer
+'   Valid values:
+'       *OPMODE_AUTO (0): Automatic sequence, as selected by OperatingMode
+'        OPMODE_MANUAL (1): Mode is forced
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#OPMODE, 1, @tmp)
+    case mode
+        OPMODE_AUTO, OPMODE_MANUAL:
+            mode := mode << core#FLD_SEQUENCEROFF
+        OTHER:
+            result := (tmp >> core#FLD_SEQUENCEROFF) & %1
+            return result
+
+    tmp &= core#MASK_SEQUENCEROFF
+    tmp := (tmp | mode) & core#OPMODE_MASK
+    writeRegX (core#OPMODE, 1, @tmp)
+
 PUB Stop
 
     spi.stop
@@ -67,18 +88,18 @@ PUB Version
 '       $24:    ???
     readRegX (core#VERSION, 1, @result)
 
-PUB readRegX(reg, nr_bytes, addr_buff) | i
-' Read nr_bytes from register 'reg' to address 'addr_buff'
+PUB readRegX(reg, nr_bytes, buf_addr) | i
+' Read nr_bytes from register 'reg' to address 'buf_addr'
     outa[_CS] := 0
 
     spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
     
     repeat i from 0 to nr_bytes-1
-        byte[addr_buff][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
+        byte[buf_addr][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
 
     outa[_CS] := 1
 
-PUB writeRegX(reg, nr_bytes, val) | i
+PUB writeRegX(reg, nr_bytes, buf_addr) | i
 ' Write nr_bytes to register 'reg' stored in val
 
     outa[_CS] := 0
@@ -86,7 +107,7 @@ PUB writeRegX(reg, nr_bytes, val) | i
     spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg|core#W)
 
     repeat i from 0 to nr_bytes-1
-        spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, val.byte[i])
+        spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][i])
 
     outa[_CS] := 1
 

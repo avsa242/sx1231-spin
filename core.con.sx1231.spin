@@ -22,7 +22,19 @@ CON
 
 ' Register definitions
     FIFO                        = $00
+
     OPMODE                      = $01
+    OPMODE_MASK                 = $FC
+        FLD_SEQUENCEROFF        = 7
+        FLD_LISTENON            = 6
+        FLD_LISTENABORT         = 5
+        FLD_MODE                = 2
+        BITS_MODE               = %111
+        MASK_SEQUENCEROFF       = OPMODE_MASK ^ (1 << FLD_SEQUENCEROFF)
+        MASK_LISTENON           = OPMODE_MASK ^ (1 << FLD_LISTENON)
+        MASK_LISTENABORT        = OPMODE_MASK ^ (1 << FLD_LISTENABORT)
+        MASK_MODE               = OPMODE_MASK ^ (BITS_MODE << FLD_MODE)
+
     DATAMODUL                   = $02
     BITRATEMSB                  = $03
     BITRATELSB                  = $04

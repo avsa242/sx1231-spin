@@ -20,6 +20,11 @@ CON
     SCK_PIN     = 2
     CS_PIN      = 3
 
+    COL_REG     = 0
+    COL_SET     = 12
+    COL_READ    = 24
+    COL_PF      = 40
+
 OBJ
 
     cfg     : "core.con.boardcfg.flip"
@@ -34,8 +39,41 @@ VAR
 PUB Main
 
     Setup
-    ser.Hex (sx.Version, 2)
-    repeat
+
+    Test_SEQUENCEROFF (1)
+    flash(cfg#LED1)
+
+PUB Test_SEQUENCEROFF(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 0 to 1
+            sx.Sequencer (tmp)
+            read := sx.Sequencer (-2)
+            Message (string("SEQUENCEROFF"), tmp, read)
+
+PUB Message(field, arg1, arg2)
+
+    ser.PositionX ( COL_REG)
+    ser.Str (field)
+
+    ser.PositionX ( COL_SET)
+    ser.Str (string("SET: "))
+    ser.Dec (arg1)
+
+    ser.PositionX ( COL_READ)
+    ser.Str (string("   READ: "))
+    ser.Dec (arg2)
+
+    ser.PositionX (COL_PF)
+    PassFail (arg1 == arg2)
+    ser.NewLine
+
+PUB PassFail(num)
+
+    case num
+        0: ser.Str (string("FAIL"))
+        -1: ser.Str (string("PASS"))
+        OTHER: ser.Str (string("???"))
 
 PUB Setup
 
@@ -50,6 +88,13 @@ PUB Setup
         time.MSleep (5)
         ser.Stop
         repeat
+
+PRI flash(led_pin)
+
+    dira[led_pin] := 1
+    repeat
+        !outa[led_pin]
+        time.MSleep (100)
 
 DAT
 {
