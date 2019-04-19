@@ -229,6 +229,22 @@ PUB Listen(enabled) | tmp
     tmp := (tmp | enabled) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+PUB LowBattMon(enabled) | tmp
+' Enable low battery detector signal
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#LOWBAT, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := (||enabled) << core#FLD_LOWBATON
+        OTHER:
+            result := ((tmp >> core#FLD_LOWBATON) & %1) * TRUE
+            return result
+
+    tmp &= core#MASK_LOWBATON
+    tmp := (tmp | enabled) & core#LOWBAT_MASK
+    writeRegX (core#LOWBAT, 1, @tmp)
+
 PUB Modulation(type) | tmp
 ' Set modulation type
 '   Valid values:

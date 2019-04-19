@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_LOWBATON (1)
     Test_AFCCTRL (1)
     Test_OSC1 (1)
     Test_FRF (1)
@@ -54,6 +55,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_LOWBATON(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.LowBattMon (tmp)
+            read := sx.LowBattMon (-2)
+            Message (string("LOWBATON"), tmp, read)
 
 PUB Test_AFCCTRL(reps) | tmp, read
 

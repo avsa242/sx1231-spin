@@ -70,6 +70,15 @@ CON
         FLD_AFCLOWBETAON        = 5
 
     LOWBAT                      = $0C
+    LOWBAT_MASK                 = $1F
+        FLD_LOWBATMONITOR       = 4
+        FLD_LOWBATON            = 3
+        FLD_LOWBATTRIM          = 0
+        BITS_LOWBATTRIM         = %111
+        MASK_LOWBATMONITOR      = LOWBAT_MASK ^ (1 << FLD_LOWBATMONITOR)
+        MASK_LOWBATON           = LOWBAT_MASK ^ (1 << FLD_LOWBATON)
+        MASK_LOWBATTRIM         = LOWBAT_MASK ^ (BITS_LOWBATTRIM << FLD_LOWBATTRIM)
+
     LISTEN1                     = $0D
     LISTEN2                     = $0E
     LISTEN3                     = $0F
