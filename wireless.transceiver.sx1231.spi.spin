@@ -13,13 +13,18 @@
 CON
 
 ' Sequencer operating modes
-    OPMODE_AUTO     = 0
-    OPMODE_MANUAL   = 1
-    OPMODE_SLEEP    = 0
-    OPMODE_STDBY    = 1
-    OPMODE_FS       = 2
-    OPMODE_TX       = 3
-    OPMODE_RX       = 4
+    OPMODE_AUTO             = 0
+    OPMODE_MANUAL           = 1
+    OPMODE_SLEEP            = 0
+    OPMODE_STDBY            = 1
+    OPMODE_FS               = 2
+    OPMODE_TX               = 3
+    OPMODE_RX               = 4
+
+' Data processing modes
+    DATAMODE_PACKET         = 0
+    DATAMODE_CONT_W_SYNC    = 2
+    DATAMODE_CONT_WO_SYNC   = 3
 
 VAR
 
@@ -67,6 +72,25 @@ PUB AbortListen | tmp
     tmp &= core#MASK_LISTENABORT
     tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
+
+PUB DataMode(mode) | tmp
+' Set data processing mode
+'   Valid values:
+'       DATAMODE_PACKET (0): Packet mode
+'       DATAMODE_CONT_W_SYNC (2): Continuous mode with bit synchronizer
+'       DATAMODE_CONT_WO_SYNC (3): Continuous mode without bit synchronizer
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#DATAMODUL, 1, @tmp)
+    case mode
+        DATAMODE_PACKET, DATAMODE_CONT_W_SYNC, DATAMODE_CONT_WO_SYNC:
+            mode := mode << core#FLD_DATAMODE
+        OTHER:
+            result := (tmp >> core#FLD_DATAMODE) & core#BITS_DATAMODE
+            return result
+
+    tmp &= core#MASK_DATAMODE
+    tmp := (tmp | mode) & core#DATAMODUL_MASK
+    writeRegX (core#DATAMODUL, 1, @tmp)
 
 PUB Listen(enabled) | tmp
 ' Enable listen mode

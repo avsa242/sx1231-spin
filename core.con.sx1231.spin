@@ -36,6 +36,17 @@ CON
         MASK_MODE               = OPMODE_MASK ^ (BITS_MODE << FLD_MODE)
 
     DATAMODUL                   = $02
+    DATAMODUL_MASK              = $6B
+        FLD_DATAMODE            = 5
+        FLD_MODULATIONTYPE      = 3
+        FLD_MODULATIONSHAPING   = 0
+        BITS_DATAMODE           = %11
+        BITS_MODULATIONTYPE     = %01
+        BITS_MODULATIONSHAPING  = %11
+        MASK_DATAMODE           = DATAMODUL_MASK ^ (BITS_DATAMODE << FLD_DATAMODE)
+        MASK_MODULATIONTYPE     = DATAMODUL_MASK ^ (BITS_MODULATIONTYPE << FLD_MODULATIONTYPE)
+        MASK_MODULATIONSHAPING  = DATAMODUL_MASK ^ (BITS_MODULATIONSHAPING << FLD_MODULATIONSHAPING)
+
     BITRATEMSB                  = $03
     BITRATELSB                  = $04
     FDEVMSB                     = $05

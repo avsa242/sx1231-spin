@@ -40,10 +40,21 @@ PUB Main
 
     Setup
 
+    Test_DATAMODE (1)
     Test_MODE (1)
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_DATAMODE(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from sx#DATAMODE_PACKET to sx#DATAMODE_CONT_WO_SYNC
+            if tmp == %01   'Not a valid mode, skip it
+                next
+            sx.DataMode (tmp)
+            read := sx.DataMode (-2)
+            Message (string("DATAMODE"), tmp, read)
 
 PUB Test_MODE(reps) | tmp, read
 
