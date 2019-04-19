@@ -107,6 +107,12 @@ PUB AFCMethod(method) | tmp
     tmp := (tmp | method) & core#AFCCTRL_MASK
     writeRegX (core#AFCCTRL, 1, @tmp)
 
+PUB BattLow
+' Battery low detector
+'   Returns TRUE if battery low, FALSE otherwise
+    readRegX (core#LOWBAT, 1, @result)
+    result := ((result >> core#FLD_LOWBATMONITOR) & %1)* TRUE
+
 PUB BitRate(bps) | tmp
 ' Set on-air data rate, in bits per second
 '   Valid values:
