@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_OCPON (1)
     Test_PARAMP (1)
     Test_OUTPUTPOWER (1)
     Test_LOWBATTRIM (1)
@@ -58,6 +59,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_OCPON(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.OvercurrentProtection (tmp)
+            read := sx.OvercurrentProtection (-2)
+            Message (string("OCPON"), tmp, read)
 
 PUB Test_PARAMP(reps) | tmp, read
 

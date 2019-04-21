@@ -104,6 +104,13 @@ CON
         BITS_PARAMP             = %1111
 
     OCP                         = $13
+    OCP_MASK                    = $1F
+        FLD_OCPON               = 4
+        FLD_OCPTRIM             = 0
+        BITS_OCPTRIM            = %1111
+        MASK_OCPON              = OCP_MASK ^ (1 << FLD_OCPON)
+        MASK_OCPTRIM            = OCP_MASK ^ (1 << FLD_OCPTRIM)
+
     LNA                         = $18
     RXBW                        = $19
     AFCBW                       = $1A

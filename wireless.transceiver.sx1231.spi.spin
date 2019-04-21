@@ -325,6 +325,22 @@ PUB OutputPower(dBm) | tmp
     tmp := (tmp | dBm) & core#PALEVEL_MASK
     writeRegX (core#PALEVEL, 1, @tmp)
 
+PUB OvercurrentProtection(enabled) | tmp
+' Enable PA overcurrent protection
+'   Valid values: *TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#OCP, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := (||enabled) << core#FLD_OCPON
+        OTHER:
+            result := ((tmp >> core#FLD_OCPON) & %1) * TRUE
+            return result
+
+    tmp &= core#MASK_OCPON
+    tmp := (tmp | enabled) & core#OCP_MASK
+    writeRegX (core#OCP, 1, @tmp)
+
 PUB RampTime(uSec) | tmp
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
