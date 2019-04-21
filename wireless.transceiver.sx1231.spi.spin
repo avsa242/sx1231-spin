@@ -398,26 +398,29 @@ PUB SwapByteOrder(in_word)
 
 PUB readRegX(reg, nr_bytes, buf_addr) | i
 ' Read nr_bytes from register 'reg' to address 'buf_addr'
-    outa[_CS] := 0
+    case reg
+        $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
+            outa[_CS] := 0
+            spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            repeat i from 0 to nr_bytes-1
+                byte[buf_addr][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
+            outa[_CS] := 1
 
-    spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-    
-    repeat i from 0 to nr_bytes-1
-        byte[buf_addr][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
-
-    outa[_CS] := 1
+        OTHER:
+            return FALSE
 
 PUB writeRegX(reg, nr_bytes, buf_addr) | i
 ' Write nr_bytes to register 'reg' stored in val
+    case reg
+        $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
+            outa[_CS] := 0
+            spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg|core#W)
+            repeat i from 0 to nr_bytes-1
+                spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][i])
+            outa[_CS] := 1
 
-    outa[_CS] := 0
-
-    spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg|core#W)
-
-    repeat i from 0 to nr_bytes-1
-        spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][i])
-
-    outa[_CS] := 1
+        OTHER:
+            return FALSE
 
 DAT
 {
