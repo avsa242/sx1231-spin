@@ -82,8 +82,22 @@ CON
     LISTEN1                     = $0D
     LISTEN2                     = $0E
     LISTEN3                     = $0F
+
     VERSION                     = $10
+
     PALEVEL                     = $11
+    PALEVEL_MASK                = $FF
+        FLD_PA0ON               = 7
+        FLD_PA1ON               = 6
+        FLD_PA2ON               = 5
+        FLD_OUTPUTPOWER         = 0
+        BITS_PA012              = %111
+        BITS_OUTPUTPOWER        = %11111
+        MASK_PA0ON              = PALEVEL_MASK ^ (1 << FLD_PA0ON)
+        MASK_PA1ON              = PALEVEL_MASK ^ (1 << FLD_PA1ON)
+        MASK_PA2ON              = PALEVEL_MASK ^ (1 << FLD_PA2ON)
+        MASK_OUTPUTPOWER        = PALEVEL_MASK ^ (BITS_OUTPUTPOWER << FLD_OUTPUTPOWER)
+
     PARAMP                      = $12
     OCP                         = $13
     LNA                         = $18
