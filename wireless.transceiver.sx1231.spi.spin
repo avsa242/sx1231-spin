@@ -306,6 +306,25 @@ PUB OpMode(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+PUB OutputPower(dBm) | tmp
+' Set transmit output power, in dBm
+'   Valid values:
+'       -18..17
+'   Any other value polls the chip and returns the current setting
+    tmp := 0
+    readRegX (core#PALEVEL, 1, @tmp)
+    case dBm
+        -18..17:
+            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+        OTHER:
+            result := tmp & core#BITS_OUTPUTPOWER
+            result := result - 18'case pa[012] bitfield
+            return result
+
+    tmp &= core#MASK_OUTPUTPOWER
+    tmp := (tmp | dBm) & core#PALEVEL_MASK
+    writeRegX (core#PALEVEL, 1, @tmp)
+
 PUB RCOscCal(enabled) | tmp
 ' Trigger calibration of RC oscillator
 '   Valid values:

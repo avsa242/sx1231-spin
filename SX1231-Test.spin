@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_OUTPUTPOWER (1)
     Test_LOWBATTRIM (1)
     Test_LOWBATON (1)
     Test_AFCCTRL (1)
@@ -56,6 +57,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_OUTPUTPOWER(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from -18 to 17
+            sx.OutputPower (tmp)
+            read := sx.OutputPower (-100)
+            Message (string("OUTPUTPOWER"), tmp, read)
 
 PUB Test_LOWBATTRIM(reps) | tmp, read
 
