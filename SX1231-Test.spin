@@ -22,8 +22,8 @@ CON
 
     COL_REG     = 0
     COL_SET     = 20
-    COL_READ    = 36
-    COL_PF      = 56
+    COL_READ    = 40
+    COL_PF      = 58
 
 OBJ
 
@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_PARAMP (1)
     Test_OUTPUTPOWER (1)
     Test_LOWBATTRIM (1)
     Test_LOWBATON (1)
@@ -57,6 +58,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_PARAMP(reps) | tmp, read
+
+   _row++
+    repeat reps
+        repeat tmp from 1 to 16
+            sx.RampTime (lookup(tmp: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10))
+            read := sx.RampTime (-2)
+            Message (string("PARAMP"), lookup(tmp: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10), read)
 
 PUB Test_OUTPUTPOWER(reps) | tmp, read
 
@@ -210,6 +220,7 @@ PUB Message(field, arg1, arg2)
             ser.PositionX (COL_SET)
             ser.Str (string("SET: "))
             ser.Dec (arg1)
+            ser.Chars (32, 3)
 
             ser.PositionX (COL_READ)
             ser.Str (string("READ: "))
@@ -226,10 +237,12 @@ PUB Message(field, arg1, arg2)
             ser.Position (COL_SET, _row)
             ser.Str (string("SET: "))
             ser.Dec (arg1)
+            ser.Chars (32, 3)
 
             ser.Position (COL_READ, _row)
             ser.Str (string("READ: "))
             ser.Dec (arg2)
+            ser.Chars (32, 3)
 
             ser.Position (COL_PF, _row)
             PassFail (arg1 == arg2)

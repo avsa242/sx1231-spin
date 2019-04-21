@@ -99,6 +99,10 @@ CON
         MASK_OUTPUTPOWER        = PALEVEL_MASK ^ (BITS_OUTPUTPOWER << FLD_OUTPUTPOWER)
 
     PARAMP                      = $12
+    PARAMP_MASK                 = $0F
+        FLD_PARAMP              = 0
+        BITS_PARAMP             = %1111
+
     OCP                         = $13
     LNA                         = $18
     RXBW                        = $19

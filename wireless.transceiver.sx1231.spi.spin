@@ -325,6 +325,22 @@ PUB OutputPower(dBm) | tmp
     tmp := (tmp | dBm) & core#PALEVEL_MASK
     writeRegX (core#PALEVEL, 1, @tmp)
 
+PUB RampTime(uSec) | tmp
+' Set rise/fall time of ramp up/down in FSK, in microseconds
+'   Valid values:
+'       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#PARAMP, 1, @tmp)
+    case uSec := lookdown(uSec: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
+        1..16:
+            uSec := (uSec-1) & core#BITS_PARAMP
+        OTHER:
+            result := tmp & core#BITS_PARAMP
+            return lookupz(result: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
+
+    tmp := uSec & core#PARAMP_MASK
+    writeRegX (core#PARAMP, 1, @tmp)
+
 PUB RCOscCal(enabled) | tmp
 ' Trigger calibration of RC oscillator
 '   Valid values:
