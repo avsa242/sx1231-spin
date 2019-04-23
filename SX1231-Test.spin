@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_LNAGAINSELECT (1)
     Test_LNAZIN (1)
     Test_OCPTRIM (1)
     Test_OCPON (1)
@@ -61,6 +62,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_LNAGAINSELECT(reps) | tmp, read
+
+   _row++
+    repeat reps
+        repeat tmp from 1 to 6
+            sx.Gain (lookup(tmp: sx#LNA_AGC, sx#LNA_HIGH, -6, -12, -24, -36, -48))
+            read := sx.Gain (-2)
+            Message (string("LNAGAINSELECT"), lookup(tmp: sx#LNA_AGC, sx#LNA_HIGH, -6, -12, -24, -36, -48), read)
 
 PUB Test_LNAZIN(reps) | tmp, read
 
