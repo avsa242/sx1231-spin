@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_OCPTRIM (1)
     Test_OCPON (1)
     Test_PARAMP (1)
     Test_OUTPUTPOWER (1)
@@ -59,6 +60,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_OCPTRIM(reps) | tmp, read
+
+   _row++
+    repeat reps
+        repeat tmp from 1 to 16
+            sx.OCPCurrent (lookup(tmp: 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120))
+            read := sx.OCPCurrent (-2)
+            Message (string("OCPTRIM"), lookup(tmp: 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120), read)
 
 PUB Test_OCPON(reps) | tmp, read
 

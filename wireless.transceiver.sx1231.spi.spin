@@ -286,6 +286,24 @@ PUB Modulation(type) | tmp
     tmp := (tmp | type) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
 
+PUB OCPCurrent(mA) | tmp
+' Set PA overcurrent protection level, in milliamps
+'   Valid values:
+'       45..120 (Default: 95)
+'   NOTE: Set value will be rounded to the nearest 5mA
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#OCP, 1, @tmp)
+    case mA
+        45..120:
+            mA := (mA-45)/5 & core#BITS_OCPTRIM
+        OTHER:
+            result := 45 + 5 * (tmp & core#BITS_OCPTRIM)
+            return result
+
+    tmp &= core#MASK_OCPTRIM
+    tmp := (tmp | mA) & core#OCP_MASK
+    writeRegX (core#OCP, 1, @tmp)
+
 PUB OpMode(mode) | tmp
 ' Set operating mode
 '   Valid values:
