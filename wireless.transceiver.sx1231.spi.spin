@@ -217,7 +217,6 @@ PUB GaussianFilter(BT) | tmp
     tmp := (tmp | BT) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
 
-
 PUB Listen(enabled) | tmp
 ' Enable listen mode
 '   Valid values: TRUE (-1 or 1), FALSE (0)
@@ -234,6 +233,24 @@ PUB Listen(enabled) | tmp
     tmp &= core#MASK_LISTENON
     tmp := (tmp | enabled) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
+
+PUB LNAZInput(ohms) | tmp
+' Set LNA's input impedance, in ohms
+'   Valid values:
+'       50, *200
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#LNA, 1, @tmp)
+    case ohms := lookdown(ohms: 50, 200)
+        1, 2:
+            ohms := (ohms-1) << core#FLD_LNAZIN
+        OTHER:
+            result := (tmp >> core#FLD_LNAZIN) & %1
+            return lookupz(result: 50, 200)
+
+    tmp &= core#MASK_LNAZIN
+    tmp := (tmp | ohms) & core#LNA_MASK
+    writeRegX (core#LNA, 1, @tmp)
+
 
 PUB LowBattLevel(mV) | tmp
 ' Set low battery threshold, in millivolts

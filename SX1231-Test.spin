@@ -42,6 +42,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_LNAZIN (1)
     Test_OCPTRIM (1)
     Test_OCPON (1)
     Test_PARAMP (1)
@@ -60,6 +61,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1)
+
+PUB Test_LNAZIN(reps) | tmp, read
+
+   _row++
+    repeat reps
+        repeat tmp from 1 to 2
+            sx.LNAZInput (lookup(tmp: 50, 200))
+            read := sx.LNAZInput (-2)
+            Message (string("LNAZIN"), lookup(tmp: 50, 200), read)
 
 PUB Test_OCPTRIM(reps) | tmp, read
 

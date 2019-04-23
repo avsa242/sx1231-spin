@@ -112,6 +112,16 @@ CON
         MASK_OCPTRIM            = OCP_MASK ^ (BITS_OCPTRIM << FLD_OCPTRIM)
 
     LNA                         = $18
+    LNA_MASK                    = $BF
+        FLD_LNAZIN              = 7
+        FLD_LNACURRENTGAIN      = 5
+        FLD_LNAGAINSELECT       = 0
+        BITS_LNACURRENTGAIN     = %111
+        BITS_LNAGAINSELECT      = %111
+        MASK_LNAZIN             = LNA_MASK ^ (1 << FLD_LNAZIN)
+        MASK_LNACURRENTGAIN     = LNA_MASK ^ (BITS_LNACURRENTGAIN << FLD_LNACURRENTGAIN)
+        MASK_LNAGAINSELECT      = LNA_MASK ^ (BITS_LNAGAINSELECT<< FLD_LNAGAINSELECT)
+
     RXBW                        = $19
     AFCBW                       = $1A
     OOKPEAK                     = $1B
