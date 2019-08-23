@@ -494,13 +494,29 @@ PUB SyncWordBytes(bytes) | tmp
     readRegX(core#SYNCCONFIG, 1, @tmp)
     case bytes
         1..8:
-            bytes-=1
+            bytes := (bytes-1) << core#FLD_SYNCSIZE
         OTHER:
-            return tmp+1
+            return ((tmp >> core#FLD_SYNCSIZE) & core#BITS_SYNCSIZE) + 1
 
     tmp &= core#MASK_SYNCSIZE
     tmp := (tmp | bytes) & core#SYNCCONFIG_MASK
-    writeRegX(core#SYNCCONFIG, 1, @bytes)
+    writeRegX(core#SYNCCONFIG, 1, @tmp)
+
+PUB SyncWordEnabled(enable) | tmp
+' Enable sync word generation (TX) and detection (RX)
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#SYNCCONFIG, 1, @tmp)
+    case ||enable
+        0, 1:
+            enable := ||enable << core#FLD_SYNCON
+        OTHER:
+            return ((tmp >> core#FLD_SYNCON) & %1) * TRUE
+
+    tmp &= core#MASK_SYNCON
+    tmp := (tmp | enable) & core#SYNCCONFIG_MASK
+    writeRegX(core#SYNCCONFIG, 1, @tmp)
 
 PUB Version
 ' Read silicon revision

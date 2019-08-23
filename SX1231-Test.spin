@@ -44,6 +44,8 @@ PUB Main
     Setup
 
     _row := 2
+
+    Test_SYNCON (1)
     Test_SYNCSIZE (1)
     Test_PREAMBLE (1)
     Test_LNAGAINSELECT (1)
@@ -66,6 +68,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_SYNCON(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.SyncWordEnabled (tmp)
+            read := sx.SyncWordEnabled (-2)
+            Message (string("SYNCON"), tmp, read)
 
 PUB Test_SYNCSIZE(reps) | tmp, read
 
