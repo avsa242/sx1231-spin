@@ -54,9 +54,9 @@ VAR
 
 OBJ
 
-    spi : "SPI_Asm"                                             'PASM SPI Driver
+    spi : "com.spi.4w"                                              'PASM SPI Driver
     core: "core.con.sx1231"
-    time: "time"                                                'Basic timing functions
+    time: "time"                                                    'Basic timing functions
 
 PUB Null
 ''This is not a top-level object
@@ -67,7 +67,7 @@ PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN) : okay
 
 PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
     if SCK_DELAY => 1 and lookdown(SCK_CPOL: 0, 1)
-        if okay := spi.start (SCK_DELAY, SCK_CPOL)              'SPI Object Started?
+        if okay := spi.start (SCK_DELAY, SCK_CPOL)                  'SPI Object Started?
             _CS := CS_PIN
             _MOSI := MOSI_PIN
             _MISO := MISO_PIN
@@ -77,16 +77,16 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
             dira[_CS] := 1
             outa[_SCK] := 0
             dira[_SCK] := 1
-            time.MSleep (10)                                     'Add startup delay appropriate to your device (consult its datasheet)
+            time.MSleep (10)
 
             case Version
-                $21, $22, $23, $24:
+                $21, $22, $23, $24:                                 'Is it really an SX1231?
                     return okay
                 OTHER:
                     return FALSE
 
 
-    return FALSE                                                'If we got here, something went wrong
+    return FALSE                                                    'If we got here, something went wrong
 
 PUB AbortListen | tmp
 ' Abort listen mode when used together with Listen(FALSE)
