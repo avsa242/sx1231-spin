@@ -15,15 +15,17 @@ CON
     _clkmode    = cfg#_clkmode
     _xinfreq    = cfg#_xinfreq
 
-    MISO_PIN    = 0
-    MOSI_PIN    = 1
-    SCK_PIN     = 2
-    CS_PIN      = 3
+    MISO_PIN    = 11
+    MOSI_PIN    = 10
+    SCK_PIN     = 9
+    CS_PIN      = 8
 
     COL_REG     = 0
-    COL_SET     = 20
-    COL_READ    = 40
-    COL_PF      = 58
+    COL_SET     = COL_REG+20
+    COL_READ    = COL_SET+20
+    COL_PF      = COL_READ+18
+
+    LED         = cfg#LED1
 
 OBJ
 
@@ -61,7 +63,7 @@ PUB Main
     Test_MODE (1)
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
-    flash(cfg#LED1)
+    flash(cfg#LED1, 100)
 
 PUB Test_LNAGAINSELECT(reps) | tmp, read
 
@@ -309,14 +311,14 @@ PUB Setup
         sx.Stop
         time.MSleep (5)
         ser.Stop
-        repeat
+        Flash(LED, 500)
 
-PRI flash(led_pin)
+PRI Flash(led_pin, delay_ms)
 
     dira[led_pin] := 1
     repeat
         !outa[led_pin]
-        time.MSleep (100)
+        time.MSleep (delay_ms)
 
 DAT
 {
