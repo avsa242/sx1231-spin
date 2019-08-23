@@ -486,6 +486,22 @@ PUB Sequencer(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+PUB SyncWordBytes(bytes) | tmp
+' Set number of bytes in sync word
+'   Valid values: 1..8
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#SYNCCONFIG, 1, @tmp)
+    case bytes
+        1..8:
+            bytes-=1
+        OTHER:
+            return tmp+1
+
+    tmp &= core#MASK_SYNCSIZE
+    tmp := (tmp | bytes) & core#SYNCCONFIG_MASK
+    writeRegX(core#SYNCCONFIG, 1, @bytes)
+
 PUB Version
 ' Read silicon revision
 '   Returns:

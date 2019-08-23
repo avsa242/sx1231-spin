@@ -155,7 +155,20 @@ CON
     RXTIMEOUT2                  = $2B
     PREAMBLEMSB                 = $2C
     PREAMBLELSB                 = $2D
+
     SYNCCONFIG                  = $2E
+    SYNCCONFIG_MASK             = $FF
+        FLD_SYNCON              = 7
+        FLD_FIFOFILLCONDITION   = 6
+        FLD_SYNCSIZE            = 3
+        FLD_SYNCTOL             = 0
+        BITS_SYNCSIZE           = %111
+        BITS_SYNCTOL            = %111
+        MASK_SYNCON             = SYNCCONFIG_MASK ^ (1 << FLD_SYNCON)
+        MASK_FIFOFILLCONDITION  = SYNCCONFIG_MASK ^ (1 << FLD_FIFOFILLCONDITION)
+        MASK_SYNCSIZE           = SYNCCONFIG_MASK ^ (1 << FLD_SYNCSIZE)
+        MASK_SYNCTOL            = SYNCCONFIG_MASK ^ (1 << FLD_SYNCTOL)
+
     #$2F, SYNCVALUE1, SYNCVALUE2, SYNCVALUE3, SYNCVALUE4, SYNCVALUE5, SYNCVALUE6, SYNCVALUE7, SYNCVALUE8
     PACKETCONFIG1               = $37
     PAYLOADLENGTH               = $38

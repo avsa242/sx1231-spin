@@ -44,6 +44,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_SYNCSIZE (1)
     Test_PREAMBLE (1)
     Test_LNAGAINSELECT (1)
     Test_LNAZIN (1)
@@ -66,8 +67,17 @@ PUB Main
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
 
+PUB Test_SYNCSIZE(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 1 to 8
+            sx.SyncWordBytes (tmp)
+            read := sx.SyncWordBytes (-2)
+            Message (string("SYNCSIZE"), tmp, read)
+
 PUB Test_PREAMBLE(reps) | tmp, read
-' For now, ignore failures
+
     _row++
     repeat reps
         repeat tmp from 0 to 65535 step 1024
