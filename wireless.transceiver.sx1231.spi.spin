@@ -200,6 +200,13 @@ PUB Deviation(Hz) | tmp
     tmp := SwapByteOrder (Hz)
     writeRegX (core#FDEVMSB, 2, @tmp)
 
+PUB FIFOEmpty
+' FIFO Empty status
+'   Returns: TRUE if FIFO empty, FALSE if FIFO contains at least one byte
+    result := $00
+    readRegX (core#IRQFLAGS2, 1, @result)
+    result := (((result >> core#FLD_FIFONOTEMPTY) & %1) ^ %1) * TRUE
+
 PUB Gain(dB) | tmp
 ' Set LNA gain, in dB relative to highest gain
 '   Valid values:

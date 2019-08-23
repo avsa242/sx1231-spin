@@ -136,8 +136,20 @@ CON
     RSSIVALUE                   = $24
     DIOMAPPING1                 = $25
     DIOMAPPING2                 = $26
+
     IRQFLAGS1                   = $27
+
     IRQFLAGS2                   = $28
+    IRQFLAGS2_MASK              = $FF
+        FLD_FIFOFULL            = 7
+        FLD_FIFONOTEMPTY        = 6
+        FLD_FIFOLEVEL           = 5
+        FLD_FIFOOVERRUN         = 4
+        FLD_PACKETSENT          = 3
+        FLD_PAYLOADREADY        = 2
+        FLD_CRCOK               = 1
+        FLD_LOWBAT              = 0
+
     RSSITHRESH                  = $29
     RXTIMEOUT1                  = $2A
     RXTIMEOUT2                  = $2B
