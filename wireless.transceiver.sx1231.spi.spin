@@ -417,6 +417,15 @@ PUB OvercurrentProtection(enabled) | tmp
     tmp := (tmp | enabled) & core#OCP_MASK
     writeRegX (core#OCP, 1, @tmp)
 
+PUB PacketSent
+' Packet sent status
+'   Returns: TRUE if packet sent, FALSE otherwise
+'   NOTE: Once set, this flag clears when exiting TX mode
+    result := $00
+    readRegX (core#IRQFLAGS2, 1, @result)
+    result := ((result >> core#FLD_PACKETSENT) & %1) * TRUE
+
+
 PUB RampTime(uSec) | tmp
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
