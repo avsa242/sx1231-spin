@@ -88,6 +88,10 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
 
     return FALSE                                                    'If we got here, something went wrong
 
+PUB Stop
+
+    spi.stop
+
 PUB AbortListen | tmp
 ' Abort listen mode when used together with Listen(FALSE)
     readRegX (core#OPMODE, 1, @tmp)
@@ -481,10 +485,6 @@ PUB Sequencer(mode) | tmp
     tmp &= core#MASK_SEQUENCEROFF
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
-
-PUB Stop
-
-    spi.stop
 
 PUB Version
 ' Read silicon revision
