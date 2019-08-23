@@ -128,9 +128,7 @@ PUB BitRate(bps) | tmp
     case bps
         1_200..300_000:
             bps := FXOSC / bps
-            bps := SwapByteOrder (bps)
         OTHER:
-            tmp := SwapByteOrder (tmp)
             result := tmp
             return FXOSC / result
 
@@ -148,14 +146,8 @@ PUB CarrierFreq(Hz) | tmp
     case Hz
         290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
             Hz := Hz / FSTEP
-            Hz.byte[3] := Hz.byte[0]
-            Hz.byte[0] := Hz.byte[2]
-            Hz.byte[2] := Hz.byte[3]
             Hz &= core#BITS_FRF
         OTHER:
-            tmp.byte[3] := tmp.byte[0]
-            tmp.byte[0] := tmp.byte[2]
-            tmp.byte[2] := tmp.byte[3]
             tmp &= core#BITS_FRF
             return tmp * FSTEP
 
@@ -192,13 +184,12 @@ PUB Deviation(Hz) | tmp
     readRegX (core#FDEVMSB, 2, @tmp)
     case Hz
         600..300_000:
-            Hz := Hz / FSTEP
+            Hz := (Hz / FSTEP) & core#BITS_FDEV
         OTHER:
-            tmp := SwapByteOrder (tmp) & core#BITS_FDEV
+            tmp &= core#BITS_FDEV
             return tmp * FSTEP
 
-    tmp := SwapByteOrder (Hz)
-    writeRegX (core#FDEVMSB, 2, @tmp)
+    writeRegX (core#FDEVMSB, 2, @Hz)
 
 PUB FIFOEmpty
 ' FIFO Empty status
@@ -425,7 +416,6 @@ PUB PacketSent
     readRegX (core#IRQFLAGS2, 1, @result)
     result := ((result >> core#FLD_PACKETSENT) & %1) * TRUE
 
-
 PUB RampTime(uSec) | tmp
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
@@ -493,17 +483,13 @@ PUB Version
 '       $24:    ???
     readRegX (core#VERSION, 1, @result)
 
-PUB SwapByteOrder(in_word)
-
-    result := (in_word >> 8) | ((in_word << 8) & $FFFF)
-
 PUB readRegX(reg, nr_bytes, buf_addr) | i
 ' Read nr_bytes from register 'reg' to address 'buf_addr'
     case reg
         $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
             outa[_CS] := 0
             spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            repeat i from 0 to nr_bytes-1
+            repeat i from nr_bytes-1 to 0
                 byte[buf_addr][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
             outa[_CS] := 1
 
@@ -516,7 +502,7 @@ PUB writeRegX(reg, nr_bytes, buf_addr) | i
         $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
             outa[_CS] := 0
             spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg|core#W)
-            repeat i from 0 to nr_bytes-1
+            repeat i from nr_bytes-1 to 0
                 spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][i])
             outa[_CS] := 1
 
