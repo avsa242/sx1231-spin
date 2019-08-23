@@ -518,6 +518,22 @@ PUB SyncWordEnabled(enable) | tmp
     tmp := (tmp | enable) & core#SYNCCONFIG_MASK
     writeRegX(core#SYNCCONFIG, 1, @tmp)
 
+PUB SyncWordMaxBitErr(bits) | tmp
+' Set maximum number of tolerated bit errors in sync word
+'   Valid values: 0..7
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#SYNCCONFIG, 1, @tmp)
+    case bits
+        0..7:
+        OTHER:
+            return (tmp & core#BITS_SYNCTOL)
+
+    tmp &= core#MASK_SYNCTOL
+    tmp := (tmp | bits) & core#SYNCCONFIG_MASK
+    writeRegX(core#SYNCCONFIG, 1, @tmp)
+
+
 PUB Version
 ' Read silicon revision
 '   Returns:

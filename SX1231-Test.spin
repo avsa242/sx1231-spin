@@ -44,7 +44,7 @@ PUB Main
     Setup
 
     _row := 2
-
+    Test_SYNCTOL (1)
     Test_SYNCON (1)
     Test_SYNCSIZE (1)
     Test_PREAMBLE (1)
@@ -68,6 +68,14 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_SYNCTOL(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 0 to 7
+            sx.SyncWordMaxBitErr (tmp)
+            read := sx.SyncWordMaxBitErr (-2)
+            Message (string("SYNCTOL"), tmp, read)
 
 PUB Test_SYNCON(reps) | tmp, read
 
