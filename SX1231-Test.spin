@@ -5,7 +5,7 @@
     Description: Test object for the SX1231 driver
     Copyright (c) 2019
     Started Apr 19, 2019
-    Updated Apr 19, 2019
+    Updated Aug 23, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -114,7 +114,7 @@ PUB Test_OUTPUTPOWER(reps) | tmp, read
 
     _row++
     repeat reps
-        repeat tmp from -18 to 17
+        repeat tmp from -18 to 13
             sx.OutputPower (tmp)
             read := sx.OutputPower (-100)
             Message (string("OUTPUTPOWER"), tmp, read)

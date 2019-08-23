@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC
     Copyright (c) 2019
     Started Apr 19, 2019
-    Updated Apr 19, 2019
+    Updated Aug 23, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
