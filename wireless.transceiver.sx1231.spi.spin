@@ -416,6 +416,19 @@ PUB PacketSent
     readRegX (core#IRQFLAGS2, 1, @result)
     result := ((result >> core#FLD_PACKETSENT) & %1) * TRUE
 
+PUB PreambleBytes(bytes) | tmp
+' Set number of bytes in preamble
+'   Valid values: 0..65535
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#PREAMBLEMSB, 2, @tmp)
+    case bytes
+        0..65535:
+        OTHER:
+            return tmp
+
+    writeRegX(core#PREAMBLEMSB, 2, @bytes)
+
 PUB RampTime(uSec) | tmp
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:

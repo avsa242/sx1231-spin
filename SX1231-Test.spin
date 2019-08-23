@@ -44,6 +44,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_PREAMBLE (1)
     Test_LNAGAINSELECT (1)
     Test_LNAZIN (1)
     Test_OCPTRIM (1)
@@ -64,6 +65,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_PREAMBLE(reps) | tmp, read
+' For now, ignore failures
+    _row++
+    repeat reps
+        repeat tmp from 0 to 65535 step 1024
+            sx.PreambleBytes (tmp)
+            read := sx.PreambleBytes (-2)
+            Message (string("PREAMBLE"), tmp, read)
 
 PUB Test_LNAGAINSELECT(reps) | tmp, read
 
