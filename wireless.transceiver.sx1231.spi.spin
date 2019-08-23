@@ -207,6 +207,13 @@ PUB FIFOEmpty
     readRegX (core#IRQFLAGS2, 1, @result)
     result := (((result >> core#FLD_FIFONOTEMPTY) & %1) ^ %1) * TRUE
 
+PUB FIFOFull
+' FIFO Full status
+'   Returns: TRUE if FIFO full, FALSE if there's at least one byte available
+    result := $00
+    readRegX (core#IRQFLAGS2, 1, @result)
+    result := ((result >> core#FLD_FIFOFULL) & %1) * TRUE
+
 PUB Gain(dB) | tmp
 ' Set LNA gain, in dB relative to highest gain
 '   Valid values:
