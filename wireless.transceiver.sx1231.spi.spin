@@ -87,6 +87,10 @@ CON
     EXITCOND_PKTSENT        = %110
     EXITCOND_TIMEOUT        = %111
 
+' Conditions for starting packet transmission
+    TXSTART_FIFOLVL         = 0
+    TXSTART_FIFONOTEMPTY    = 1
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -771,6 +775,23 @@ PUB SyncWordMaxBitErr(bits) | tmp
     tmp := (tmp | bits) & core#SYNCCONFIG_MASK
     writeRegX(core#SYNCCONFIG, 1, @tmp)
 
+PUB TXStartCondition(when) | tmp
+' Define when to begin packet transmission
+'   Valid values:
+'       TXSTART_FIFOLVL (0): If the number of bytes in the FIFO exceeds FIFOThreshold
+'       TXSTART_FIFONOTEMPTY (1): If there's at least one byte in the FIFO
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#FIFOTHRESH, 1, @tmp)
+    case when
+        TXSTART_FIFOLVL, TXSTART_FIFONOTEMPTY:
+            when <<= core#FLD_TXSTARTCONDITION
+        OTHER:
+            result := (tmp >> core#FLD_TXSTARTCONDITION) & %1
+
+    tmp &= core#MASK_TXSTARTCONDITION
+    tmp := (tmp | when) & CORE#FIFOTHRESH_MASK
+    writeRegX(core#FIFOTHRESH, 1, @tmp)
 
 PUB Version
 ' Read silicon revision
