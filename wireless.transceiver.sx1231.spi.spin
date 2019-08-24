@@ -190,6 +190,24 @@ PUB AFCMethod(method) | tmp
     tmp := (tmp | method) & core#AFCCTRL_MASK
     writeRegX (core#AFCCTRL, 1, @tmp)
 
+PUB AutoRestartRX(enabled) | tmp
+' Enable automatic RX restart (RSSI phase)
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Restart occurs after payload is ready and the packet has been read from the FIFO
+    tmp := $00
+    readRegX(core#PACKETCONFIG2, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_AUTORESTARTRXON
+        OTHER:
+            result := ((tmp >> core#FLD_AUTORESTARTRXON) & %1) * TRUE
+            return
+
+    tmp &= core#MASK_AUTORESTARTRXON
+    tmp := (tmp | enabled) & core#PACKETCONFIG2_MASK
+    writeRegX(core#PACKETCONFIG2, 1, @tmp)
+
 PUB BattLow
 ' Battery low detector
 '   Returns TRUE if battery low, FALSE otherwise

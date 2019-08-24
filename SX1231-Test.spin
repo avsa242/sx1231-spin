@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_AUTORESTARTRX(1)
     Test_FIFOTHRESHOLD(1)
     Test_TXSTARTCONDITION(1)
     Test_EXITCONDITION(1)
@@ -81,6 +82,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_AUTORESTARTRX(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.AutoRestartRX (tmp)
+            read := sx.AutoRestartRX (-2)
+            Message (string("AUTORESTARTRX"), tmp, read)
 
 PUB Test_FIFOTHRESHOLD(reps) | tmp, read
 
