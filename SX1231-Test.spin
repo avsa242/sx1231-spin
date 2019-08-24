@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_INTERMEDIATEMODE(1)
     Test_BROADCASTADRS (1)
     Test_NODEADRS (1)
     Test_PACKETLEN (1)
@@ -76,6 +77,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_INTERMEDIATEMODE(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 0 to 3
+            sx.IntermediateMode (tmp)
+            read := sx.IntermediateMode (-2)
+            Message (string("INTERMEDIATEMODE"), tmp, read)
 
 PUB Test_BROADCASTADRS(reps) | tmp, read
 
@@ -414,6 +424,7 @@ PUB PassFail(num)
 PUB Setup
 
     repeat until _ser_cog := ser.Start (115_200)
+    time.MSleep(500)
     ser.Clear
     ser.Str(string("Serial terminal started", 10, 13))'ser#NL))
     if sx.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)

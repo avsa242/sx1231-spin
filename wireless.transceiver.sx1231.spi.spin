@@ -62,6 +62,12 @@ CON
     ADDRCHK_CHK_NO_BCAST    = %01
     ADDRCHK_CHK_BCAST       = %10
 
+' Intermediate modes
+    IMODE_SLEEP             = %00
+    IMODE_STBY              = %01
+    IMODE_RX                = %10
+    IMODE_TX                = %11
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -98,7 +104,6 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
                     return okay
                 OTHER:
                     return FALSE
-
 
     return FALSE                                                    'If we got here, something went wrong
 
@@ -348,6 +353,20 @@ PUB GaussianFilter(BT) | tmp
     tmp &= core#MASK_MODULATIONSHAPING
     tmp := (tmp | BT) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
+
+PUB IntermediateMode(mode) | tmp
+
+    tmp := $00
+    readRegX(core#AUTOMODES, 1, @tmp)
+    case mode
+        IMODE_SLEEP, IMODE_STBY, IMODE_RX, IMODE_TX:
+            mode &= core#BITS_INTERMEDIATEMODE
+        OTHER:
+            result := (tmp >> core#FLD_INTERMEDIATEMODE) & core#BITS_INTERMEDIATEMODE
+
+    tmp &= core#MASK_INTERMEDIATEMODE
+    tmp := (tmp | mode) & core#AUTOMODES_MASK
+    writeRegX(core#AUTOMODES, 1, @tmp)
 
 PUB Listen(enabled) | tmp
 ' Enable listen mode
