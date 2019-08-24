@@ -44,6 +44,7 @@ PUB Main
     Setup
 
     _row := 2
+    Test_CRCON (1)
     Test_SYNCTOL (1)
     Test_SYNCON (1)
     Test_SYNCSIZE (1)
@@ -69,8 +70,18 @@ PUB Main
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
 
+PUB Test_CRCON(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.CRCCheck (tmp)
+            read := sx.CRCCheck (-2)
+            Message (string("CRCON"), tmp, read)
+
 PUB Test_SYNCTOL(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to 7
             sx.SyncWordMaxBitErr (tmp)

@@ -161,6 +161,23 @@ PUB CarrierFreq(Hz) | tmp
     tmp := Hz & core#BITS_FRF
     writeRegX (core#FRFMSB, 3, @tmp)
 
+PUB CRCCheck(enabled) | tmp
+' Enable CRC calculation (TX) and checking (RX)
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#PACKETCONFIG1, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := (||enabled & %1) << core#FLD_CRCON
+        OTHER:
+            result := ((tmp >> core#FLD_CRCON) & %1) * TRUE
+            return
+
+    tmp &= core#MASK_CRCON
+    tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
+    writeRegX(core#PACKETCONFIG1, 1, @tmp)
+
 PUB DataMode(mode) | tmp
 ' Set data processing mode
 '   Valid values:
