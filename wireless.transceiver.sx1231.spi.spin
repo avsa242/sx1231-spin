@@ -48,6 +48,9 @@ CON
     LNA_AGC                 = 0
     LNA_HIGH                = 1
 
+' Sync word read/write operation
+    SW_READ                 = 0
+    SW_WRITE                = 1
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -486,21 +489,20 @@ PUB Sequencer(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
-PUB SyncWordBytes(bytes) | tmp
-' Set number of bytes in sync word
-'   Valid values: 1..8
-'   Any other value polls the chip and returns the current setting
-    tmp := $00
-    readRegX(core#SYNCCONFIG, 1, @tmp)
-    case bytes
-        1..8:
-            bytes := (bytes-1) << core#FLD_SYNCSIZE
+PUB SyncWord(rw, buff_addr)
+' Set sync word to value at buff_addr
+'   Valid values:
+'       rw: SW_READ (0), SW_WRITE (1)
+'       variable at address buff_addr: All bytes can be $00..$FF
+'   For rw, any value other than SW_WRITE (1) polls the chip and returns the current setting
+'   NOTE: Variable pointed to by buff_addr must be at least 8 bytes in length
+    case rw
+        SW_WRITE:
+            writeRegX(core#SYNCVALUE1, 8, buff_addr)
+            return $E111_1111
         OTHER:
-            return ((tmp >> core#FLD_SYNCSIZE) & core#BITS_SYNCSIZE) + 1
-
-    tmp &= core#MASK_SYNCSIZE
-    tmp := (tmp | bytes) & core#SYNCCONFIG_MASK
-    writeRegX(core#SYNCCONFIG, 1, @tmp)
+            readRegX(core#SYNCVALUE1, 8, buff_addr)  'XXX Future test: set nr_bytes arg to SyncWordBytes(-2)?
+            return $E000_0000
 
 PUB SyncWordEnabled(enable) | tmp
 ' Enable sync word generation (TX) and detection (RX)
@@ -516,6 +518,22 @@ PUB SyncWordEnabled(enable) | tmp
 
     tmp &= core#MASK_SYNCON
     tmp := (tmp | enable) & core#SYNCCONFIG_MASK
+    writeRegX(core#SYNCCONFIG, 1, @tmp)
+
+PUB SyncWordLength(bytes) | tmp
+' Set number of bytes in sync word
+'   Valid values: 1..8
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#SYNCCONFIG, 1, @tmp)
+    case bytes
+        1..8:
+            bytes := (bytes-1) << core#FLD_SYNCSIZE
+        OTHER:
+            return ((tmp >> core#FLD_SYNCSIZE) & core#BITS_SYNCSIZE) + 1
+
+    tmp &= core#MASK_SYNCSIZE
+    tmp := (tmp | bytes) & core#SYNCCONFIG_MASK
     writeRegX(core#SYNCCONFIG, 1, @tmp)
 
 PUB SyncWordMaxBitErr(bits) | tmp

@@ -91,8 +91,8 @@ PUB Test_SYNCSIZE(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from 1 to 8
-            sx.SyncWordBytes (tmp)
-            read := sx.SyncWordBytes (-2)
+            sx.SyncWordLength (tmp)
+            read := sx.SyncWordLength (-2)
             Message (string("SYNCSIZE"), tmp, read)
 
 PUB Test_PREAMBLE(reps) | tmp, read
