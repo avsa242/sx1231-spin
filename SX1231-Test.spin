@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_FIFOTHRESHOLD(1)
     Test_TXSTARTCONDITION(1)
     Test_EXITCONDITION(1)
     Test_ENTERCONDITION(1)
@@ -80,6 +81,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_FIFOTHRESHOLD(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 0 to 127
+            sx.FIFOThreshold (tmp)
+            read := sx.FIFOThreshold (-2)
+            Message (string("FIFOTHRESHOLD"), tmp, read)
 
 PUB Test_TXSTARTCONDITION(reps) | tmp, read
 

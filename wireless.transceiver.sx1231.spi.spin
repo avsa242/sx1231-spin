@@ -381,6 +381,21 @@ PUB FIFOFull
     readRegX (core#IRQFLAGS2, 1, @result)
     result := ((result >> core#FLD_FIFOFULL) & %1) * TRUE
 
+PUB FIFOThreshold(bytes) | tmp
+' Set threshold for triggering FIFO level interrupt
+'   Valid values: 0..127
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#FIFOTHRESH, 1, @tmp)
+    case bytes
+        0..127:
+        OTHER:
+            return tmp & core#BITS_FIFOTHRESHOLD
+
+    tmp &= core#MASK_FIFOTHRESHOLD
+    tmp := (tmp | bytes) & core#FIFOTHRESH_MASK
+    writeRegX(core#FIFOTHRESH, 1, @tmp)
+
 PUB Gain(dB) | tmp
 ' Set LNA gain, in dB relative to highest gain
 '   Valid values:
