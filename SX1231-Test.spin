@@ -45,7 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
-
+    Test_ADDRESSFILT (1)
     Test_DCFREE_WHITE (1)
     Test_DCFREE_MANCH (1)
     Test_CRCON (1)
@@ -73,6 +73,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_ADDRESSFILT(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 0 to 2
+            sx.AddressCheck (tmp)
+            read := sx.AddressCheck (-2)
+            Message (string("ADDRESSFILT"), tmp, read)
 
 PUB Test_DCFREE_WHITE(reps) | tmp, read
 

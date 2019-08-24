@@ -57,6 +57,11 @@ CON
     DCFREE_MANCH            = %01
     DCFREE_WHITE            = %10
 
+' Address matching
+    ADDRCHK_NONE            = %00
+    ADDRCHK_CHK_NO_BCAST    = %01
+    ADDRCHK_CHK_BCAST       = %10
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -107,6 +112,26 @@ PUB AbortListen | tmp
     tmp &= core#MASK_LISTENABORT
     tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
+
+PUB AddressCheck(method) | tmp
+' Enable address checking/matching/filtering
+'   Valid values:
+'       ADDRCHK_NONE (%00): No address check
+'       ADDRCHK_CHK_NO_BCAST (%01): Check address, but ignore broadcast addresses
+'       ADDRCHK_CHK_00_BCAST (%10): Check address, and also respond to broadcast address
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#PACKETCONFIG1, 1, @tmp)
+    case method
+        ADDRCHK_NONE, ADDRCHK_CHK_NO_BCAST, ADDRCHK_CHK_BCAST:
+            method <<= core#FLD_ADDRESSFILTERING
+        OTHER:
+            result := ((tmp >> core#FLD_ADDRESSFILTERING) & core#BITS_ADDRESSFILTERING)
+            return
+
+    tmp &= core#MASK_ADDRESSFILTERING
+    tmp := (tmp | method) & core#PACKETCONFIG1_MASK
+    writeRegX(core#PACKETCONFIG1, 1, @tmp)
 
 PUB AFCMethod(method) | tmp
 ' Set AFC method/routine
