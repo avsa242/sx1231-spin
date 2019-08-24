@@ -843,6 +843,23 @@ PUB SyncWordMaxBitErr(bits) | tmp
     tmp := (tmp | bits) & core#SYNCCONFIG_MASK
     writeRegX(core#SYNCCONFIG, 1, @tmp)
 
+PUB Temperature | tmp
+' Read temperature
+'   Returns: Degrees C
+    tmp := (1 << core#FLD_TEMPMEASSTART)    ' Trigger a temperature measurement
+    writeRegX(core#TEMP1, 1, @tmp)
+    tmp := $00
+    repeat                                  ' Wait until the measurement is complete
+        readRegX(core#TEMP1, 1, @tmp)
+    while ((tmp >> core#FLD_TEMPMEASRUNNING) & %1)
+
+    result := $00
+    readRegX(core#TEMP2, 1, @result)
+    if result & $80
+        return 256-result
+    else
+        return result
+
 PUB TXStartCondition(when) | tmp
 ' Define when to begin packet transmission
 '   Valid values:

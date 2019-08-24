@@ -225,8 +225,14 @@ CON
 
     #$3E, AESKEY1, AESKEY2, AESKEY3, AESKEY4, AESKEY5, AESKEY6, AESKEY7, AESKEY8, {
 }         AESKEY9, AESKEY10, AESKEY11, AESKEY12, AESKEY13, AESKEY14, AESKEY15, AESKEY16
+
     TEMP1                       = $4E
+    TEMP1_MASK                  = $0C
+        FLD_TEMPMEASSTART       = 3
+        FLD_TEMPMEASRUNNING     = 2
+
     TEMP2                       = $4F
+
     TESTLNA                     = $58
     TESTTCXO                    = $59
     TESTLLBW                    = $5F
