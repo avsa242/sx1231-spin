@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_EXITCONDITION(1)
     Test_ENTERCONDITION(1)
     Test_INTERMEDIATEMODE(1)
     Test_BROADCASTADRS (1)
@@ -78,6 +79,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_EXITCONDITION(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 0 to 7
+            sx.ExitCondition (tmp)
+            read := sx.ExitCondition (-2)
+            Message (string("EXITCONDITION"), tmp, read)
 
 PUB Test_ENTERCONDITION(reps) | tmp, read
 

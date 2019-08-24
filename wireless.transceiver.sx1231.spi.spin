@@ -68,7 +68,7 @@ CON
     IMODE_RX                = %10
     IMODE_TX                = %11
 
-' Conditions for entering immediate modes
+' Conditions for entering and exiting immediate modes
     ENTCOND_NONE            = %000
     ENTCOND_FIFONOTEMPTY    = %001
     ENTCOND_FIFOLVL         = %010
@@ -77,6 +77,15 @@ CON
     ENTCOND_SYNCADD         = %101
     ENTCOND_PKTSENT         = %110
     ENTCOND_FIFOEMPTY       = %111
+
+    EXITCOND_NONE           = %000
+    EXITCOND_FIFOEMPTY      = %001
+    EXITCOND_FIFOLVL        = %010
+    EXITCOND_CRCOK          = %011
+    EXITCOND_PAYLDRDY       = %100
+    EXITCOND_SYNCADD        = %101
+    EXITCOND_PKTSENT        = %110
+    EXITCOND_TIMEOUT        = %111
 
 VAR
 
@@ -309,14 +318,15 @@ PUB Deviation(Hz) | tmp
 PUB EnterCondition(condition) | tmp
 ' Set interrupt condition for entering intermediate mode
 '   Valid values:
-'       ENTCOND_NONE            Automodes off
-'       ENTCOND_FIFONOTEMPTY    Rising edge of FIFO not empty
-'       ENTCOND_FIFOLVL         Rising edge of FIFO level
-'       ENTCOND_CRCOK           Rising edge of CRC OK
-'       ENTCOND_PAYLDRDY        Rising edge of Payload ready
-'       ENTCOND_SYNCADD         Rising edge of Sync Address
-'       ENTCOND_PKTSENT         Rising edge of Packet sent
-'       ENTCOND_FIFOEMPTY       Falling edge of FIFO not empty (i.e., FIFO empty)
+'       ENTCOND_NONE (%000)            Automodes off
+'       ENTCOND_FIFONOTEMPTY (%001)    Rising edge of FIFO not empty
+'       ENTCOND_FIFOLVL (%010)         Rising edge of FIFO level
+'       ENTCOND_CRCOK (%011)           Rising edge of CRC OK
+'       ENTCOND_PAYLDRDY (%100)        Rising edge of Payload ready
+'       ENTCOND_SYNCADD (%101)         Rising edge of Sync Address
+'       ENTCOND_PKTSENT (%110)         Rising edge of Packet sent
+'       ENTCOND_FIFOEMPTY (%111)       Falling edge of FIFO not empty (i.e., FIFO empty)
+'   Any other value polls the chip and returns the current setting
     tmp := $00
     readRegX (core#AUTOMODES, 1, @tmp)
     case condition
@@ -326,6 +336,30 @@ PUB EnterCondition(condition) | tmp
             result := (tmp >> core#FLD_ENTERCONDITION) & core#BITS_ENTERCONDITION
 
     tmp &= core#MASK_ENTERCONDITION
+    tmp := (tmp | condition) & core#AUTOMODES_MASK
+    writeRegX(core#AUTOMODES, 1, @tmp)
+
+PUB ExitCondition(condition) | tmp
+' Set interrupt condition for entering intermediate mode
+'   Valid values:
+'       EXITCOND_NONE (%000)           Automodes off
+'       EXITCOND_FIFOEMPTY (%001)      Falling edge of FIFO not empty
+'       EXITCOND_FIFOLVL (%010)        Rising edge of FIFO level or timeout
+'       EXITCOND_CRCOK (%011)          Rising edge of CRC OK or timeout
+'       EXITCOND_PAYLDRDY (%100)       Rising edge of Payload ready or timeout
+'       EXITCOND_SYNCADD (%101)        Rising edge of Sync Addressor timeout
+'       EXITCOND_PKTSENT (%110)        Rising edge of Packet sent
+'       EXITCOND_TIMEOUT (%111)        Rising edge of timeout
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX (core#AUTOMODES, 1, @tmp)
+    case condition
+        EXITCOND_NONE, EXITCOND_FIFOEMPTY, EXITCOND_FIFOLVL, EXITCOND_CRCOK, EXITCOND_PAYLDRDY, EXITCOND_SYNCADD, EXITCOND_PKTSENT, EXITCOND_TIMEOUT:
+            condition <<= core#FLD_EXITCONDITION
+        OTHER:
+            result := (tmp >> core#FLD_EXITCONDITION) & core#BITS_EXITCONDITION
+
+    tmp &= core#MASK_EXITCONDITION
     tmp := (tmp | condition) & core#AUTOMODES_MASK
     writeRegX(core#AUTOMODES, 1, @tmp)
 
