@@ -68,6 +68,16 @@ CON
     IMODE_RX                = %10
     IMODE_TX                = %11
 
+' Conditions for entering immediate modes
+    ENTCOND_NONE            = %000
+    ENTCOND_FIFONOTEMPTY    = %001
+    ENTCOND_FIFOLVL         = %010
+    ENTCOND_CRCOK           = %011
+    ENTCOND_PAYLDRDY        = %100
+    ENTCOND_SYNCADD         = %101
+    ENTCOND_PKTSENT         = %110
+    ENTCOND_FIFOEMPTY       = %111
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -296,6 +306,29 @@ PUB Deviation(Hz) | tmp
 
     writeRegX (core#FDEVMSB, 2, @Hz)
 
+PUB EnterCondition(condition) | tmp
+' Set interrupt condition for entering intermediate mode
+'   Valid values:
+'       ENTCOND_NONE            Automodes off
+'       ENTCOND_FIFONOTEMPTY    Rising edge of FIFO not empty
+'       ENTCOND_FIFOLVL         Rising edge of FIFO level
+'       ENTCOND_CRCOK           Rising edge of CRC OK
+'       ENTCOND_PAYLDRDY        Rising edge of Payload ready
+'       ENTCOND_SYNCADD         Rising edge of Sync Address
+'       ENTCOND_PKTSENT         Rising edge of Packet sent
+'       ENTCOND_FIFOEMPTY       Falling edge of FIFO not empty (i.e., FIFO empty)
+    tmp := $00
+    readRegX (core#AUTOMODES, 1, @tmp)
+    case condition
+        ENTCOND_NONE, ENTCOND_FIFONOTEMPTY, ENTCOND_FIFOLVL, ENTCOND_CRCOK, ENTCOND_PAYLDRDY, ENTCOND_SYNCADD, ENTCOND_PKTSENT, ENTCOND_FIFOEMPTY:
+            condition <<= core#FLD_ENTERCONDITION
+        OTHER:
+            result := (tmp >> core#FLD_ENTERCONDITION) & core#BITS_ENTERCONDITION
+
+    tmp &= core#MASK_ENTERCONDITION
+    tmp := (tmp | condition) & core#AUTOMODES_MASK
+    writeRegX(core#AUTOMODES, 1, @tmp)
+
 PUB FIFOEmpty
 ' FIFO Empty status
 '   Returns: TRUE if FIFO empty, FALSE if FIFO contains at least one byte
@@ -355,7 +388,13 @@ PUB GaussianFilter(BT) | tmp
     writeRegX (core#DATAMODUL, 1, @tmp)
 
 PUB IntermediateMode(mode) | tmp
-
+' Set intermediate operating mode
+'   Valid values:
+'       IMODE_SLEEP (%00): Sleep
+'       IMODE_STBY (%01): Standby
+'       IMODE_RX (%10): Receive
+'       IMODE_TX (%11): Transmit
+'   Any other value polls the chip and returns the current setting
     tmp := $00
     readRegX(core#AUTOMODES, 1, @tmp)
     case mode
