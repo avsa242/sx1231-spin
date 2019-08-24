@@ -818,6 +818,15 @@ PUB Version
 '       $24:    ???
     readRegX (core#VERSION, 1, @result)
 
+PUB WaitRX | tmp
+' Force the receiver in wait mode (continuous RX)
+    tmp := $00
+    readRegX(core#PACKETCONFIG2, 1, @tmp)
+
+    tmp &= core#MASK_RESTARTRX
+    tmp := (tmp | (1 << core#FLD_RESTARTRX)) & core#PACKETCONFIG2_MASK
+    writeRegX(core#PACKETCONFIG2, 1, @tmp)
+
 PUB readRegX(reg, nr_bytes, buf_addr) | i
 ' Read nr_bytes from register 'reg' to address 'buf_addr'
     case reg
