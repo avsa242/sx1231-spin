@@ -30,7 +30,7 @@ CON
 OBJ
 
     cfg     : "core.con.boardcfg.flip"
-    ser     : "com.serial.terminal"
+    ser     : "com.serial.terminal.ansi"
     time    : "time"
     sx      : "wireless.transceiver.sx1231.spi"
 
@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_BROADCASTADRS (1)
     Test_NODEADRS (1)
     Test_PACKETLEN (1)
     Test_ADDRESSFILT (1)
@@ -75,6 +76,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_BROADCASTADRS(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 0 to 255
+            sx.BroadcastAddress (tmp)
+            read := sx.BroadcastAddress (-2)
+            Message (string("BROADCASTADRS"), tmp, read)
 
 PUB Test_NODEADRS(reps) | tmp, read
 
@@ -371,8 +381,8 @@ PUB Message(field, arg1, arg2)
             ser.Chars (32, 3)
             ser.PositionX (COL_PF)
             PassFail (arg1 == arg2)
-            ser.NewLine
-
+'            ser.NewLine
+            ser.str(string(10, 13))
         FALSE:
             ser.Position (COL_REG, _row)
             ser.Str (field)
@@ -389,7 +399,8 @@ PUB Message(field, arg1, arg2)
 
             ser.Position (COL_PF, _row)
             PassFail (arg1 == arg2)
-            ser.NewLine
+'            ser.NewLine
+            ser.Str(string(10, 13))
         OTHER:
             ser.Str (string("DEADBEEF"))
 
@@ -404,11 +415,11 @@ PUB Setup
 
     repeat until _ser_cog := ser.Start (115_200)
     ser.Clear
-    ser.Str(string("Serial terminal started", ser#NL))
+    ser.Str(string("Serial terminal started", 10, 13))'ser#NL))
     if sx.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-        ser.Str (string("SX1231 driver started", ser#NL))
+        ser.Str (string("SX1231 driver started", 10, 13))'ser#NL))
     else
-        ser.Str (string("SX1231 driver failed to start - halting", ser#NL))
+        ser.Str (string("SX1231 driver failed to start - halting", 10, 13))'ser#NL))
         sx.Stop
         time.MSleep (5)
         ser.Stop

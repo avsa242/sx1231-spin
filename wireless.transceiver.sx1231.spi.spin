@@ -187,6 +187,19 @@ PUB BitRate(bps) | tmp
     writeRegX (core#BITRATEMSB, 2, @tmp)
     return tmp
 
+PUB BroadcastAddress(addr) | tmp
+' Set broadcast address
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX (core#BROADCASTADRS, 1, @tmp)
+    case addr
+        $00..$FF:
+        OTHER:
+            return tmp
+
+    writeRegX (core#BROADCASTADRS, 1, @addr)
+
 PUB CarrierFreq(Hz) | tmp
 ' Set Carrier frequency, in Hz
 '   Valid values:
