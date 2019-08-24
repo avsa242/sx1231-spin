@@ -91,6 +91,10 @@ CON
     TXSTART_FIFOLVL         = 0
     TXSTART_FIFONOTEMPTY    = 1
 
+' AES Key
+    KEY_RD                  = 0
+    KEY_WR                  = 1
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -336,6 +340,37 @@ PUB Deviation(Hz) | tmp
             return tmp * FSTEP
 
     writeRegX (core#FDEVMSB, 2, @Hz)
+
+PUB Encryption(enabled) | tmp
+' Enable AES encryption/decryption
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Encryption is limited to payloads of a maximum of 66 bytes
+    tmp := $00
+    readRegX(core#PACKETCONFIG2, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled & %1
+        OTHER:
+            result := (tmp & %1) * TRUE
+            return
+
+    tmp &= core#MASK_AESON
+    tmp := (tmp | enabled) & core#PACKETCONFIG2_MASK
+    writeRegX(core#PACKETCONFIG2, 1, @tmp)
+
+PUB EncryptionKey(rw, buff_addr) | tmp
+' Set AES 128-bit encryption key
+'   Valid values:
+'       rw: KEY_RD (0), KEY_WR (1)
+'       buff_addr: All bytes at address may be $00..$FF
+'   NOTE: Variable at buff_addr must be at least 16 bytes
+'           1st byte of key is MSB
+    case rw
+        KEY_WR:
+            writeRegX(core#AESKEY1, 16, buff_addr)
+        OTHER:
+            readRegX(core#AESKEY1, 16, buff_addr)
 
 PUB EnterCondition(condition) | tmp
 ' Set interrupt condition for entering intermediate mode

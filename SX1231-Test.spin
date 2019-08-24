@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_AESON(1)
     Test_AUTORESTARTRX(1)
     Test_FIFOTHRESHOLD(1)
     Test_TXSTARTCONDITION(1)
@@ -82,6 +83,16 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_AESON(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.Encryption (tmp)
+            read := sx.Encryption (-2)
+            Message (string("AESON"), tmp, read)
+
 
 PUB Test_AUTORESTARTRX(reps) | tmp, read
 
