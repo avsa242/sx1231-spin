@@ -203,6 +203,25 @@ PUB DataMode(mode) | tmp
     tmp := (tmp | mode) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
 
+PUB DataWhitening(enabled) | tmp
+' Enable data whitening
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: This setting and ManchesterEnc are mutually exclusive; enabling this will disable ManchesterEnc
+    tmp := $00
+    readRegX(core#PACKETCONFIG1, 1, @tmp)
+    case ||enabled
+        0:
+        1:
+            enabled := DCFREE_WHITE << core#FLD_DCFREE
+        OTHER:
+            result := ((tmp >> core#FLD_DCFREE) & core#BITS_DCFREE)
+            return (result == DCFREE_WHITE)
+
+    tmp &= core#MASK_DCFREE
+    tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
+    writeRegX(core#PACKETCONFIG1, 1, @tmp)
+
 PUB Deviation(Hz) | tmp
 ' Set carrier deviation, in Hz
 '   Valid values:

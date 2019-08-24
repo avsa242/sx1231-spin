@@ -46,6 +46,7 @@ PUB Main
     _row := 2
 '    _expanded := TRUE
 
+    Test_DCFREE_WHITE (1)
     Test_DCFREE_MANCH (1)
     Test_CRCON (1)
     Test_SYNCTOL (1)
@@ -72,6 +73,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_DCFREE_WHITE(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.DataWhitening (tmp)
+            read := sx.DataWhitening (-2)
+            Message (string("DCFREE_WHITE"), tmp, read)
 
 PUB Test_DCFREE_MANCH(reps) | tmp, read
 
