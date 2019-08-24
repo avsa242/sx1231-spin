@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_PACKETLEN (1)
     Test_ADDRESSFILT (1)
     Test_DCFREE_WHITE (1)
     Test_DCFREE_MANCH (1)
@@ -73,6 +74,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_PACKETLEN(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 0 to 255
+            sx.PacketLen (tmp)
+            read := sx.PacketLen (-2)
+            Message (string("PACKETLEN"), tmp, read)
 
 PUB Test_ADDRESSFILT(reps) | tmp, read
 

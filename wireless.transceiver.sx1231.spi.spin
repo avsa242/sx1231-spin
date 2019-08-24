@@ -113,6 +113,7 @@ PUB AbortListen | tmp
     tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+
 PUB AddressCheck(method) | tmp
 ' Enable address checking/matching/filtering
 '   Valid values:
@@ -500,6 +501,22 @@ PUB OvercurrentProtection(enabled) | tmp
     tmp &= core#MASK_OCPON
     tmp := (tmp | enabled) & core#OCP_MASK
     writeRegX (core#OCP, 1, @tmp)
+
+PUB PacketLen(bytes) | tmp
+' Set payload/packet length, in bytes
+'   Behavior differs depending on setting of PacketFormat:
+'       If PacketFormat == PKTFMT_FIXED, this sets payload length
+'       If PacketFormat == PKTFMT_VAR, this sets max length in RX, and is ignored in TX
+'   Valid values: 0..255
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX (core#PAYLOADLENGTH, 1, @tmp)
+    case bytes
+        0..255:
+        OTHER:
+            return tmp
+
+    writeRegX (core#PAYLOADLENGTH, 1, @bytes)
 
 PUB PacketSent
 ' Packet sent status

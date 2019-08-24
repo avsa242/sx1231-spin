@@ -187,6 +187,7 @@ CON
         MASK_ADDRESSFILTERING   = PACKETCONFIG1_MASK ^ (BITS_ADDRESSFILTERING << FLD_ADDRESSFILTERING)
 
     PAYLOADLENGTH               = $38
+
     NODEADRS                    = $39
     BROADCASTADRS               = $3A
     AUTOMODES                   = $3B
