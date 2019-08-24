@@ -114,7 +114,7 @@ CON
     LNA                         = $18
     LNA_MASK                    = $BF
         FLD_LNAZIN              = 7
-        FLD_LNACURRENTGAIN      = 5
+        FLD_LNACURRENTGAIN      = 3
         FLD_LNAGAINSELECT       = 0
         BITS_LNACURRENTGAIN     = %111
         BITS_LNAGAINSELECT      = %111
