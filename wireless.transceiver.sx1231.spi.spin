@@ -51,6 +51,12 @@ CON
 ' Sync word read/write operation
     SW_READ                 = 0
     SW_WRITE                = 1
+
+' DC-free encoding/decoding
+    DCFREE_NONE             = %00
+    DCFREE_MANCH            = %01
+    DCFREE_WHITE            = %10
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -340,6 +346,25 @@ PUB LowBattMon(enabled) | tmp
     tmp &= core#MASK_LOWBATON
     tmp := (tmp | enabled) & core#LOWBAT_MASK
     writeRegX (core#LOWBAT, 1, @tmp)
+
+PUB ManchesterEnc(enabled) | tmp
+' Enable Manchester encoding/decoding
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: This setting and DataWhitening are mutually exclusive; enabling this will disable DataWhitening
+    tmp := $00
+    readRegX(core#PACKETCONFIG1, 1, @tmp)
+    case ||enabled
+        0:
+        1:
+            enabled := DCFREE_MANCH << core#FLD_DCFREE
+        OTHER:
+            result := ((tmp >> core#FLD_DCFREE) & core#BITS_DCFREE)
+            return (result == DCFREE_MANCH)
+
+    tmp &= core#MASK_DCFREE
+    tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
+    writeRegX(core#PACKETCONFIG1, 1, @tmp)
 
 PUB Modulation(type) | tmp
 ' Set modulation type

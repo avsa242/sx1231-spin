@@ -44,6 +44,9 @@ PUB Main
     Setup
 
     _row := 2
+'    _expanded := TRUE
+
+    Test_DCFREE_MANCH (1)
     Test_CRCON (1)
     Test_SYNCTOL (1)
     Test_SYNCON (1)
@@ -69,6 +72,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_DCFREE_MANCH(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.ManchesterEnc (tmp)
+            read := sx.ManchesterEnc (-2)
+            Message (string("DCFREE_MANCH"), tmp, read)
 
 PUB Test_CRCON(reps) | tmp, read
 
