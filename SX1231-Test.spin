@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_NODEADRS (1)
     Test_PACKETLEN (1)
     Test_ADDRESSFILT (1)
     Test_DCFREE_WHITE (1)
@@ -74,6 +75,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_NODEADRS(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from 0 to 255
+            sx.Address (tmp)
+            read := sx.Address (-2)
+            Message (string("NODEADRS"), tmp, read)
 
 PUB Test_PACKETLEN(reps) | tmp, read
 

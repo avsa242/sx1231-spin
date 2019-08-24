@@ -113,6 +113,18 @@ PUB AbortListen | tmp
     tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+PUB Address(addr) | tmp
+' Set node address
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX (core#NODEADRS, 1, @tmp)
+    case addr
+        $00..$FF:
+        OTHER:
+            return tmp
+
+    writeRegX (core#NODEADRS, 1, @addr)
 
 PUB AddressCheck(method) | tmp
 ' Enable address checking/matching/filtering
