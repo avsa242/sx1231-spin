@@ -217,6 +217,17 @@ PUB AFCMethod(method) | tmp
     tmp := (tmp | method) & core#AFCCTRL_MASK
     writeRegX (core#AFCCTRL, 1, @tmp)
 
+PUB AFCOffset | tmp
+' Read AFC frequency offset
+'   Returns: Frequency offset in Hz
+    tmp := $00
+    readRegX(core#AFCMSB, 2, @tmp)
+    if tmp & $8000
+        result := (65536-tmp) * FSTEP
+    else
+        result := tmp * FSTEP
+    return
+
 PUB AFCStart | tmp
 ' Trigger a manual AFC
     readRegX (core#AFCFEI, 1, @tmp)
