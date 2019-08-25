@@ -5,7 +5,7 @@
     Description: Test object for the SX1231 driver
     Copyright (c) 2019
     Started Apr 19, 2019
-    Updated Aug 23, 2019
+    Updated Aug 25, 2019
     See end of file for terms of use.
     --------------------------------------------
 }

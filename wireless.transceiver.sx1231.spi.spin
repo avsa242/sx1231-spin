@@ -460,6 +460,32 @@ PUB ExitCondition(condition) | tmp
     tmp := (tmp | condition) & core#AUTOMODES_MASK
     writeRegX(core#AUTOMODES, 1, @tmp)
 
+PUB FEIComplete
+' Indicates if FEI measurement complete
+'   Returns: TRUE if complete, FALSE otherwise
+    result := $00
+    readRegX(core#AFCFEI, 1, @result)
+    result := ((result >> core#FLD_FEIDONE) & %1) * TRUE
+    return
+
+PUB FEIError | tmp
+' Frequency error
+'   Returns: FEI measurement, in Hz
+    tmp := $00
+    readRegX(core#AFCFEI, 2, @tmp)
+    if tmp & $8000
+        result := (65536-tmp) * FSTEP
+    else
+        result := tmp * FSTEP
+    return
+
+PUB FEIStart | tmp
+' Trigger a manual FEI measurement
+    tmp := $00
+    readRegX(core#AFCFEI, 1, @tmp)
+    tmp := tmp | (1 << core#FLD_FEISTART)
+    writeRegX(core#AFCFEI, 1, @tmp)
+
 PUB FIFOEmpty
 ' FIFO Empty status
 '   Returns: TRUE if FIFO empty, FALSE if FIFO contains at least one byte
@@ -704,8 +730,12 @@ PUB OutputPower(dBm) | tmp
     tmp := 0
     readRegX (core#PALEVEL, 1, @tmp)
     case dBm
-        -18..17:
+        -18..13:
             dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            tmp |= (1 << core#FLD_PA1ON)
+        14..17:
+            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            tmp |= (1 << core#FLD_PA2ON)
         OTHER:
             result := tmp & core#BITS_OUTPUTPOWER
             result := result - 18'case pa[012] bitfield

@@ -96,6 +96,7 @@ CON
         MASK_PA0ON              = PALEVEL_MASK ^ (1 << FLD_PA0ON)
         MASK_PA1ON              = PALEVEL_MASK ^ (1 << FLD_PA1ON)
         MASK_PA2ON              = PALEVEL_MASK ^ (1 << FLD_PA2ON)
+        MASK_PA012ON            = PALEVEL_MASK ^ (BITS_PA012 << FLD_PA0ON)
         MASK_OUTPUTPOWER        = PALEVEL_MASK ^ (BITS_OUTPUTPOWER << FLD_OUTPUTPOWER)
 
     PARAMP                      = $12
