@@ -45,6 +45,7 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
+    Test_AFCAUTOON(1)
     Test_AESON(1)
     Test_AUTORESTARTRX(1)
     Test_FIFOTHRESHOLD(1)
@@ -83,6 +84,15 @@ PUB Main
     Test_LISTENON (1)
     Test_SEQUENCEROFF (1)
     flash(cfg#LED1, 100)
+
+PUB Test_AFCAUTOON(reps) | tmp, read
+
+    _row++
+    repeat reps
+        repeat tmp from FALSE to TRUE
+            sx.AFCAuto (tmp)
+            read := sx.AFCAuto (-2)
+            Message (string("AFCAUTOON"), tmp, read)
 
 PUB Test_AESON(reps) | tmp, read
 

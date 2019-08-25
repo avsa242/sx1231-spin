@@ -178,6 +178,29 @@ PUB AddressCheck(method) | tmp
     tmp := (tmp | method) & core#PACKETCONFIG1_MASK
     writeRegX(core#PACKETCONFIG1, 1, @tmp)
 
+PUB AFCAuto(enabled) | tmp
+' Enable automatic AFC
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX(core#AFCFEI, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := (||enabled << core#FLD_AFCAUTOON)
+        OTHER:
+            result := ((tmp >> core#FLD_AFCAUTOON) & %1) * TRUE
+            return
+
+    tmp &= core#MASK_AFCAUTOON
+    tmp := (tmp | enabled) & core#AFCFEI_MASK
+    writeRegX(core#AFCFEI, 1, @tmp)
+
+PUB AFCComplete
+' AFC (auto or manual) completed
+'   Returns: TRUE if complete, FALSE otherwise
+    readRegX (core#AFCFEI, 1, @result)
+    result := ((result >> core#FLD_AFCDONE) & %1) * TRUE
+
 PUB AFCMethod(method) | tmp
 ' Set AFC method/routine
 '   Valid values:
@@ -193,6 +216,12 @@ PUB AFCMethod(method) | tmp
 
     tmp := (tmp | method) & core#AFCCTRL_MASK
     writeRegX (core#AFCCTRL, 1, @tmp)
+
+PUB AFCStart | tmp
+' Trigger a manual AFC
+    readRegX (core#AFCFEI, 1, @tmp)
+    tmp |= %1   '1 << core#FLD_AFCSTART
+    writeRegX (core#AFCFEI, 1, @tmp)
 
 PUB AutoRestartRX(enabled) | tmp
 ' Enable automatic RX restart (RSSI phase)
