@@ -127,7 +127,24 @@ CON
     OOKPEAK                     = $1B
     OOKAVG                      = $1C
     OOKFIX                      = $1D
+
     AFCFEI                      = $1E
+    AFCFEI_MASK                 = $7F
+        FLD_FEIDONE             = 6     'R/O
+        FLD_FEISTART            = 5     'W/O
+        FLD_AFCDONE             = 4     'R/O
+        FLD_AFCAUTOCLEARON      = 3     'R/W
+        FLD_AFCAUTOON           = 2     'R/W
+        FLD_AFCCLEAR            = 1     'W/O
+        FLD_AFCSTART            = 0     'W/O
+        MASK_FEIDONE            = AFCFEI_MASK ^ (1 << FLD_FEIDONE)
+        MASK_FEISTART           = AFCFEI_MASK ^ (1 << FLD_FEISTART)
+        MASK_AFCDONE            = AFCFEI_MASK ^ (1 << FLD_AFCDONE)
+        MASK_AFCAUTOCLEARON     = AFCFEI_MASK ^ (1 << FLD_AFCAUTOCLEARON)
+        MASK_AFCAUTOON          = AFCFEI_MASK ^ (1 << FLD_AFCAUTOON)
+        MASK_AFCCLEAR           = AFCFEI_MASK ^ (1 << FLD_AFCCLEAR)
+        MASK_AFCSTART           = AFCFEI_MASK ^ (1 << FLD_AFCSTART)
+
     AFCMSB                      = $1F
     AFCLSB                      = $20
     FEIMSB                      = $21

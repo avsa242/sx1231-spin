@@ -464,7 +464,7 @@ PUB Gain(dB) | tmp
     case dB := lookdown(dB: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
         1..7:
             dB := dB-1 & core#BITS_LNAGAINSELECT
-        OTHER:
+        OTHER:'XXX Should this read the LNACURRENTGAIN field instead?
             result := tmp & core#BITS_LNAGAINSELECT
             return lookupz(result: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
 
@@ -763,6 +763,13 @@ PUB RCOscCal(enabled) | tmp
     tmp := (tmp | enabled) & core#OSC1_MASK
     writeRegX (core#OSC1, 1, @tmp)
 
+PUB RXData(nr_bytes, buff_addr)
+' Read data queued in the RX FIFO
+'   nr_bytes Valid values: 1..66
+'   Any other value is ignored
+'   NOTE: Ensure buffer at address buff_addr is at least as big as the number of bytes you're reading
+    readRegX(core#FIFO, nr_bytes, buff_addr)
+
 PUB Sequencer(mode) | tmp
 ' Control automatic sequencer
 '   Valid values:
@@ -859,6 +866,12 @@ PUB Temperature | tmp
         return 256-result
     else
         return result
+
+PUB TXData(nr_bytes, buff_addr)
+' Queue data to transmit in the TX FIFO
+'   nr_bytes Valid values: 1..66
+'   Any other value is ignored
+    writeRegX(core#FIFO, nr_bytes, buff_addr)
 
 PUB TXStartCondition(when) | tmp
 ' Define when to begin packet transmission
