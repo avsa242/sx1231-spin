@@ -36,6 +36,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 - [ ] Add support for setting RSSI threshold (carrier detect)
 - [ ] Add support for PLL lock status
 - [ ] Add support for setting RX bandwidth
+- [ ] Add support for setting freq by channel (emulated - use current channel bandwidth * channel number)
 - [ ] Update API to current standard (wireless.transceiver API)
 - [ ] Fix carrier frequency error
 - [ ] Fix transmit power issues (-2dB is loud, -3dB barely received at the highest receiver gain settings)
