@@ -30,8 +30,15 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 ## TODO
 
 - [x] Verify modulated transmission
+- [ ] Add support for reading RSSI
+- [ ] Add support for setting GPIO pin functions
+- [ ] Add support for reading the rest of the IRQ flags
+- [ ] Add support for setting RSSI threshold (carrier detect)
+- [ ] Add support for PLL lock status
+- [ ] Add support for setting RX bandwidth
+- [ ] Update API to current standard (wireless.transceiver API)
 - [ ] Fix carrier frequency error
 - [ ] Fix transmit power issues (-2dB is loud, -3dB barely received at the highest receiver gain settings)
-- [ ] Verify reception from another unit
-- [ ] Verify reception of an SX1231 transmission by a different, compatible unit
+- [ ] Verify reception from another SX1231 unit
+- [ ] Verify reception of an SX1231 transmission by a different, compatible unit (e.g., CC1101)
 

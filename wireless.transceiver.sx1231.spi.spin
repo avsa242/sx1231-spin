@@ -19,6 +19,7 @@ CON
 ' Sequencer operating modes
     OPMODE_AUTO             = 0
     OPMODE_MANUAL           = 1
+
     OPMODE_SLEEP            = 0
     OPMODE_STDBY            = 1
     OPMODE_FS               = 2
@@ -94,6 +95,10 @@ CON
 ' AES Key
     KEY_RD                  = 0
     KEY_WR                  = 1
+
+' Packet length config
+    PKTFMT_FIXED            = 0
+    PKTFMT_VAR              = 1
 
 VAR
 
@@ -732,16 +737,17 @@ PUB OutputPower(dBm) | tmp
     case dBm
         -18..13:
             dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            tmp &= core#MASK_OUTPUTPOWER
             tmp |= (1 << core#FLD_PA1ON)
         14..17:
             dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            tmp &= core#MASK_OUTPUTPOWER
             tmp |= (1 << core#FLD_PA2ON)
         OTHER:
             result := tmp & core#BITS_OUTPUTPOWER
             result := result - 18'case pa[012] bitfield
             return result
 
-    tmp &= core#MASK_OUTPUTPOWER
     tmp := (tmp | dBm) & core#PALEVEL_MASK
     writeRegX (core#PALEVEL, 1, @tmp)
 
@@ -776,6 +782,26 @@ PUB PacketLen(bytes) | tmp
             return tmp
 
     writeRegX (core#PAYLOADLENGTH, 1, @bytes)
+
+PUB PacketLenCfg(mode) | tmp
+' Set payload/packet length, in bytes
+'   Behavior differs depending on setting of PacketFormat:
+'       If PacketFormat == PKTFMT_FIXED, this sets payload length
+'       If PacketFormat == PKTFMT_VAR, this sets max length in RX, and is ignored in TX
+'   Valid values: 0..255
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX (core#PACKETCONFIG1, 1, @tmp)
+    case mode
+        PKTFMT_FIXED, PKTFMT_VAR:
+            mode <<= core#FLD_PACKETFORMAT
+        OTHER:
+            result := (tmp >> core#FLD_PACKETFORMAT) & %1
+            return
+
+    tmp &= core#MASK_PACKETFORMAT
+    tmp := (tmp | mode) & core#PACKETCONFIG1_MASK
+    writeRegX (core#PACKETCONFIG1, 1, @tmp)
 
 PUB PacketSent
 ' Packet sent status
