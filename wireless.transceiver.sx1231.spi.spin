@@ -131,11 +131,8 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
             dira[_SCK] := 1
             time.MSleep (10)
 
-            case Version
-                $21, $22, $23, $24:                                 'Is it really an SX1231?
-                    return okay
-                OTHER:
-                    return FALSE
+            if lookdown(ChipID: $21, $22, $23, $24)                   'Is it really an SX1231?
+                return okay
 
     return FALSE                                                    'If we got here, something went wrong
 
@@ -320,6 +317,16 @@ PUB CarrierFreq(Hz) | tmp
 
     tmp := Hz & core#BITS_FRF
     writeRegX (core#FRFMSB, 3, @tmp)
+
+PUB ChipID
+' Read silicon revision
+'   Returns:
+'       Value   Chip version
+'       $21:    V2a
+'       $22:    V2b
+'       $23:    V2c
+'       $24:    ???
+    readRegX (core#VERSION, 1, @result)
 
 PUB CRCCheck(enabled) | tmp
 ' Enable CRC calculation (TX) and checking (RX)
@@ -994,16 +1001,6 @@ PUB TXStartCondition(when) | tmp
     tmp &= core#MASK_TXSTARTCONDITION
     tmp := (tmp | when) & CORE#FIFOTHRESH_MASK
     writeRegX(core#FIFOTHRESH, 1, @tmp)
-
-PUB Version
-' Read silicon revision
-'   Returns:
-'       Value   Chip version
-'       $21:    V2a
-'       $22:    V2b
-'       $23:    V2c
-'       $24:    ???
-    readRegX (core#VERSION, 1, @result)
 
 PUB WaitRX | tmp
 ' Force the receiver in wait mode (continuous RX)
