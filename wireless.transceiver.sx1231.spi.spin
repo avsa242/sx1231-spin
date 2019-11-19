@@ -243,6 +243,10 @@ PUB AfterRX(next_state)
 ' Defines the state the radio transitions to after a packet is successfully received
     result := IntermediateMode(next_state)
 
+PUB AfterTX(next_state)
+' Defines the state the radio transitions to after a packet is successfully transmitted
+    result := IntermediateMode(next_state)
+
 PUB AutoRestartRX(enabled) | tmp
 ' Enable automatic RX restart (RSSI phase)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
