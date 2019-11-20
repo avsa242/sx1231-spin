@@ -885,6 +885,10 @@ PUB RXData(nr_bytes, buff_addr)
 '   NOTE: Ensure buffer at address buff_addr is at least as big as the number of bytes you're reading
     readRegX(core#FIFO, nr_bytes, buff_addr)
 
+PUB RXMode
+' Change chip state to RX (receive)
+    OpMode (OPMODE_RX)
+
 PUB Sequencer(mode) | tmp
 ' Control automatic sequencer
 '   Valid values:
