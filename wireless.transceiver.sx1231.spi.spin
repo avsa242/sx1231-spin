@@ -535,29 +535,6 @@ PUB FreqDeviation(Hz) | tmp
 
     writeRegX (core#FDEVMSB, 2, @Hz)
 
-PUB Gain(dB) | tmp
-' Set LNA gain, in dB relative to highest gain
-'   Valid values:
-'      *LNA_AGC (0): Gain is set by the internal AGC loop
-'       LNA_HIGH (1): Highest gain
-'       -6: Highest gain - 6dB
-'       -12: Highest gain - 12dB
-'       -24: Highest gain - 24dB
-'       -36: Highest gain - 36dB
-'       -48: Highest gain - 48dB
-'   Any other value polls the chip and returns the current setting
-    readRegX (core#LNA, 1, @tmp)
-    case dB := lookdown(dB: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
-        1..7:
-            dB := dB-1 & core#BITS_LNAGAINSELECT
-        OTHER:'XXX Should this read the LNACURRENTGAIN field instead?
-            result := tmp & core#BITS_LNAGAINSELECT
-            return lookupz(result: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
-
-    tmp &= core#MASK_LNAGAINSELECT
-    tmp := (tmp | dB) & core#LNA_MASK
-    writeRegX (core#LNA, 1, @tmp)
-
 PUB GaussianFilter(BT) | tmp
 ' Set Gaussian filter/data shaping parameters
 '   Valid values:
@@ -619,6 +596,29 @@ PUB Listen(enabled) | tmp
     tmp &= core#MASK_LISTENON
     tmp := (tmp | enabled) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
+
+PUB LNAGain(dB) | tmp
+' Set LNA gain, in dB relative to highest gain
+'   Valid values:
+'      *LNA_AGC (0): Gain is set by the internal AGC loop
+'       LNA_HIGH (1): Highest gain
+'       -6: Highest gain - 6dB
+'       -12: Highest gain - 12dB
+'       -24: Highest gain - 24dB
+'       -36: Highest gain - 36dB
+'       -48: Highest gain - 48dB
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#LNA, 1, @tmp)
+    case dB := lookdown(dB: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
+        1..7:
+            dB := dB-1 & core#BITS_LNAGAINSELECT
+        OTHER:'XXX Should this read the LNACURRENTGAIN field instead?
+            result := tmp & core#BITS_LNAGAINSELECT
+            return lookupz(result: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
+
+    tmp &= core#MASK_LNAGAINSELECT
+    tmp := (tmp | dB) & core#LNA_MASK
+    writeRegX (core#LNA, 1, @tmp)
 
 PUB LNAZInput(ohms) | tmp
 ' Set LNA's input impedance, in ohms
