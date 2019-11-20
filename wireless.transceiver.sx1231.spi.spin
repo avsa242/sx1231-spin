@@ -830,7 +830,7 @@ PUB PayloadLenCfg(mode) | tmp
     tmp := (tmp | mode) & core#PACKETCONFIG1_MASK
     writeRegX (core#PACKETCONFIG1, 1, @tmp)
 
-PUB PreambleBytes(bytes) | tmp
+PUB PreambleLen(bytes) | tmp
 ' Set number of bytes in preamble
 '   Valid values: 0..65535
 '   Any other value polls the chip and returns the current setting
