@@ -579,6 +579,10 @@ PUB GaussianFilter(BT) | tmp
     tmp := (tmp | BT) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
 
+PUB Idle
+' Change chip state to idle (standby)
+    OpMode (OPMODE_STDBY)
+
 PUB IntermediateMode(mode) | tmp
 ' Set intermediate operating mode
 '   Valid values:
