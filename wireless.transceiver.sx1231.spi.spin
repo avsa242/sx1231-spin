@@ -383,24 +383,6 @@ PUB DataWhitening(enabled) | tmp
     tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
     writeRegX(core#PACKETCONFIG1, 1, @tmp)
 
-PUB Deviation(Hz) | tmp
-' Set carrier deviation, in Hz
-'   Valid values:
-'       600..300_000
-'       Default is 5_000
-'   Any other value polls the chip and returns the current setting
-'   NOTE: Set value will be rounded
-    tmp := 0
-    readRegX (core#FDEVMSB, 2, @tmp)
-    case Hz
-        600..300_000:
-            Hz := (Hz / FSTEP) & core#BITS_FDEV
-        OTHER:
-            tmp &= core#BITS_FDEV
-            return tmp * FSTEP
-
-    writeRegX (core#FDEVMSB, 2, @Hz)
-
 PUB Encryption(enabled) | tmp
 ' Enable AES encryption/decryption
 '   Valid values: TRUE (-1 or 1), FALSE (0)
@@ -534,6 +516,24 @@ PUB FIFOThreshold(bytes) | tmp
     tmp &= core#MASK_FIFOTHRESHOLD
     tmp := (tmp | bytes) & core#FIFOTHRESH_MASK
     writeRegX(core#FIFOTHRESH, 1, @tmp)
+
+PUB FreqDeviation(Hz) | tmp
+' Set carrier deviation, in Hz
+'   Valid values:
+'       600..300_000
+'       Default is 5_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Set value will be rounded
+    tmp := 0
+    readRegX (core#FDEVMSB, 2, @tmp)
+    case Hz
+        600..300_000:
+            Hz := (Hz / FSTEP) & core#BITS_FDEV
+        OTHER:
+            tmp &= core#BITS_FDEV
+            return tmp * FSTEP
+
+    writeRegX (core#FDEVMSB, 2, @Hz)
 
 PUB Gain(dB) | tmp
 ' Set LNA gain, in dB relative to highest gain
