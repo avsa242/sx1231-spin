@@ -990,6 +990,10 @@ PUB Temperature | tmp
     else
         return result
 
+PUB TX
+' Change chip state to TX (transmit)
+    OpMode(OPMODE_TX)
+
 PUB TXData(nr_bytes, buff_addr)
 ' Queue data to transmit in the TX FIFO
 '   nr_bytes Valid values: 1..66
