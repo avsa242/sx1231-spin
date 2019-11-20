@@ -328,7 +328,7 @@ PUB ChipID
 '       $24:    ???
     readRegX (core#VERSION, 1, @result)
 
-PUB CRCCheck(enabled) | tmp
+PUB CRCCheckEnabled(enabled) | tmp
 ' Enable CRC calculation (TX) and checking (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
