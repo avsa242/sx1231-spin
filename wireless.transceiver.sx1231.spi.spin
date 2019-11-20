@@ -907,6 +907,10 @@ PUB Sequencer(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
+PUB Sleep
+' Power down chip
+    OpMode(OPMODE_SLEEP)
+
 PUB SyncWord(rw, buff_addr)
 ' Set sync word to value at buff_addr
 '   Valid values:
