@@ -786,7 +786,15 @@ PUB OvercurrentProtection(enabled) | tmp
     tmp := (tmp | enabled) & core#OCP_MASK
     writeRegX (core#OCP, 1, @tmp)
 
-PUB PacketLen(bytes) | tmp
+PUB PacketSent
+' Packet sent status
+'   Returns: TRUE if packet sent, FALSE otherwise
+'   NOTE: Once set, this flag clears when exiting TX mode
+    result := $00
+    readRegX (core#IRQFLAGS2, 1, @result)
+    result := ((result >> core#FLD_PACKETSENT) & %1) * TRUE
+
+PUB PayloadLen(length) | tmp
 ' Set payload/packet length, in bytes
 '   Behavior differs depending on setting of PacketFormat:
 '       If PacketFormat == PKTFMT_FIXED, this sets payload length
@@ -795,14 +803,14 @@ PUB PacketLen(bytes) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readRegX (core#PAYLOADLENGTH, 1, @tmp)
-    case bytes
+    case length
         0..255:
         OTHER:
             return tmp
 
-    writeRegX (core#PAYLOADLENGTH, 1, @bytes)
+    writeRegX (core#PAYLOADLENGTH, 1, @length)
 
-PUB PacketLenCfg(mode) | tmp
+PUB PayloadLenCfg(mode) | tmp
 ' Set payload/packet length, in bytes
 '   Behavior differs depending on setting of PacketFormat:
 '       If PacketFormat == PKTFMT_FIXED, this sets payload length
@@ -821,14 +829,6 @@ PUB PacketLenCfg(mode) | tmp
     tmp &= core#MASK_PACKETFORMAT
     tmp := (tmp | mode) & core#PACKETCONFIG1_MASK
     writeRegX (core#PACKETCONFIG1, 1, @tmp)
-
-PUB PacketSent
-' Packet sent status
-'   Returns: TRUE if packet sent, FALSE otherwise
-'   NOTE: Once set, this flag clears when exiting TX mode
-    result := $00
-    readRegX (core#IRQFLAGS2, 1, @result)
-    result := ((result >> core#FLD_PACKETSENT) & %1) * TRUE
 
 PUB PreambleBytes(bytes) | tmp
 ' Set number of bytes in preamble
