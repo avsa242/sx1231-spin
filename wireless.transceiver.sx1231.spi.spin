@@ -147,19 +147,6 @@ PUB AbortListen | tmp
     tmp := (tmp | (1 << core#FLD_LISTENABORT)) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
-PUB Address(addr) | tmp
-' Set node address
-'   Valid values: $00..$FF
-'   Any other value polls the chip and returns the current setting
-    tmp := $00
-    readRegX (core#NODEADRS, 1, @tmp)
-    case addr
-        $00..$FF:
-        OTHER:
-            return tmp
-
-    writeRegX (core#NODEADRS, 1, @addr)
-
 PUB AddressCheck(mode) | tmp
 ' Enable address checking/matching/filtering
 '   Valid values:
@@ -707,6 +694,19 @@ PUB Modulation(type) | tmp
     tmp &= core#MASK_MODULATIONTYPE
     tmp := (tmp | type) & core#DATAMODUL_MASK
     writeRegX (core#DATAMODUL, 1, @tmp)
+
+PUB NodeAddress(addr) | tmp
+' Set node address
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readRegX (core#NODEADRS, 1, @tmp)
+    case addr
+        $00..$FF:
+        OTHER:
+            return tmp
+
+    writeRegX (core#NODEADRS, 1, @addr)
 
 PUB OCPCurrent(mA) | tmp
 ' Set PA overcurrent protection level, in milliamps
