@@ -746,30 +746,6 @@ PUB OpMode(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeRegX (core#OPMODE, 1, @tmp)
 
-PUB OutputPower(dBm) | tmp
-' Set transmit output power, in dBm
-'   Valid values:
-'       -18..17
-'   Any other value polls the chip and returns the current setting
-    tmp := 0
-    readRegX (core#PALEVEL, 1, @tmp)
-    case dBm
-        -18..13:
-            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
-            tmp &= core#MASK_OUTPUTPOWER
-            tmp |= (1 << core#FLD_PA1ON)
-        14..17:
-            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
-            tmp &= core#MASK_OUTPUTPOWER
-            tmp |= (1 << core#FLD_PA2ON)
-        OTHER:
-            result := tmp & core#BITS_OUTPUTPOWER
-            result := result - 18'case pa[012] bitfield
-            return result
-
-    tmp := (tmp | dBm) & core#PALEVEL_MASK
-    writeRegX (core#PALEVEL, 1, @tmp)
-
 PUB OvercurrentProtection(enabled) | tmp
 ' Enable PA overcurrent protection
 '   Valid values: *TRUE (-1 or 1), FALSE (0)
@@ -999,6 +975,30 @@ PUB TXData(nr_bytes, buff_addr)
 '   nr_bytes Valid values: 1..66
 '   Any other value is ignored
     writeRegX(core#FIFO, nr_bytes, buff_addr)
+
+PUB TXPower(dBm) | tmp
+' Set transmit output power, in dBm
+'   Valid values:
+'       -18..17
+'   Any other value polls the chip and returns the current setting
+    tmp := 0
+    readRegX (core#PALEVEL, 1, @tmp)
+    case dBm
+        -18..13:
+            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            tmp &= core#MASK_OUTPUTPOWER
+            tmp |= (1 << core#FLD_PA1ON)
+        14..17:
+            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            tmp &= core#MASK_OUTPUTPOWER
+            tmp |= (1 << core#FLD_PA2ON)
+        OTHER:
+            result := tmp & core#BITS_OUTPUTPOWER
+            result := result - 18'case pa[012] bitfield
+            return result
+
+    tmp := (tmp | dBm) & core#PALEVEL_MASK
+    writeRegX (core#PALEVEL, 1, @tmp)
 
 PUB TXStartCondition(when) | tmp
 ' Define when to begin packet transmission
