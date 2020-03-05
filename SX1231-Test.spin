@@ -3,9 +3,9 @@
     Filename: SX1231-Test.spin
     Author: Jesse Burt
     Description: Test object for the SX1231 driver
-    Copyright (c) 2019
+    Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Aug 25, 2019
+    Updated Mar 5, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -14,6 +14,11 @@ CON
 
     _clkmode    = cfg#_clkmode
     _xinfreq    = cfg#_xinfreq
+
+    LED         = cfg#LED1
+    SER_RX      = 31
+    SER_TX      = 30
+    SER_BAUD    = 115_200
 
     MISO_PIN    = 11
     MOSI_PIN    = 10
@@ -24,8 +29,6 @@ CON
     COL_SET     = COL_REG+20
     COL_READ    = COL_SET+20
     COL_PF      = COL_READ+18
-
-    LED         = cfg#LED1
 
 OBJ
 
@@ -45,47 +48,47 @@ PUB Main
 
     _row := 2
 '    _expanded := TRUE
-    Test_AFCAUTOON(1)
-    Test_AESON(1)
-    Test_AUTORESTARTRX(1)
-    Test_FIFOTHRESHOLD(1)
-    Test_TXSTARTCONDITION(1)
-    Test_EXITCONDITION(1)
-    Test_ENTERCONDITION(1)
-    Test_INTERMEDIATEMODE(1)
-    Test_BROADCASTADRS (1)
-    Test_NODEADRS (1)
-    Test_PACKETLEN (1)
-    Test_ADDRESSFILT (1)
-    Test_DCFREE_WHITE (1)
-    Test_DCFREE_MANCH (1)
-    Test_CRCON (1)
-    Test_SYNCTOL (1)
-    Test_SYNCON (1)
-    Test_SYNCSIZE (1)
-    Test_PREAMBLE (1)
-    Test_LNAGAINSELECT (1)
-    Test_LNAZIN (1)
-    Test_OCPTRIM (1)
-    Test_OCPON (1)
-    Test_PARAMP (1)
-    Test_OUTPUTPOWER (1)
-    Test_LOWBATTRIM (1)
-    Test_LOWBATON (1)
-    Test_AFCCTRL (1)
-    Test_OSC1 (1)
-    Test_FRF (1)
-    Test_FDEV (1)
-    Test_BITRATE (1)
-    Test_MODULATIONSHAPING (1)
-    Test_MODULATIONTYPE (1)
-    Test_DATAMODE (1)
-    Test_MODE (1)
-    Test_LISTENON (1)
-    Test_SEQUENCEROFF (1)
-    flash(cfg#LED1, 100)
+    AFCAUTOON(1)
+    AESON(1)
+    AUTORESTARTRX(1)
+    FIFOTHRESHOLD(1)
+    TXSTARTCONDITION(1)
+    EXITCONDITION(1)
+    ENTERCONDITION(1)
+    INTERMEDIATEMODE(1)
+    BROADCASTADRS (1)
+    NODEADRS (1)
+    PACKETLEN (1)
+    ADDRESSFILT (1)
+    DCFREE_WHITE (1)
+    DCFREE_MANCH (1)
+    CRCON (1)
+    SYNCTOL (1)
+    SYNCON (1)
+    SYNCSIZE (1)
+    PREAMBLE (1)
+    LNAGAINSELECT (1)
+    LNAZIN (1)
+    OCPTRIM (1)
+    OCPON (1)
+    PARAMP (1)
+    OUTPUTPOWER (1)
+    LOWBATTRIM (1)
+    LOWBATON (1)
+    AFCCTRL (1)
+    OSC1 (1)
+    FRF (1)
+    FDEV (1)
+    BITRATE (1)
+    MODULATIONSHAPING (1)
+    MODULATIONTYPE (1)
+    DATAMODE (1)
+    MODE (1)
+    LISTENON (1)
+    SEQUENCEROFF (1)
+    FlashLED(LED, 100)
 
-PUB Test_AFCAUTOON(reps) | tmp, read
+PUB AFCAUTOON(reps) | tmp, read
 
     _row++
     repeat reps
@@ -94,7 +97,7 @@ PUB Test_AFCAUTOON(reps) | tmp, read
             read := sx.AFCAuto (-2)
             Message (string("AFCAUTOON"), tmp, read)
 
-PUB Test_AESON(reps) | tmp, read
+PUB AESON(reps) | tmp, read
 
     _row++
     repeat reps
@@ -104,7 +107,7 @@ PUB Test_AESON(reps) | tmp, read
             Message (string("AESON"), tmp, read)
 
 
-PUB Test_AUTORESTARTRX(reps) | tmp, read
+PUB AUTORESTARTRX(reps) | tmp, read
 
     _row++
     repeat reps
@@ -113,7 +116,7 @@ PUB Test_AUTORESTARTRX(reps) | tmp, read
             read := sx.AutoRestartRX (-2)
             Message (string("AUTORESTARTRX"), tmp, read)
 
-PUB Test_FIFOTHRESHOLD(reps) | tmp, read
+PUB FIFOTHRESHOLD(reps) | tmp, read
 
     _row++
     repeat reps
@@ -122,7 +125,7 @@ PUB Test_FIFOTHRESHOLD(reps) | tmp, read
             read := sx.FIFOThreshold (-2)
             Message (string("FIFOTHRESHOLD"), tmp, read)
 
-PUB Test_TXSTARTCONDITION(reps) | tmp, read
+PUB TXSTARTCONDITION(reps) | tmp, read
 
     _row++
     repeat reps
@@ -131,7 +134,7 @@ PUB Test_TXSTARTCONDITION(reps) | tmp, read
             read := sx.TXStartCondition (-2)
             Message (string("TXSTARTCONDITION"), tmp, read)
 
-PUB Test_EXITCONDITION(reps) | tmp, read
+PUB EXITCONDITION(reps) | tmp, read
 
     _row++
     repeat reps
@@ -140,7 +143,7 @@ PUB Test_EXITCONDITION(reps) | tmp, read
             read := sx.ExitCondition (-2)
             Message (string("EXITCONDITION"), tmp, read)
 
-PUB Test_ENTERCONDITION(reps) | tmp, read
+PUB ENTERCONDITION(reps) | tmp, read
 
     _row++
     repeat reps
@@ -150,7 +153,7 @@ PUB Test_ENTERCONDITION(reps) | tmp, read
             Message (string("ENTERCONDITION"), tmp, read)
 
 
-PUB Test_INTERMEDIATEMODE(reps) | tmp, read
+PUB INTERMEDIATEMODE(reps) | tmp, read
 
     _row++
     repeat reps
@@ -159,7 +162,7 @@ PUB Test_INTERMEDIATEMODE(reps) | tmp, read
             read := sx.IntermediateMode (-2)
             Message (string("INTERMEDIATEMODE"), tmp, read)
 
-PUB Test_BROADCASTADRS(reps) | tmp, read
+PUB BROADCASTADRS(reps) | tmp, read
 
     _row++
     repeat reps
@@ -168,7 +171,7 @@ PUB Test_BROADCASTADRS(reps) | tmp, read
             read := sx.BroadcastAddress (-2)
             Message (string("BROADCASTADRS"), tmp, read)
 
-PUB Test_NODEADRS(reps) | tmp, read
+PUB NODEADRS(reps) | tmp, read
 
     _row++
     repeat reps
@@ -177,7 +180,7 @@ PUB Test_NODEADRS(reps) | tmp, read
             read := sx.Address (-2)
             Message (string("NODEADRS"), tmp, read)
 
-PUB Test_PACKETLEN(reps) | tmp, read
+PUB PACKETLEN(reps) | tmp, read
 
     _row++
     repeat reps
@@ -186,7 +189,7 @@ PUB Test_PACKETLEN(reps) | tmp, read
             read := sx.PacketLen (-2)
             Message (string("PACKETLEN"), tmp, read)
 
-PUB Test_ADDRESSFILT(reps) | tmp, read
+PUB ADDRESSFILT(reps) | tmp, read
 
     _row++
     repeat reps
@@ -195,7 +198,7 @@ PUB Test_ADDRESSFILT(reps) | tmp, read
             read := sx.AddressCheck (-2)
             Message (string("ADDRESSFILT"), tmp, read)
 
-PUB Test_DCFREE_WHITE(reps) | tmp, read
+PUB DCFREE_WHITE(reps) | tmp, read
 
     _row++
     repeat reps
@@ -204,7 +207,7 @@ PUB Test_DCFREE_WHITE(reps) | tmp, read
             read := sx.DataWhitening (-2)
             Message (string("DCFREE_WHITE"), tmp, read)
 
-PUB Test_DCFREE_MANCH(reps) | tmp, read
+PUB DCFREE_MANCH(reps) | tmp, read
 
     _row++
     repeat reps
@@ -213,7 +216,7 @@ PUB Test_DCFREE_MANCH(reps) | tmp, read
             read := sx.ManchesterEnc (-2)
             Message (string("DCFREE_MANCH"), tmp, read)
 
-PUB Test_CRCON(reps) | tmp, read
+PUB CRCON(reps) | tmp, read
 
     _row++
     repeat reps
@@ -222,7 +225,7 @@ PUB Test_CRCON(reps) | tmp, read
             read := sx.CRCCheck (-2)
             Message (string("CRCON"), tmp, read)
 
-PUB Test_SYNCTOL(reps) | tmp, read
+PUB SYNCTOL(reps) | tmp, read
 
     _row++
     repeat reps
@@ -231,7 +234,7 @@ PUB Test_SYNCTOL(reps) | tmp, read
             read := sx.SyncWordMaxBitErr (-2)
             Message (string("SYNCTOL"), tmp, read)
 
-PUB Test_SYNCON(reps) | tmp, read
+PUB SYNCON(reps) | tmp, read
 
     _row++
     repeat reps
@@ -240,7 +243,7 @@ PUB Test_SYNCON(reps) | tmp, read
             read := sx.SyncWordEnabled (-2)
             Message (string("SYNCON"), tmp, read)
 
-PUB Test_SYNCSIZE(reps) | tmp, read
+PUB SYNCSIZE(reps) | tmp, read
 
     _row++
     repeat reps
@@ -249,7 +252,7 @@ PUB Test_SYNCSIZE(reps) | tmp, read
             read := sx.SyncWordLength (-2)
             Message (string("SYNCSIZE"), tmp, read)
 
-PUB Test_PREAMBLE(reps) | tmp, read
+PUB PREAMBLE(reps) | tmp, read
 
     _row++
     repeat reps
@@ -258,7 +261,7 @@ PUB Test_PREAMBLE(reps) | tmp, read
             read := sx.PreambleBytes (-2)
             Message (string("PREAMBLE"), tmp, read)
 
-PUB Test_LNAGAINSELECT(reps) | tmp, read
+PUB LNAGAINSELECT(reps) | tmp, read
 
    _row++
     repeat reps
@@ -267,7 +270,7 @@ PUB Test_LNAGAINSELECT(reps) | tmp, read
             read := sx.Gain (-2)
             Message (string("LNAGAINSELECT"), lookup(tmp: sx#LNA_AGC, sx#LNA_HIGH, -6, -12, -24, -36, -48), read)
 
-PUB Test_LNAZIN(reps) | tmp, read
+PUB LNAZIN(reps) | tmp, read
 
    _row++
     repeat reps
@@ -276,7 +279,7 @@ PUB Test_LNAZIN(reps) | tmp, read
             read := sx.LNAZInput (-2)
             Message (string("LNAZIN"), lookup(tmp: 50, 200), read)
 
-PUB Test_OCPTRIM(reps) | tmp, read
+PUB OCPTRIM(reps) | tmp, read
 
    _row++
     repeat reps
@@ -285,7 +288,7 @@ PUB Test_OCPTRIM(reps) | tmp, read
             read := sx.OCPCurrent (-2)
             Message (string("OCPTRIM"), lookup(tmp: 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120), read)
 
-PUB Test_OCPON(reps) | tmp, read
+PUB OCPON(reps) | tmp, read
 
     _row++
     repeat reps
@@ -294,7 +297,7 @@ PUB Test_OCPON(reps) | tmp, read
             read := sx.OvercurrentProtection (-2)
             Message (string("OCPON"), tmp, read)
 
-PUB Test_PARAMP(reps) | tmp, read
+PUB PARAMP(reps) | tmp, read
 
    _row++
     repeat reps
@@ -303,7 +306,7 @@ PUB Test_PARAMP(reps) | tmp, read
             read := sx.RampTime (-2)
             Message (string("PARAMP"), lookup(tmp: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10), read)
 
-PUB Test_OUTPUTPOWER(reps) | tmp, read
+PUB OUTPUTPOWER(reps) | tmp, read
 
     _row++
     repeat reps
@@ -312,7 +315,7 @@ PUB Test_OUTPUTPOWER(reps) | tmp, read
             read := sx.OutputPower (-100)
             Message (string("OUTPUTPOWER"), tmp, read)
 
-PUB Test_LOWBATTRIM(reps) | tmp, read
+PUB LOWBATTRIM(reps) | tmp, read
 
     _row++
     repeat reps
@@ -321,7 +324,7 @@ PUB Test_LOWBATTRIM(reps) | tmp, read
             read := sx.LowBattLevel  (-2)
             Message (string("LOWBATTRIM"), lookup(tmp: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185), read)
 
-PUB Test_LOWBATON(reps) | tmp, read
+PUB LOWBATON(reps) | tmp, read
 
     _row++
     repeat reps
@@ -330,7 +333,7 @@ PUB Test_LOWBATON(reps) | tmp, read
             read := sx.LowBattMon (-2)
             Message (string("LOWBATON"), tmp, read)
 
-PUB Test_AFCCTRL(reps) | tmp, read
+PUB AFCCTRL(reps) | tmp, read
 
     _row++
     repeat reps
@@ -339,7 +342,7 @@ PUB Test_AFCCTRL(reps) | tmp, read
             read := sx.AFCMethod (-2)
             Message (string("AFCCTRL"), tmp, read)
 
-PUB Test_OSC1(reps) | tmp, read
+PUB OSC1(reps) | tmp, read
 ' For now, ignore failures
     _row++
     repeat reps
@@ -348,7 +351,7 @@ PUB Test_OSC1(reps) | tmp, read
             read := sx.RCOscCal (-2)
             Message (string("OSC1"), tmp, read)
 
-PUB Test_FRF(reps) | tmp, read
+PUB FRF(reps) | tmp, read
 ' For now, ignore failures
 ' 290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
     _row++
@@ -368,7 +371,7 @@ PUB Test_FRF(reps) | tmp, read
             read := sx.CarrierFreq (-2)
             Message (string("FRF"), tmp, read)
 
-PUB Test_FDEV(reps) | tmp, read
+PUB FDEV(reps) | tmp, read
 ' For now, ignore failures
     _row++
     repeat reps
@@ -377,7 +380,7 @@ PUB Test_FDEV(reps) | tmp, read
             read := sx.Deviation (-2)
             Message (string("FDEV"), tmp, read)
 
-PUB Test_BITRATE(reps) | tmp, read
+PUB BITRATE(reps) | tmp, read
 ' For now, ignore failures past 9600bps
     _row++
     repeat reps
@@ -386,7 +389,7 @@ PUB Test_BITRATE(reps) | tmp, read
             read := sx.BitRate (-2)
             Message (string("BITRATE"), lookup(tmp: 1200, 2400, 4800, 9600, 19_200, 38_400, 76_800, 115_200, 300_000), read)
 
-PUB Test_MODULATIONSHAPING(reps) | tmp, read
+PUB MODULATIONSHAPING(reps) | tmp, read
 
     _row++
     repeat reps
@@ -395,7 +398,7 @@ PUB Test_MODULATIONSHAPING(reps) | tmp, read
             read := sx.GaussianFilter (-2)
             Message (string("MODULATIONSHAPING"), tmp, read)
 
-PUB Test_MODULATIONTYPE(reps) | tmp, read
+PUB MODULATIONTYPE(reps) | tmp, read
 
     _row++
     repeat reps
@@ -404,7 +407,7 @@ PUB Test_MODULATIONTYPE(reps) | tmp, read
             read := sx.Modulation (-2)
             Message (string("MODULATIONTYPE"), tmp, read)
 
-PUB Test_DATAMODE(reps) | tmp, read
+PUB DATAMODE(reps) | tmp, read
 
     _row++
     repeat reps
@@ -415,7 +418,7 @@ PUB Test_DATAMODE(reps) | tmp, read
             read := sx.DataMode (-2)
             Message (string("DATAMODE"), tmp, read)
 
-PUB Test_MODE(reps) | tmp, read
+PUB MODE(reps) | tmp, read
 
     _row++
     sx.Sequencer (sx#OPMODE_MANUAL) ' Must first set sequencer to manual mode to switch operating modes
@@ -427,7 +430,7 @@ PUB Test_MODE(reps) | tmp, read
             Message (string("MODE"), tmp, read)
     sx.Sequencer (sx#OPMODE_AUTO)   ' Restore automatic sequencer mode
 
-PUB Test_LISTENON(reps) | tmp, read
+PUB LISTENON(reps) | tmp, read
 
     _row++
     repeat reps
@@ -436,7 +439,7 @@ PUB Test_LISTENON(reps) | tmp, read
             read := sx.Listen (-2)
             Message (string("LISTENON"), tmp, read)
 
-PUB Test_SEQUENCEROFF(reps) | tmp, read
+PUB SEQUENCEROFF(reps) | tmp, read
 
     _row++
     repeat reps
@@ -464,7 +467,7 @@ PUB Message(field, arg1, arg2)
             ser.PositionX (COL_PF)
             PassFail (arg1 == arg2)
 '            ser.NewLine
-            ser.str(string(10, 13))
+            ser.str(string(ser#CR, ser#LF))
         FALSE:
             ser.Position (COL_REG, _row)
             ser.Str (field)
@@ -482,7 +485,7 @@ PUB Message(field, arg1, arg2)
             ser.Position (COL_PF, _row)
             PassFail (arg1 == arg2)
 '            ser.NewLine
-            ser.Str(string(10, 13))
+            ser.Str(string(ser#CR, ser#LF))
         OTHER:
             ser.Str (string("DEADBEEF"))
 
@@ -495,25 +498,20 @@ PUB PassFail(num)
 
 PUB Setup
 
-    repeat until _ser_cog := ser.Start (115_200)
-    time.MSleep(500)
+    repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
+    time.MSleep(30)
     ser.Clear
-    ser.Str(string("Serial terminal started", 10, 13))'ser#NL))
+    ser.Str(string("Serial terminal started", ser#CR, ser#LF))
     if sx.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-        ser.Str (string("SX1231 driver started", 10, 13))'ser#NL))
+        ser.Str (string("SX1231 driver started", ser#CR, ser#LF))
     else
-        ser.Str (string("SX1231 driver failed to start - halting", 10, 13))'ser#NL))
+        ser.Str (string("SX1231 driver failed to start - halting", ser#CR, ser#LF))
         sx.Stop
         time.MSleep (5)
         ser.Stop
-        Flash(LED, 500)
+        FlashLED(LED, 500)
 
-PRI Flash(led_pin, delay_ms)
-
-    dira[led_pin] := 1
-    repeat
-        !outa[led_pin]
-        time.MSleep (delay_ms)
+#include "lib.utility.spin"
 
 DAT
 {
