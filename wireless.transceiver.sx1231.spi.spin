@@ -891,7 +891,7 @@ PUB SyncWord(rw, buff_addr)
 ' Set sync word to value at buff_addr
 '   Valid values:
 '       rw: SW_READ (0), SW_WRITE (1)
-'       variable at address buff_addr: All bytes can be $00..$FF
+'       variable at address buff_addr: All bytes can be $01..$FF
 '   For rw, any value other than SW_WRITE (1) polls the chip and returns the current setting
 '   NOTE: Variable pointed to by buff_addr must be at least 8 bytes in length
     case rw
