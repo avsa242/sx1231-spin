@@ -35,6 +35,7 @@ OBJ
     cfg     : "core.con.boardcfg.flip"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
+    io      : "io"
     sx      : "wireless.transceiver.sx1231.spi"
 
 VAR
@@ -176,8 +177,8 @@ PUB NODEADRS(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from 0 to 255
-            sx.Address (tmp)
-            read := sx.Address (-2)
+            sx.NodeAddress (tmp)
+            read := sx.NodeAddress (-2)
             Message (string("NODEADRS"), tmp, read)
 
 PUB PACKETLEN(reps) | tmp, read
@@ -185,8 +186,8 @@ PUB PACKETLEN(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from 0 to 255
-            sx.PacketLen (tmp)
-            read := sx.PacketLen (-2)
+            sx.PayloadLen (tmp)
+            read := sx.PayloadLen (-2)
             Message (string("PACKETLEN"), tmp, read)
 
 PUB ADDRESSFILT(reps) | tmp, read
@@ -221,8 +222,8 @@ PUB CRCON(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from FALSE to TRUE
-            sx.CRCCheck (tmp)
-            read := sx.CRCCheck (-2)
+            sx.CRCCheckEnabled (tmp)
+            read := sx.CRCCheckEnabled (-2)
             Message (string("CRCON"), tmp, read)
 
 PUB SYNCTOL(reps) | tmp, read
@@ -257,8 +258,8 @@ PUB PREAMBLE(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from 0 to 65535 step 1024
-            sx.PreambleBytes (tmp)
-            read := sx.PreambleBytes (-2)
+            sx.PreambleLen (tmp)
+            read := sx.PreambleLen (-2)
             Message (string("PREAMBLE"), tmp, read)
 
 PUB LNAGAINSELECT(reps) | tmp, read
@@ -266,8 +267,8 @@ PUB LNAGAINSELECT(reps) | tmp, read
    _row++
     repeat reps
         repeat tmp from 1 to 6
-            sx.Gain (lookup(tmp: sx#LNA_AGC, sx#LNA_HIGH, -6, -12, -24, -36, -48))
-            read := sx.Gain (-2)
+            sx.LNAGain (lookup(tmp: sx#LNA_AGC, sx#LNA_HIGH, -6, -12, -24, -36, -48))
+            read := sx.LNAGain (-2)
             Message (string("LNAGAINSELECT"), lookup(tmp: sx#LNA_AGC, sx#LNA_HIGH, -6, -12, -24, -36, -48), read)
 
 PUB LNAZIN(reps) | tmp, read
@@ -311,8 +312,8 @@ PUB OUTPUTPOWER(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from -18 to 13
-            sx.OutputPower (tmp)
-            read := sx.OutputPower (-100)
+            sx.TXPower (tmp)
+            read := sx.TXPower (-100)
             Message (string("OUTPUTPOWER"), tmp, read)
 
 PUB LOWBATTRIM(reps) | tmp, read
@@ -376,8 +377,8 @@ PUB FDEV(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from 600 to 300_000 step 10000
-            sx.Deviation (tmp)
-            read := sx.Deviation (-2)
+            sx.FreqDeviation (tmp)
+            read := sx.FreqDeviation (-2)
             Message (string("FDEV"), tmp, read)
 
 PUB BITRATE(reps) | tmp, read
@@ -385,8 +386,8 @@ PUB BITRATE(reps) | tmp, read
     _row++
     repeat reps
         repeat tmp from 1 to 9
-            sx.BitRate (lookup(tmp: 1200, 2400, 4800, 9600, 19_200, 38_400, 76_800, 115_200, 300_000))
-            read := sx.BitRate (-2)
+            sx.DataRate (lookup(tmp: 1200, 2400, 4800, 9600, 19_200, 38_400, 76_800, 115_200, 300_000))
+            read := sx.DataRate (-2)
             Message (string("BITRATE"), lookup(tmp: 1200, 2400, 4800, 9600, 19_200, 38_400, 76_800, 115_200, 300_000), read)
 
 PUB MODULATIONSHAPING(reps) | tmp, read

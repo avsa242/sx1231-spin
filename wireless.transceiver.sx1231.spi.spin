@@ -109,6 +109,7 @@ OBJ
     spi : "com.spi.4w"                                              'PASM SPI Driver
     core: "core.con.sx1231"
     time: "time"                                                    'Basic timing functions
+    io  : "io"
 
 PUB Null
 ''This is not a top-level object
@@ -125,13 +126,12 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
             _MISO := MISO_PIN
             _SCK := SCK_PIN
 
-            outa[_CS] := 1
-            dira[_CS] := 1
-            outa[_SCK] := 0
-            dira[_SCK] := 1
+            io.High(_CS)
+            io.Output(_CS)
+
             time.MSleep (10)
 
-            if lookdown(ChipID: $21, $22, $23, $24)                   'Is it really an SX1231?
+            if lookdown(DeviceID: $21, $22, $23, $24)                   'Is it really an SX1231?
                 return okay
 
     return FALSE                                                    'If we got here, something went wrong
@@ -255,25 +255,6 @@ PUB BattLow
     readReg (core#LOWBAT, 1, @result)
     result := ((result >> core#FLD_LOWBATMONITOR) & %1)* TRUE
 
-PUB BitRate(bps) | tmp
-' Set on-air data rate, in bits per second
-'   Valid values:
-'       1_200..300_000
-'   Any other value polls the chip and returns the current setting
-'   NOTE: Result will be rounded
-'   NOTE: Effective data rate will be halved if Manchester encoding is used
-    readReg (core#BITRATEMSB, 2, @tmp)
-    case bps
-        1_200..300_000:
-            bps := FXOSC / bps
-        OTHER:
-            result := tmp
-            return FXOSC / result
-
-    tmp := bps & core#BITS_BITRATE
-    writeReg (core#BITRATEMSB, 2, @tmp)
-    return tmp
-
 PUB BroadcastAddress(addr) | tmp
 ' Set broadcast address
 '   Valid values: $00..$FF
@@ -304,16 +285,6 @@ PUB CarrierFreq(Hz) | tmp
 
     tmp := Hz & core#BITS_FRF
     writeReg (core#FRFMSB, 3, @tmp)
-
-PUB ChipID
-' Read silicon revision
-'   Returns:
-'       Value   Chip version
-'       $21:    V2a
-'       $22:    V2b
-'       $23:    V2c
-'       $24:    ???
-    readReg (core#VERSION, 1, @result)
 
 PUB CRCCheckEnabled(enabled) | tmp
 ' Enable CRC calculation (TX) and checking (RX)
@@ -351,6 +322,25 @@ PUB DataMode(mode) | tmp
     tmp := (tmp | mode) & core#DATAMODUL_MASK
     writeReg (core#DATAMODUL, 1, @tmp)
 
+PUB DataRate(bps) | tmp
+' Set on-air data rate, in bits per second
+'   Valid values:
+'       1_200..300_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Result will be rounded
+'   NOTE: Effective data rate will be halved if Manchester encoding is used
+    readReg (core#BITRATEMSB, 2, @tmp)
+    case bps
+        1_200..300_000:
+            bps := FXOSC / bps
+        OTHER:
+            result := tmp
+            return FXOSC / result
+
+    tmp := bps & core#BITS_BITRATE
+    writeReg (core#BITRATEMSB, 2, @tmp)
+    return tmp
+
 PUB DataWhitening(enabled) | tmp
 ' Enable data whitening
 '   Valid values: TRUE (-1 or 1), FALSE (0)
@@ -369,6 +359,16 @@ PUB DataWhitening(enabled) | tmp
     tmp &= core#MASK_DCFREE
     tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
     writeReg(core#PACKETCONFIG1, 1, @tmp)
+
+PUB DeviceID
+' Read device ID
+'   Returns:
+'       Value   Chip version
+'       $21:    V2a
+'       $22:    V2b
+'       $23:    V2c
+'       $24:    ???
+    readReg (core#VERSION, 1, @result)
 
 PUB Encryption(enabled) | tmp
 ' Enable AES encryption/decryption
@@ -589,11 +589,11 @@ PUB LNAGain(dB) | tmp
 '   Valid values:
 '      *LNA_AGC (0): Gain is set by the internal AGC loop
 '       LNA_HIGH (1): Highest gain
-'       -6: Highest gain - 6dB
-'       -12: Highest gain - 12dB
-'       -24: Highest gain - 24dB
-'       -36: Highest gain - 36dB
-'       -48: Highest gain - 48dB
+'       -6: (Highest gain - 6dB)
+'       -12: (Highest gain - 12dB)
+'       -24: (Highest gain - 24dB)
+'       -36: (Highest gain - 36dB)
+'       -48: (Highest gain - 48dB)
 '   Any other value polls the chip and returns the current setting
     readReg (core#LNA, 1, @tmp)
     case dB := lookdown(dB: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
@@ -762,14 +762,6 @@ PUB OvercurrentProtection(enabled) | tmp
     tmp := (tmp | enabled) & core#OCP_MASK
     writeReg (core#OCP, 1, @tmp)
 
-PUB PacketSent
-' Packet sent status
-'   Returns: TRUE if packet sent, FALSE otherwise
-'   NOTE: Once set, this flag clears when exiting TX mode
-    result := $00
-    readReg (core#IRQFLAGS2, 1, @result)
-    result := ((result >> core#FLD_PACKETSENT) & %1) * TRUE
-
 PUB PayloadLen(length) | tmp
 ' Set payload/packet length, in bytes
 '   Behavior differs depending on setting of PacketFormat:
@@ -805,6 +797,14 @@ PUB PayloadLenCfg(mode) | tmp
     tmp &= core#MASK_PACKETFORMAT
     tmp := (tmp | mode) & core#PACKETCONFIG1_MASK
     writeReg (core#PACKETCONFIG1, 1, @tmp)
+
+PUB PayloadSent
+' Packet sent status
+'   Returns: TRUE if packet sent, FALSE otherwise
+'   NOTE: Once set, this flag clears when exiting TX mode
+    result := $00
+    readReg (core#IRQFLAGS2, 1, @result)
+    result := ((result >> core#FLD_PACKETSENT) & %1) * TRUE
 
 PUB PreambleLen(bytes) | tmp
 ' Set number of bytes in preamble
@@ -854,7 +854,7 @@ PUB RCOscCal(enabled) | tmp
     tmp := (tmp | enabled) & core#OSC1_MASK
     writeReg (core#OSC1, 1, @tmp)
 
-PUB RXData(nr_bytes, buff_addr)
+PUB RXPayload(nr_bytes, buff_addr)
 ' Read data queued in the RX FIFO
 '   nr_bytes Valid values: 1..66
 '   Any other value is ignored
@@ -897,10 +897,8 @@ PUB SyncWord(rw, buff_addr)
     case rw
         SW_WRITE:
             writeReg(core#SYNCVALUE1, 8, buff_addr)
-            return $E111_1111
         OTHER:
             readReg(core#SYNCVALUE1, 8, buff_addr)  'XXX Future test: set nr_bytes arg to SyncWordBytes(-2)?
-            return $E000_0000
 
 PUB SyncWordEnabled(enable) | tmp
 ' Enable sync word generation (TX) and detection (RX)
@@ -976,6 +974,10 @@ PUB TXData(nr_bytes, buff_addr)
 '   Any other value is ignored
     writeReg(core#FIFO, nr_bytes, buff_addr)
 
+PUB TXMode
+' Change chip state to transmit
+    OpMode(OPMODE_TX)
+
 PUB TXPower(dBm) | tmp
 ' Set transmit output power, in dBm
 '   Valid values:
@@ -1027,28 +1029,28 @@ PUB WaitRX | tmp
     tmp := (tmp | (1 << core#FLD_RESTARTRX)) & core#PACKETCONFIG2_MASK
     writeReg(core#PACKETCONFIG2, 1, @tmp)
 
-PRI readReg(reg, nr_bytes, buf_addr) | i
+PRI readReg(reg, nr_bytes, buf_addr) | tmp
 ' Read nr_bytes from register 'reg' to address 'buf_addr'
     case reg
         $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
-            outa[_CS] := 0
+            io.Low(_CS)
             spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            repeat i from nr_bytes-1 to 0
-                byte[buf_addr][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
-            outa[_CS] := 1
+            repeat tmp from nr_bytes-1 to 0
+                byte[buf_addr][tmp] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
+            io.High(_CS)
 
         OTHER:
             return FALSE
 
-PRI writeReg(reg, nr_bytes, buf_addr) | i
+PRI writeReg(reg, nr_bytes, buf_addr) | tmp
 ' Write nr_bytes to register 'reg' stored in val
     case reg
         $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
-            outa[_CS] := 0
+            io.Low(_CS)
             spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg|core#W)
-            repeat i from nr_bytes-1 to 0
-                spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][i])
-            outa[_CS] := 1
+            repeat tmp from nr_bytes-1 to 0
+                spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
+            io.High(_CS)
 
         OTHER:
             return FALSE

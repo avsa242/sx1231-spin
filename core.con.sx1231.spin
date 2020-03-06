@@ -3,9 +3,9 @@
     Filename: core.con.sx1231.spin
     Author: Jesse Burt
     Description: Low-level constants
-    Copyright (c) 2019
+    Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Apr 19, 2019
+    Updated Mar 5, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -15,6 +15,7 @@ CON
 ' SPI Configuration
     CPOL                        = 0
     CLK_DELAY                   = 10
+    SCK_MAX_FREQ                = 10_000_000
     MOSI_BITORDER               = 5             'MSBFIRST
     MISO_BITORDER               = 0             'MSBPRE
 

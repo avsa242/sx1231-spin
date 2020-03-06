@@ -23,6 +23,10 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 
 * 1 extra core/cog for the PASM SPI driver
 
+## Compiler compatibility
+
+- [x] OpenSpin (tested with 1.00.81)
+
 ## Limitations
 
 * Very early in development; may malfunction or outright fail to build
@@ -30,6 +34,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 ## TODO
 
 - [x] Verify modulated transmission
+- [ ] Add some simple demos
 - [ ] Add support for reading RSSI
 - [ ] Add support for setting GPIO pin functions
 - [ ] Add support for reading the rest of the IRQ flags
