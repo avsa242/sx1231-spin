@@ -125,6 +125,20 @@ CON
         MASK_LNAGAINSELECT      = LNA_MASK ^ (BITS_LNAGAINSELECT<< FLD_LNAGAINSELECT)
 
     RXBW                        = $19
+    RXBW_MASK                   = $FF
+        FLD_DCCFREQ             = 5
+        FLD_RXBWMANT            = 3
+        FLD_RXBWEXP             = 0
+        FLD_RXBW                = 0
+        BITS_DCCFREQ            = %111
+        BITS_RXBWMANT           = %11
+        BITS_RXBWEXP            = %111
+        BITS_RXBW               = %11111
+        MASK_DCCFREQ            = RXBW_MASK ^ (BITS_DCCFREQ << FLD_DCCFREQ)
+        MASK_RXBWMANT           = RXBW_MASK ^ (BITS_RXBWMANT << FLD_RXBWMANT)
+        MASK_RXBWEXP            = RXBW_MASK ^ (BITS_RXBWEXP << FLD_RXBWEXP)
+        MASK_RXBW               = RXBW_MASK ^ (BITS_RXBW << FLD_RXBW)
+
     AFCBW                       = $1A
     OOKPEAK                     = $1B
     OOKAVG                      = $1C

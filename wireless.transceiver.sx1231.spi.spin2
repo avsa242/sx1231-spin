@@ -890,8 +890,27 @@ PUB RSSI | tmp
     result := ~result
     result >> 1
 
-PUB RXBandwidth(param=-2)
-' dummy method
+PUB RXBandwidth(Hz=-2) | tmp, tmp_m, tmp_e
+' Set receiver channel filter bandwidth, in Hz
+'   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600, 20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000, 166700, 200000, 250000, 333300, 400000, 500000
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#RXBW, 1, @tmp)
+    case Hz
+        2_600..500_000:
+            tmp_e := tmp_m := lookdownz(Hz: 500000, 400000, 333300, 250000, 200000, 166700, 125000, 100000, 83300, 62500, 50000, 41700, 31300, 25000, 20800, 15600, 12500, 10400, 7800, 6300, 5200, 3900, 3100, 2600)
+            tmp_m := lookupz(tmp_m: %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10) << core#FLD_RXBWMANT
+            tmp_e := lookupz(tmp_e: 00, 00, 00, 01, 01, 01, 02, 02, 02, 03, 03, 03, 04, 04, 04, 05, 05, 05, 06, 06, 06, 07, 07, 07)
+            Hz := tmp_m | tmp_e
+        OTHER:
+            tmp.byte[3] := tmp.byte[0] & core#BITS_RXBWEXP
+            tmp.byte[2] := lookupz( (tmp.byte[0] >> core#FLD_RXBWMANT) & core#BITS_RXBWMANT: 16, 20, 24)
+            result := FXOSC / ( tmp.byte[2] * (1 << (tmp.byte[3] + 2)) )
+            return
+
+    tmp &= core#MASK_RXBW
+    tmp := (tmp | Hz) & core#RXBW_MASK
+    writeReg(core#RXBW, 1, @tmp)
 
 PUB RXPayload(nr_bytes, buff_addr)
 ' Read data queued in the RX FIFO
