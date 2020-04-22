@@ -145,6 +145,52 @@ PUB Stop
 
     spi.stop
 
+PUB Defaults | tmp[4]
+' Factory defaults
+    AddressCheck(ADDRCHK_NONE)
+    AFCAuto(FALSE)
+    AFCMethod(AFC_STANDARD)
+    AutoRestartRX(TRUE)
+    BroadcastAddress($00)
+    CarrierFreq(915_000_000)
+    CRCCheckEnabled(TRUE)
+    DataMode(DATAMODE_PACKET)
+    DataRate(4800)
+    DataWhitening(FALSE)
+    Encryption(FALSE)
+    bytefill(@tmp, $00, 16)
+    EncryptionKey(KEY_WR, @tmp)
+    EnterCondition(ENTCOND_NONE)
+    ExitCondition(EXITCOND_NONE)
+    FIFOThreshold(15)
+    FreqDeviation(5000)
+    GaussianFilter(BT_NONE)
+    IntermediateMode(IMODE_SLEEP)
+    Listen(FALSE)
+    LNAGain(LNA_AGC)
+    LNAZInput(200)
+    LowBattLevel(1_835)
+    LowBattMon(FALSE)
+    ManchesterEnc(FALSE)
+    Modulation(MOD_FSK)
+    NodeAddress($00)
+    OCPCurrent(95)
+    OpMode(OPMODE_STDBY)
+    OvercurrentProtection(TRUE)
+    PayloadLen(64)
+    PayloadLenCfg(PKTLEN_FIXED)
+    PreambleLen(3)
+    RampTime(40)
+    RXBandwidth(10_400)
+    Sequencer(OPMODE_AUTO)
+    bytefill(@tmp, $01, 8)
+    SyncWord(SW_WRITE, @tmp)
+    SyncWordEnabled(TRUE)
+    SyncWordLength(4)
+    SyncWordMaxBitErr(0)
+    TXPower(13)
+    TXStartCondition(TXSTART_FIFONOTEMPTY)
+
 PUB AbortListen | tmp
 ' Abort listen mode when used together with Listen(FALSE)
     readReg (core#OPMODE, 1, @tmp)
@@ -399,7 +445,7 @@ PUB DeviceID
 '       $24:    ???
     readReg (core#VERSION, 1, @result)
 
-PUB DVGAGain(param=-2)
+PUB DVGAGain(param)
 ' dummy method
 
 PUB Encryption(enabled) | tmp
@@ -605,7 +651,7 @@ PUB IntermediateMode(mode) | tmp
     tmp := (tmp | mode) & core#AUTOMODES_MASK
     writeReg(core#AUTOMODES, 1, @tmp)
 
-PUB IntFreq(param=-2)
+PUB IntFreq(param)
 ' dummy method
 
 PUB Listen(enabled) | tmp
@@ -906,7 +952,7 @@ PUB RSSI | tmp
 
     readReg(core#RSSIVALUE, 1, @result)
     result := ~result
-    result >> 1
+    result >>= 1
 
 PUB RXBandwidth(Hz) | tmp, tmp_m, tmp_e
 ' Set receiver channel filter bandwidth, in Hz
