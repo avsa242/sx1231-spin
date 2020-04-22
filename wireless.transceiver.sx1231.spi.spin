@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC
     Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Mar 5, 2020
+    Updated Apr 22, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -69,7 +69,7 @@ CON
     IMODE_RX                = %10
     IMODE_TX                = %11
 
-' Conditions for entering and exiting immediate modes
+' Conditions for entering and exiting intermediate modes
     ENTCOND_NONE            = %000
     ENTCOND_FIFONOTEMPTY    = %001
     ENTCOND_FIFOLVL         = %010
@@ -97,8 +97,13 @@ CON
     KEY_WR                  = 1
 
 ' Packet length config
-    PKTFMT_FIXED            = 0
-    PKTFMT_VAR              = 1
+    PKTLEN_FIXED            = 0
+    PKTLEN_VAR              = 1
+
+' Constants for compatibility with other drivers
+    IDLE_RXTX               = 0
+    SYNCMODE_3032_CS        = 0
+    AGC_OFF                 = 0
 
 VAR
 
@@ -231,6 +236,18 @@ PUB AfterTX(next_state)
 ' Defines the state the radio transitions to after a packet is successfully transmitted
     result := IntermediateMode(next_state)
 
+PUB AGCFilterLength(param)
+' dummy method
+
+PUB AGCMode(param)
+' dummy method
+
+PUB AppendStatus(param)
+' dummy method
+
+PUB AutoCal(param)
+' dummy method
+
 PUB AutoRestartRX(enabled) | tmp
 ' Enable automatic RX restart (RSSI phase)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
@@ -286,6 +303,12 @@ PUB CarrierFreq(Hz) | tmp
     tmp := Hz & core#BITS_FRF
     writeReg (core#FRFMSB, 3, @tmp)
 
+PUB CarrierSense(param)
+' dummy method
+
+PUB Channel(param)
+' dummy method
+
 PUB CRCCheckEnabled(enabled) | tmp
 ' Enable CRC calculation (TX) and checking (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
@@ -302,6 +325,9 @@ PUB CRCCheckEnabled(enabled) | tmp
     tmp &= core#MASK_CRCON
     tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
     writeReg(core#PACKETCONFIG1, 1, @tmp)
+
+PUB CRCLength(param)
+' dummy method
 
 PUB DataMode(mode) | tmp
 ' Set data processing mode
@@ -360,6 +386,9 @@ PUB DataWhitening(enabled) | tmp
     tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
     writeReg(core#PACKETCONFIG1, 1, @tmp)
 
+PUB DCBlock(param)
+' dummy method
+
 PUB DeviceID
 ' Read device ID
 '   Returns:
@@ -369,6 +398,9 @@ PUB DeviceID
 '       $23:    V2c
 '       $24:    ???
     readReg (core#VERSION, 1, @result)
+
+PUB DVGAGain(param=-2)
+' dummy method
 
 PUB Encryption(enabled) | tmp
 ' Enable AES encryption/decryption
@@ -504,6 +536,9 @@ PUB FIFOThreshold(bytes) | tmp
     tmp := (tmp | bytes) & core#FIFOTHRESH_MASK
     writeReg(core#FIFOTHRESH, 1, @tmp)
 
+PUB FlushTX
+' dummy method
+
 PUB FreqDeviation(Hz) | tmp
 ' Set carrier deviation, in Hz
 '   Valid values:
@@ -521,6 +556,9 @@ PUB FreqDeviation(Hz) | tmp
             return tmp * FSTEP
 
     writeReg (core#FDEVMSB, 2, @Hz)
+
+PUB FSTX
+' dummy method
 
 PUB GaussianFilter(BT) | tmp
 ' Set Gaussian filter/data shaping parameters
@@ -566,6 +604,9 @@ PUB IntermediateMode(mode) | tmp
     tmp &= core#MASK_INTERMEDIATEMODE
     tmp := (tmp | mode) & core#AUTOMODES_MASK
     writeReg(core#AUTOMODES, 1, @tmp)
+
+PUB IntFreq(param=-2)
+' dummy method
 
 PUB Listen(enabled) | tmp
 ' Enable listen mode
@@ -765,8 +806,8 @@ PUB OvercurrentProtection(enabled) | tmp
 PUB PayloadLen(length) | tmp
 ' Set payload/packet length, in bytes
 '   Behavior differs depending on setting of PacketFormat:
-'       If PacketFormat == PKTFMT_FIXED, this sets payload length
-'       If PacketFormat == PKTFMT_VAR, this sets max length in RX, and is ignored in TX
+'       If PacketFormat == PKTLEN_FIXED, this sets payload length
+'       If PacketFormat == PKTLEN_VAR, this sets max length in RX, and is ignored in TX
 '   Valid values: 0..255
 '   Any other value polls the chip and returns the current setting
     tmp := $00
@@ -781,14 +822,14 @@ PUB PayloadLen(length) | tmp
 PUB PayloadLenCfg(mode) | tmp
 ' Set payload/packet length, in bytes
 '   Behavior differs depending on setting of PacketFormat:
-'       If PacketFormat == PKTFMT_FIXED, this sets payload length
-'       If PacketFormat == PKTFMT_VAR, this sets max length in RX, and is ignored in TX
+'       If PacketFormat == PKTLEN_FIXED, this sets payload length
+'       If PacketFormat == PKTLEN_VAR, this sets max length in RX, and is ignored in TX
 '   Valid values: 0..255
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg (core#PACKETCONFIG1, 1, @tmp)
     case mode
-        PKTFMT_FIXED, PKTFMT_VAR:
+        PKTLEN_FIXED, PKTLEN_VAR:
             mode <<= core#FLD_PACKETFORMAT
         OTHER:
             result := (tmp >> core#FLD_PACKETFORMAT) & %1
@@ -854,6 +895,19 @@ PUB RCOscCal(enabled) | tmp
     tmp := (tmp | enabled) & core#OSC1_MASK
     writeReg (core#OSC1, 1, @tmp)
 
+PUB RSSI | tmp
+' Received Signal Strength Indicator
+'   Returns: Signal strength seen by transceiver, in dBm
+    tmp := %1
+    writeReg(core#RSSICONFIG, 1, @tmp)
+    repeat
+        readReg(core#RSSICONFIG, 1, @tmp)
+    until tmp & %10
+
+    readReg(core#RSSIVALUE, 1, @result)
+    result := ~result
+    result >> 1
+
 PUB RXBandwidth(Hz) | tmp, tmp_m, tmp_e
 ' Set receiver channel filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600, 20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000, 166700, 200000, 250000, 333300, 400000, 500000
@@ -887,6 +941,11 @@ PUB RXMode
 ' Change chip state to RX (receive)
     OpMode (OPMODE_RX)
 
+PUB SensitivityBoost | tmp
+
+    tmp := $2D
+    writeReg(core#TESTLNA, 1, @tmp)
+
 PUB Sequencer(mode) | tmp
 ' Control automatic sequencer
 '   Valid values:
@@ -908,6 +967,9 @@ PUB Sequencer(mode) | tmp
 PUB Sleep
 ' Power down chip
     OpMode(OPMODE_SLEEP)
+
+PUB SyncMode(param)
+' dummy method
 
 PUB SyncWord(rw, buff_addr)
 ' Set sync word to value at buff_addr
@@ -986,19 +1048,15 @@ PUB Temperature | tmp
     else
         return result
 
-PUB TX
-' Change chip state to TX (transmit)
+PUB TXMode
+' Change chip state to transmit
     OpMode(OPMODE_TX)
 
-PUB TXData(nr_bytes, buff_addr)
+PUB TXPayload(nr_bytes, buff_addr)
 ' Queue data to transmit in the TX FIFO
 '   nr_bytes Valid values: 1..66
 '   Any other value is ignored
     writeReg(core#FIFO, nr_bytes, buff_addr)
-
-PUB TXMode
-' Change chip state to transmit
-    OpMode(OPMODE_TX)
 
 PUB TXPower(dBm) | tmp
 ' Set transmit output power, in dBm
@@ -1006,23 +1064,50 @@ PUB TXPower(dBm) | tmp
 '       -18..17
 '   Any other value polls the chip and returns the current setting
     tmp := 0
-    readReg (core#PALEVEL, 1, @tmp)
+    readReg (core#PALEVEL, 1, @tmp.byte[0])
     case dBm
         -18..13:
             dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
-            tmp &= core#MASK_OUTPUTPOWER
-            tmp |= (1 << core#FLD_PA1ON)
+            tmp &= core#MASK_OUTPUTPOWER                                ' Zero out the existing power level setting
+            tmp &= core#MASK_PA0ON                                      '   and all of the PAx bits
+            tmp := tmp & core#MASK_PA1ON & core#MASK_PA2ON              '
+            tmp := tmp | (1 << core#FLD_PA0ON)                          ' Turn on only the PA0 bit
+            tmp.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
+            tmp.byte[2] := core#PA2_NORMAL
         14..17:
-            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            dBm := (dBm + 14) & core#BITS_OUTPUTPOWER
             tmp &= core#MASK_OUTPUTPOWER
-            tmp |= (1 << core#FLD_PA2ON)
+            tmp &= core#MASK_PA0ON
+            tmp := tmp & core#MASK_PA1ON & core#MASK_PA2ON
+            tmp := tmp | (1 << core#FLD_PA1ON) | (1 << core#FLD_PA2ON)
+            tmp.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
+            tmp.byte[2] := core#PA2_NORMAL
+        18..20:
+            dBm := (dBm + 11) & core#BITS_OUTPUTPOWER
+            tmp &= core#MASK_OUTPUTPOWER
+            tmp &= core#MASK_PA0ON
+            tmp := tmp & core#MASK_PA1ON & core#MASK_PA2ON
+            tmp := tmp | (1 << core#FLD_PA1ON) | (1 << core#FLD_PA2ON)  ' Turn on the PA1 and 2 bits
+            tmp.byte[1] := core#PA1_BOOST                               '   and the PA_BOOST circuit
+            tmp.byte[2] := core#PA2_BOOST
         OTHER:
-            result := tmp & core#BITS_OUTPUTPOWER
-            result := result - 18'case pa[012] bitfield
+            result := tmp & core#BITS_OUTPUTPOWER                       ' Determine offset to calculate current
+            case (tmp >> core#FLD_PA2ON) & core#BITS_PA012              ' TXPower by checking which PAx bits are set
+                %100:                                                   ' Only PA0 is set
+                    result -= 18
+                %011, %010:                                             ' PA1 and possibly PA2 are set
+                    readReg(core#TESTPA1, 1, @tmp.byte[1])
+                    readReg(core#TESTPA2, 1, @tmp.byte[2])
+                    if tmp.byte[1] == core#PA1_BOOST and tmp.byte[2] == core#PA2_BOOST
+                        result -= 11                                    ' PA_BOOST is active
+                    else
+                        result -= 14                                    ' PA_BOOST is inactive
             return result
 
     tmp := (tmp | dBm) & core#PALEVEL_MASK
-    writeReg (core#PALEVEL, 1, @tmp)
+    writeReg (core#PALEVEL, 1, @tmp.byte[0])
+    writeReg (core#TESTPA1, 1, @tmp.byte[1])
+    writeReg (core#TESTPA2, 1, @tmp.byte[2])
 
 PUB TXStartCondition(when) | tmp
 ' Define when to begin packet transmission
@@ -1051,27 +1136,27 @@ PUB WaitRX | tmp
     tmp := (tmp | (1 << core#FLD_RESTARTRX)) & core#PACKETCONFIG2_MASK
     writeReg(core#PACKETCONFIG2, 1, @tmp)
 
-PRI readReg(reg, nr_bytes, buf_addr) | tmp
-' Read nr_bytes from register 'reg' to address 'buf_addr'
+PRI readReg(reg, nr_bytes, buff_addr) | tmp
+' Read nr_bytes from register 'reg' to address 'buff_addr'
     case reg
         $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
             io.Low(_CS)
             spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
             repeat tmp from nr_bytes-1 to 0
-                byte[buf_addr][tmp] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
+                byte[buff_addr][tmp] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
             io.High(_CS)
 
         OTHER:
             return FALSE
 
-PRI writeReg(reg, nr_bytes, buf_addr) | tmp
+PRI writeReg(reg, nr_bytes, buff_addr) | tmp
 ' Write nr_bytes to register 'reg' stored in val
     case reg
         $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
             io.Low(_CS)
             spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg|core#W)
             repeat tmp from nr_bytes-1 to 0
-                spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
+                spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buff_addr][tmp])
             io.High(_CS)
 
         OTHER:

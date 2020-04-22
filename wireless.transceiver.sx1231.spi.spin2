@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC (P2 version)
     Copyright (c) 2020
     Started Apr 21, 2020
-    Updated Apr 21, 2020
+    Updated Apr 22, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -69,7 +69,7 @@ CON
     IMODE_RX                = %10
     IMODE_TX                = %11
 
-' Conditions for entering and exiting immediate modes
+' Conditions for entering and exiting intermediate modes
     ENTCOND_NONE            = %000
     ENTCOND_FIFONOTEMPTY    = %001
     ENTCOND_FIFOLVL         = %010
@@ -240,6 +240,9 @@ PUB AGCFilterLength(param)
 PUB AGCMode(param)
 ' dummy method
 
+PUB AppendStatus(param)
+' dummy method
+
 PUB AutoCal(param)
 ' dummy method
 
@@ -301,6 +304,9 @@ PUB CarrierFreq(Hz=-2) | tmp
 PUB CarrierSense(param)
 ' dummy method
 
+PUB Channel(param)
+' dummy method
+
 PUB CRCCheckEnabled(enabled=-2) | tmp
 ' Enable CRC calculation (TX) and checking (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
@@ -317,6 +323,9 @@ PUB CRCCheckEnabled(enabled=-2) | tmp
     tmp &= core#MASK_CRCON
     tmp := (tmp | enabled) & core#PACKETCONFIG1_MASK
     writeReg(core#PACKETCONFIG1, 1, @tmp)
+
+PUB CRCLength(param)
+' dummy method
 
 PUB DataMode(mode=-2) | tmp
 ' Set data processing mode
@@ -525,6 +534,9 @@ PUB FIFOThreshold(bytes=-2) | tmp
     tmp := (tmp | bytes) & core#FIFOTHRESH_MASK
     writeReg(core#FIFOTHRESH, 1, @tmp)
 
+PUB FlushTX
+' dummy method
+
 PUB FreqDeviation(Hz=-2) | tmp
 ' Set carrier deviation, in Hz
 '   Valid values:
@@ -542,6 +554,9 @@ PUB FreqDeviation(Hz=-2) | tmp
             return tmp * FSTEP
 
     writeReg (core#FDEVMSB, 2, @Hz)
+
+PUB FSTX
+' dummy method
 
 PUB GaussianFilter(BT=-2) | tmp
 ' Set Gaussian filter/data shaping parameters
@@ -879,7 +894,8 @@ PUB RCOscCal(enabled=-2) | tmp
     writeReg (core#OSC1, 1, @tmp)
 
 PUB RSSI | tmp
-
+' Received Signal Strength Indicator
+'   Returns: Signal strength seen by transceiver, in dBm
     tmp := %1
     writeReg(core#RSSICONFIG, 1, @tmp)
     repeat
@@ -923,6 +939,11 @@ PUB RXMode
 ' Change chip state to RX (receive)
     OpMode (OPMODE_RX)
 
+PUB SensitivityBoost | tmp
+
+    tmp := $2D
+    writeReg(core#TESTLNA, 1, @tmp)
+
 PUB Sequencer(mode=-2) | tmp
 ' Control automatic sequencer
 '   Valid values:
@@ -940,11 +961,6 @@ PUB Sequencer(mode=-2) | tmp
     tmp &= core#MASK_SEQUENCEROFF
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg (core#OPMODE, 1, @tmp)
-
-PUB SensitivityBoost | tmp
-
-    tmp := $2D
-    writeReg(core#TESTLNA, 1, @tmp)
 
 PUB Sleep
 ' Power down chip
@@ -1046,23 +1062,50 @@ PUB TXPower(dBm=-255) | tmp
 '       -18..17
 '   Any other value polls the chip and returns the current setting
     tmp := 0
-    readReg (core#PALEVEL, 1, @tmp)
+    readReg (core#PALEVEL, 1, @tmp.byte[0])
     case dBm
         -18..13:
             dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
-            tmp &= core#MASK_OUTPUTPOWER
-            tmp |= (1 << core#FLD_PA1ON)
+            tmp &= core#MASK_OUTPUTPOWER                                ' Zero out the existing power level setting
+            tmp &= core#MASK_PA0ON                                      '   and all of the PAx bits
+            tmp := tmp & core#MASK_PA1ON & core#MASK_PA2ON              '
+            tmp := tmp | (1 << core#FLD_PA0ON)                          ' Turn on only the PA0 bit
+            tmp.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
+            tmp.byte[2] := core#PA2_NORMAL
         14..17:
-            dBm := (dBm + 18) & core#BITS_OUTPUTPOWER
+            dBm := (dBm + 14) & core#BITS_OUTPUTPOWER
             tmp &= core#MASK_OUTPUTPOWER
-            tmp |= (1 << core#FLD_PA2ON)
+            tmp &= core#MASK_PA0ON
+            tmp := tmp & core#MASK_PA1ON & core#MASK_PA2ON
+            tmp := tmp | (1 << core#FLD_PA1ON) | (1 << core#FLD_PA2ON)
+            tmp.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
+            tmp.byte[2] := core#PA2_NORMAL
+        18..20:
+            dBm := (dBm + 11) & core#BITS_OUTPUTPOWER
+            tmp &= core#MASK_OUTPUTPOWER
+            tmp &= core#MASK_PA0ON
+            tmp := tmp & core#MASK_PA1ON & core#MASK_PA2ON
+            tmp := tmp | (1 << core#FLD_PA1ON) | (1 << core#FLD_PA2ON)  ' Turn on the PA1 and 2 bits
+            tmp.byte[1] := core#PA1_BOOST                               '   and the PA_BOOST circuit
+            tmp.byte[2] := core#PA2_BOOST
         OTHER:
-            result := tmp & core#BITS_OUTPUTPOWER
-            result := result - 18'case pa[012] bitfield
+            result := tmp & core#BITS_OUTPUTPOWER                       ' Determine offset to calculate current
+            case (tmp >> core#FLD_PA2ON) & core#BITS_PA012              ' TXPower by checking which PAx bits are set
+                %100:                                                   ' Only PA0 is set
+                    result -= 18
+                %011, %010:                                             ' PA1 and possibly PA2 are set
+                    readReg(core#TESTPA1, 1, @tmp.byte[1])
+                    readReg(core#TESTPA2, 1, @tmp.byte[2])
+                    if tmp.byte[1] == core#PA1_BOOST and tmp.byte[2] == core#PA2_BOOST
+                        result -= 11                                    ' PA_BOOST is active
+                    else
+                        result -= 14                                    ' PA_BOOST is inactive
             return result
 
     tmp := (tmp | dBm) & core#PALEVEL_MASK
-    writeReg (core#PALEVEL, 1, @tmp)
+    writeReg (core#PALEVEL, 1, @tmp.byte[0])
+    writeReg (core#TESTPA1, 1, @tmp.byte[1])
+    writeReg (core#TESTPA2, 1, @tmp.byte[2])
 
 PUB TXStartCondition(when=-2) | tmp
 ' Define when to begin packet transmission

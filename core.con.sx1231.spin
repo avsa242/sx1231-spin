@@ -268,8 +268,18 @@ CON
 
     TESTLNA                     = $58
     TESTTCXO                    = $59
+
+    TESTPA1                     = $5A
+        PA1_NORMAL              = $55
+        PA1_BOOST               = $5D
+
+    TESTPA2                     = $5C
+        PA2_NORMAL              = $70
+        PA2_BOOST               = $7C
+
     TESTLLBW                    = $5F
     TESTDAGC                    = $6F
+
     TESTAFC                     = $71
 
 PUB Null
