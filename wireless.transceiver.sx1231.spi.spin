@@ -651,6 +651,27 @@ PUB IntermediateMode(mode) | tmp
     tmp := (tmp | mode) & core#AUTOMODES_MASK
     writeReg(core#AUTOMODES, 1, @tmp)
 
+PUB Interrupt
+' Read interrupt state
+'   Bits:
+'   15  - FIFO is full
+'   14  - FIFO isn't empty
+'   13  - FIFO level exceeds threshold set by FIFOThreshold()
+'   12  - FIFO overrun
+'   11  - Payload sent
+'   10  - Payload ready
+'   9   - RX Payload CRC OK
+'   8   - Battery voltage below level set by LowBattLevel()
+'   7   - OpMode ready
+'   6   - RX mode only: After RSSI, AGC and AFC
+'   5   - TX mode only: after PA ramp up
+'   4   - FS, RX, TX OpModes: PLL locked
+'   3   - RX mode only: RSSI exceeds level set by RSSIThreshold()
+'   2   - Timeout
+'   1   - Entered intermediate mode
+'   0   - Syncword and address (if enabled) match
+    readReg(core#IRQFLAGS1, 2, @result)
+
 PUB IntFreq(param)
 ' dummy method
 
