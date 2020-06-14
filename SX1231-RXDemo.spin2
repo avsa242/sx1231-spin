@@ -1,0 +1,188 @@
+{
+    --------------------------------------------
+    Filename: SX1231-RXDemo.spin2
+    Author: Jesse Burt
+    Description: Simple receive demo of the sx1231 driver (P2 version)
+    Copyright (c) 2020
+    Started Nov 23, 2019
+    Updated Jun 14, 2020
+    See end of file for terms of use.
+    --------------------------------------------
+}
+CON
+
+    _xtlfreq        = cfg._xtlfreq
+    _clkfreq        = cfg._clkfreq_def
+
+' -- User-modifiable constants
+    LED             = cfg.LED1
+    SER_RX          = cfg.SER_RX
+    SER_TX          = cfg.SER_TX
+    SER_BAUD        = 2_000_000
+
+    MISO_PIN        = 33
+    MOSI_PIN        = 35
+    SCK_PIN         = 34
+    CS_PIN          = 32
+    SCK_FREQ        = 1_000_000
+
+    NODE_ADDRESS    = $01
+' --
+
+OBJ
+
+    ser         : "com.serial.terminal.ansi"
+    cfg         : "core.con.boardcfg.p2eval"
+    io          : "io"
+    time        : "time"
+    int         : "string.integer"
+    sx1231      : "wireless.transceiver.sx1231.spi.spin2"
+
+VAR
+
+    long _ser_cog, _sx1231_cog
+    long _fifo[16]
+    byte _pktlen
+
+PUB Main()
+
+    Setup()
+
+'    sx1231.GPIO0 (sx1231.IO_HI_Z)                   ' Set SX1231 GPIO0 to Hi-Z mode
+'    sx1231.AutoCal(sx1231.IDLE_RXTX)                ' Perform auto-calibration when transitioning from Idle to RX
+'    ser.printf("Autocal setting: %d\n", sx1231.AutoCal)
+    sx1231.Idle()
+    
+'    ser.printf("Waiting for radio idle status...")
+'    repeat until sx1231.State == 1
+'    ser.printf("done\n")
+
+    sx1231.CarrierFreq(432_900_000)                 ' Set carrier frequency
+
+'    ser.printf("Waiting for PLL lock...")
+'    repeat until sx1231.PLLLocked == TRUE           ' Don't proceed until PLL is locked
+'    ser.printf("done\n")
+
+    ser.printf("Press any key to begin receiving\n")
+    ser.CharIn()
+
+    sx1231.RXMode()
+
+    repeat
+        ser.position(0, 10)
+        ser.dec(sx1231.RSSI)
+
+    Receive()
+
+    FlashLED(LED, 100)
+
+PUB Receive() | rxbytes, tmp, from_node
+
+    _pktlen := 10
+    sx1231.NodeAddress(NODE_ADDRESS)                ' Set this node's address
+    sx1231.PayloadLenCfg (sx1231.PKTLEN_FIXED)      ' Fixed payload length
+    sx1231.PayloadLen (_pktlen)                     ' Set payload length to _pktlen
+    sx1231.CRCCheckEnabled (TRUE)                   ' Enable CRC checks on received payloads
+'    sx1231.SyncMode (sx1231.SYNCMODE_3032_CS)       ' Accept payload as valid only if:
+                                                    '   At least 30 of 32 syncword bits match
+                                                    '   Carrier sense is above set threshold
+
+    ser.Clear()
+    ser.Position(0, 0)
+    ser.printf("Receive mode - %dHz\n", sx1231.CarrierFreq())
+    ser.printf("Listening for traffic on node address $")
+    ser.Hex(sx1231.NodeAddress(), 2)
+
+    sx1231.AfterRX (sx1231.IMODE_STBY)              ' What state to change the radio to after reception
+    sx1231.AddressCheck (sx1231.ADDRCHK_CHK_NO_BCAST)' Address validation mode
+
+    repeat
+        bytefill (@_fifo, $00, 64)                  ' Clear RX fifo
+
+        sx1231.RXMode()                             ' Change radio state to receive mode
+        ser.Position(0, 5)
+        ser.PrintF("Radio state: ")
+'        ser.Str (@MARC_STATE[17 * sx1231.State])
+
+'        repeat                                      ' Wait to proceed
+'            rxbytes := sx1231.FIFORXBytes
+'        until rxbytes => _pktlen                    ' until we've received at least _pktlen bytes
+
+        sx1231.RXPayload(rxbytes, @_fifo)
+'        sx1231.FlushRX
+
+        from_node := _fifo.byte[1]                  ' Node we've received a packet from
+        ser.Position(0, 9)
+        ser.Printf("Received packet from node $")
+        ser.Hex(from_node, 2)
+        repeat tmp from 2 to rxbytes-1              ' Show received packet, minus the 2 'header' bytes
+            ser.Position(((tmp-1) * 3), 10)
+            ser.Hex(_fifo.byte[tmp], 2)
+            case _fifo.byte[tmp]
+                32..127:
+                    ser.Position(((tmp-1) * 3), 11)
+                    ser.Char(_fifo.byte[tmp])
+                OTHER:
+                    ser.Position(((tmp-1) * 3), 11)
+                    ser.Char(".")
+
+PUB Setup()
+
+    repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
+    ser.Clear()
+    ser.PrintF("Serial terminal started\n")
+    if _sx1231_cog := sx1231.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
+        ser.printf("SX1231 driver started\n")
+    else
+        ser.printf("SX1231 driver failed to start - halting\n")
+        FlashLED (LED, 500)
+
+DAT
+' Radio states
+MARC_STATE  byte    "SLEEP           ", 0 {0}
+            byte    "IDLE            ", 0 {1}
+            byte    "XOFF            ", 0 {2}
+            byte    "VCOON_MC        ", 0 {3}
+            byte    "REGON_MC        ", 0 {4}
+            byte    "MANCAL          ", 0 {5}
+            byte    "VCOON           ", 0 {6}
+            byte    "REGON           ", 0 {7}
+            byte    "STARTCAL        ", 0 {8}
+            byte    "BWBOOST         ", 0 {9}
+            byte    "FS_LOCK         ", 0 {10}
+            byte    "IFADCON         ", 0 {11}
+            byte    "ENDCAL          ", 0 {12}
+            byte    "RX              ", 0 {13}
+            byte    "RX_END          ", 0 {14}
+            byte    "RX_RST          ", 0 {15}
+            byte    "TXRX_SWITCH     ", 0 {16}
+            byte    "RXFIFO_OVERFLOW ", 0 {17}
+            byte    "FSTXON          ", 0 {18}
+            byte    "TX              ", 0 {19}
+            byte    "TX_END          ", 0 {20}
+            byte    "RXRX_SWITCH     ", 0 {21}
+
+#include "lib.utility.spin2"
+
+DAT
+{
+    --------------------------------------------------------------------------------------------------------
+    TERMS OF USE: MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+    associated documentation files (the "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+    following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or substantial
+    portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+    LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    --------------------------------------------------------------------------------------------------------
+}
+
