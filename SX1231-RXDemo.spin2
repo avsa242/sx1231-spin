@@ -33,14 +33,11 @@ OBJ
 
     ser         : "com.serial.terminal.ansi"
     cfg         : "core.con.boardcfg.p2eval"
-    io          : "io"
-    time        : "time"
     int         : "string.integer"
-    sx1231      : "wireless.transceiver.sx1231.spi.spin2"
+    sx1231      : "wireless.transceiver.sx1231.spi"
 
 VAR
 
-    long _ser_cog, _sx1231_cog
     long _fifo[16]
     byte _pktlen
 
@@ -106,7 +103,7 @@ PUB Receive() | rxbytes, tmp, from_node
 
 '        repeat                                      ' Wait to proceed
 '            rxbytes := sx1231.FIFORXBytes
-'        until rxbytes => _pktlen                    ' until we've received at least _pktlen bytes
+'        until rxbytes >= _pktlen                    ' until we've received at least _pktlen bytes
 
         sx1231.RXPayload(rxbytes, @_fifo)
 '        sx1231.FlushRX
@@ -128,10 +125,11 @@ PUB Receive() | rxbytes, tmp, from_node
 
 PUB Setup()
 
-    repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
+    repeat until ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
     ser.Clear()
     ser.PrintF("Serial terminal started\n")
-    if _sx1231_cog := sx1231.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
+
+    if sx1231.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
         ser.printf("SX1231 driver started\n")
     else
         ser.printf("SX1231 driver failed to start - halting\n")
