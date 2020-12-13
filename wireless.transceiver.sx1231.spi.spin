@@ -205,9 +205,8 @@ PUB AddressCheck(mode): curr_mode
         other:
             return ((curr_mode >> core#ADDRFILT) & core#ADDRFILT_BITS)
 
-    curr_mode &= core#ADDRFILT_MASK
-    curr_mode := (curr_mode | mode) & core#PKTCFG1_MASK
-    writereg(core#PKTCFG1, 1, @curr_mode)
+    mode := ((curr_mode & core#ADDRFILT_MASK) | mode) & core#PKTCFG1_MASK
+    writereg(core#PKTCFG1, 1, @mode)
 
 PUB AFCAuto(state): curr_state
 ' Enable automatic AFC
@@ -221,9 +220,8 @@ PUB AFCAuto(state): curr_state
         other:
             return ((curr_state >> core#AFCAUTOON) & %1) == 1
 
-    curr_state &= core#AFCAUTOON_MASK
-    curr_state := (curr_state | state) & core#AFCFEI_MASK
-    writereg(core#AFCFEI, 1, @curr_state)
+    state := ((curr_state & core#AFCAUTOON_MASK) | state) & core#AFCFEI_MASK
+    writereg(core#AFCFEI, 1, @state)
 
 PUB AFCComplete{}: flag
 ' Flag indicating AFC (auto or manual) completed
@@ -244,8 +242,8 @@ PUB AFCMethod(mode): curr_mode
         other:
             return (curr_mode >> core#AFCLOWBETAON) & %1
 
-    curr_mode := (curr_mode | mode) & core#AFCCTRL_MASK
-    writereg(core#AFCCTRL, 1, @curr_mode)
+    mode := ((curr_mode & core#AFCLOWBETAON_MASK) | mode) & CORE#AFCCTRL_MASK
+    writereg(core#AFCCTRL, 1, @mode)
 
 PUB AFCOffset{}: offs
 ' Read AFC frequency offset
@@ -297,9 +295,8 @@ PUB AutoRestartRX(state): curr_state
         other:
             return ((curr_state >> core#AUTORSTARTRXON) & %1) == 1
 
-    curr_state &= core#AUTORSTARTRXON
-    curr_state := (curr_state | state) & core#PKTCFG2_MASK
-    writereg(core#PKTCFG2, 1, @curr_state)
+    state := ((curr_state & core#AUTORSTARTRXON_MASK) | state) & core#PKTCFG2_MASK
+    writereg(core#PKTCFG2, 1, @state)
 
 PUB BattLow{}: flag
 ' Flag indicating battery voltage low
@@ -311,14 +308,13 @@ PUB BroadcastAddress(addr): curr_addr
 ' Set broadcast address
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
-    curr_addr := 0
-    readreg(core#BCASTADRS, 1, @curr_addr)
     case addr
         $00..$FF:
+            writereg(core#BCASTADRS, 1, @addr)
         other:
-            return curr_addr
-
-    writereg(core#BCASTADRS, 1, @addr)
+            curr_addr := 0
+            readreg(core#BCASTADRS, 1, @curr_addr)
+            return
 
 PUB CarrierFreq(freq): curr_freq
 ' Set Carrier frequency, in Hz
@@ -326,16 +322,13 @@ PUB CarrierFreq(freq): curr_freq
 '       290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Set value will be rounded
-    readreg(core#FRFMSB, 3, @curr_freq)'XXX move to get case
     case freq
         290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
-            freq := freq / FSTEP
-            freq &= core#FRF_MASK
+            freq := (freq / FSTEP) & core#FRF_MASK
+            writereg(core#FRFMSB, 3, @freq)
         other:
+            readreg(core#FRFMSB, 3, @curr_freq)
             return (curr_freq & core#FRF_MASK) * FSTEP
-
-    curr_freq := freq & core#FRF_MASK   'XXX move to set case
-    writereg(core#FRFMSB, 3, @curr_freq)
 
 PUB CarrierSense(param)
 ' dummy method
@@ -355,9 +348,8 @@ PUB CRCCheckEnabled(state): curr_state
         other:
             return ((curr_state >> core#CRCON) & %1) == 1
 
-    curr_state &= core#CRCON_MASK
-    curr_state := (curr_state | state) & core#PKTCFG1_MASK
-    writereg(core#PKTCFG1, 1, @curr_state)
+    state := ((curr_state & core#CRCON_MASK) | state) & core#PKTCFG1_MASK
+    writereg(core#PKTCFG1, 1, @state)
 
 PUB CRCLength(param)
 ' dummy method
@@ -376,9 +368,8 @@ PUB DataMode(mode): curr_mode
         other:
             return (curr_mode >> core#DATAMODE) & core#DATAMODE_BITS
 
-    curr_mode &= core#DATAMODE_MASK
-    curr_mode := (curr_mode | mode) & core#DATAMOD_MASK
-    writereg(core#DATAMOD, 1, @curr_mode)
+    mode := ((curr_mode & core#DATAMODE_MASK) | mode) & core#DATAMOD_MASK
+    writereg(core#DATAMOD, 1, @mode)
 
 PUB DataRate(rate): curr_rate
 ' Set on-air data rate, in bits per second
@@ -387,16 +378,13 @@ PUB DataRate(rate): curr_rate
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Result will be rounded
 '   NOTE: Effective data rate will be halved if Manchester encoding is used
-    readreg(core#BITRATEMSB, 2, @curr_rate)'XXX move to get case
     case rate
         1_200..300_000:
-            rate := FXOSC / rate
+            rate := (FXOSC / rate) & core#BITRATE_MASK
+            writereg(core#BITRATEMSB, 2, @rate)
         other:
+            readreg(core#BITRATEMSB, 2, @curr_rate)
             return FXOSC / curr_rate
-
-    curr_rate := rate & core#BITRATE_MASK 'XXX move to set case
-    writereg(core#BITRATEMSB, 2, @curr_rate)
-    return curr_rate'XXX why?
 
 PUB DataWhitening(state): curr_state
 ' Enable data whitening
@@ -413,8 +401,7 @@ PUB DataWhitening(state): curr_state
             curr_state := ((curr_state >> core#DCFREE) & core#DCFREE_BITS)
             return (curr_state == DCFREE_WHITE)
 
-    curr_state &= core#DCFREE_MASK
-    curr_state := (curr_state | state) & core#PKTCFG1_MASK
+    state := ((curr_state & core#DCFREE_MASK) | state) & core#PKTCFG1_MASK
     writereg(core#PKTCFG1, 1, @curr_state)
 
 PUB DCBlock(param)
@@ -446,9 +433,8 @@ PUB Encryption(state): curr_state
         other:
             return (curr_state & %1) == 1
 
-    curr_state &= core#AESON_MASK
-    curr_state := (curr_state | state) & core#PKTCFG2_MASK
-    writereg(core#PKTCFG2, 1, @curr_state)
+    state := ((curr_state & core#AESON_MASK) | state) & core#PKTCFG2_MASK
+    writereg(core#PKTCFG2, 1, @state)
 
 PUB EncryptionKey(rw, ptr_buff) | tmp
 ' Set AES 128-bit encryption key
@@ -483,9 +469,8 @@ PUB EnterCondition(cond): curr_cond
         other:
             return (curr_cond >> core#ENTCOND) & core#ENTCOND_BITS
 
-    curr_cond &= core#ENTCOND_MASK
-    curr_cond := (curr_cond | cond) & core#AUTOMODES_MASK
-    writereg(core#AUTOMODES, 1, @curr_cond)
+    cond := ((curr_cond & core#ENTCOND_MASK) | cond) & core#AUTOMODES_MASK
+    writereg(core#AUTOMODES, 1, @cond)
 
 PUB ExitCondition(cond): curr_cond
 ' Set interrupt condition for entering intermediate mode
@@ -507,9 +492,8 @@ PUB ExitCondition(cond): curr_cond
         other:
             return (curr_cond >> core#EXITCOND) & core#EXITCOND_BITS
 
-    curr_cond &= core#EXITCOND_MASK
-    curr_cond := (curr_cond | cond) & core#AUTOMODES_MASK
-    writereg(core#AUTOMODES, 1, @curr_cond)
+    cond := ((curr_cond & core#EXITCOND_MASK) | cond) & core#AUTOMODES_MASK
+    writereg(core#AUTOMODES, 1, @cond)
 
 PUB FEIComplete{}: flag
 ' Flag indicating FEI measurement complete
@@ -564,9 +548,8 @@ PUB FIFOThreshold(thresh): curr_thr
         other:
             return curr_thr & core#FIFOTHRESHOLD_BITS
 
-    curr_thr &= core#FIFOTHRESHOLD_MASK
-    curr_thr := (curr_thr | thresh) & core#FIFOTHRESH_MASK
-    writereg(core#FIFOTHRESH, 1, @curr_thr)
+    thresh := ((curr_thr & core#FIFOTHRESHOLD_MASK) | thresh) & core#FIFOTHRESH_MASK
+    writereg(core#FIFOTHRESH, 1, @thresh)
 
 PUB FlushTX{}
 ' dummy method
@@ -606,9 +589,8 @@ PUB GaussianFilter(param): curr_param
         other:
             return (curr_param >> core#MODSHP) & core#MODSHP_BITS
 
-    curr_param &= core#MODSHP_MASK
-    curr_param := (curr_param | param) & core#DATAMOD_MASK
-    writereg(core#DATAMOD, 1, @curr_param)
+    param := ((curr_param & core#MODSHP_MASK) | param) & core#DATAMOD_MASK
+    writereg(core#DATAMOD, 1, @param)
 
 PUB Idle{}
 ' Change chip state to idle (standby)
@@ -630,9 +612,8 @@ PUB IntermediateMode(mode): curr_mode
         other:
             return (curr_mode >> core#INTMDTMODE) & core#INTMDTMODE_BITS
 
-    curr_mode &= core#INTMDTMODE_MASK
-    curr_mode := (curr_mode | mode) & core#AUTOMODES_MASK
-    writereg(core#AUTOMODES, 1, @curr_mode)
+    mode := ((curr_mode & core#INTMDTMODE_MASK) | mode) & core#AUTOMODES_MASK
+    writereg(core#AUTOMODES, 1, @mode)
 
 PUB Interrupt{}: mask
 ' Read interrupt state
@@ -666,13 +647,12 @@ PUB Listen(state): curr_state
     readreg(core#OPMODE, 1, @curr_state)
     case ||(state)
         0, 1:
-            state := (||(state)) << core#LISTENON
+            state := ||(state) << core#LISTENON
         other:
             return ((curr_state >> core#LISTENON) & %1) == 1
 
-    curr_state &= core#LISTENON_MASK
-    curr_state := (curr_state | state) & core#OPMODE_MASK
-    writereg(core#OPMODE, 1, @curr_state)
+    state := ((curr_state & core#LISTENON_MASK) | state) & core#OPMODE_MASK
+    writereg(core#OPMODE, 1, @state)
 
 PUB LNAGain(gain): curr_gain
 ' Set LNA gain, in dB relative to highest gain
@@ -693,9 +673,8 @@ PUB LNAGain(gain): curr_gain
             curr_gain := curr_gain & core#LNAGAINSEL_BITS
             return lookupz(curr_gain: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
 
-    curr_gain &= core#LNAGAINSEL_MASK
-    curr_gain := (curr_gain | gain) & core#LNA_MASK
-    writereg(core#LNA, 1, @curr_gain)
+    gain := ((curr_gain & core#LNAGAINSEL_MASK) | gain) & core#LNA_MASK
+    writereg(core#LNA, 1, @gain)
 
 PUB LNAZInput(impedance): curr_imp
 ' Set LNA's input impedance, in ohms
@@ -710,10 +689,8 @@ PUB LNAZInput(impedance): curr_imp
             curr_imp := (curr_imp >> core#LNAZIN) & %1
             return lookupz(curr_imp: 50, 200)
 
-    curr_imp &= core#LNAZIN_MASK
-    curr_imp := (curr_imp | impedance) & core#LNA_MASK
-    writereg(core#LNA, 1, @curr_imp)
-
+    impedance := ((curr_imp & core#LNAZIN_MASK) | impedance) & core#LNA_MASK
+    writereg(core#LNA, 1, @impedance)
 
 PUB LowBattLevel(lvl): curr_lvl
 ' Set low battery threshold, in millivolts
@@ -728,9 +705,8 @@ PUB LowBattLevel(lvl): curr_lvl
             curr_lvl &= core#LOWBATTRIM_BITS
             return lookupz(curr_lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
 
-    curr_lvl &= core#LOWBATTRIM_MASK
-    curr_lvl := (curr_lvl | lvl) & core#LOWBAT_MASK
-    writereg(core#LOWBAT, 1, @curr_lvl)
+    lvl := ((curr_lvl & core#LOWBATTRIM_MASK) | lvl) & core#LOWBAT_MASK
+    writereg(core#LOWBAT, 1, @lvl)
 
 PUB LowBattMon(state): curr_state
 ' Enable low battery detector signal
@@ -743,9 +719,8 @@ PUB LowBattMon(state): curr_state
         other:
             return ((curr_state >> core#LOWBATON) & %1) == 1
 
-    curr_state &= core#LOWBATON_MASK
-    curr_state := (curr_state | state) & core#LOWBAT_MASK
-    writereg(core#LOWBAT, 1, @curr_state)
+    state := ((curr_state & core#LOWBAT_MASK) | state) & core#LOWBAT_MASK
+    writereg(core#LOWBAT, 1, @state)
 
 PUB ManchesterEnc(state): curr_state
 ' Enable Manchester encoding/decoding
@@ -762,9 +737,8 @@ PUB ManchesterEnc(state): curr_state
             curr_state := ((curr_state >> core#DCFREE) & core#DCFREE_BITS)
             return (curr_state == DCFREE_MANCH)
 
-    curr_state &= core#DCFREE_MASK
-    curr_state := (curr_state | state) & core#PKTCFG1_MASK
-    writereg(core#PKTCFG1, 1, @curr_state)
+    state := ((curr_state & core#DCFREE_MASK) | state) & core#PKTCFG1_MASK
+    writereg(core#PKTCFG1, 1, @state)
 
 PUB Modulation(mode): curr_mode
 ' Set modulation mode
@@ -779,39 +753,36 @@ PUB Modulation(mode): curr_mode
         other:
             return (curr_mode >> core#MODTYPE) & core#MODTYPE_BITS
 
-    curr_mode &= core#MODTYPE_MASK
-    curr_mode := (curr_mode | mode) & core#DATAMOD_MASK
-    writereg(core#DATAMOD, 1, @curr_mode)
+    mode := ((curr_mode & core#MODTYPE_MASK) | mode) & core#DATAMOD_MASK
+    writereg(core#DATAMOD, 1, @mode)
 
 PUB NodeAddress(addr): curr_addr
 ' Set node address
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
-    curr_addr := 0
-    readreg(core#NODEADRS, 1, @curr_addr)'XXX MOVE TO GET CASE
     case addr
         $00..$FF:
+            writereg(core#NODEADRS, 1, @addr)
         other:
-            return curr_addr
+            curr_addr := 0
+            readreg(core#NODEADRS, 1, @curr_addr)
+            return
 
-    writereg(core#NODEADRS, 1, @addr)'XXX MOVE TO SET CASE
-
-PUB OCPCurrent(current): curr_val
+PUB OCPCurrent(lvl): curr_lvl
 ' Set PA overcurrent protection level, in milliamps
 '   Valid values:
 '       45..120 (Default: 95)
-'   NOTE: Set value will be rounded to the nearest 5current
+'   NOTE: Set value will be rounded to the nearest 5mA
 '   Any other value polls the chip and returns the current setting
-    readreg(core#OCP, 1, @curr_val)
-    case current
+    readreg(core#OCP, 1, @curr_lvl)
+    case lvl
         45..120:
-            current := (current-45)/5 & core#OCPTRIM
+            lvl := (lvl-45)/5 & core#OCPTRIM
         other:
-            return 45 + 5 * (curr_val & core#OCPTRIM_BITS)
+            return 45 + 5 * (curr_lvl & core#OCPTRIM_BITS)
 
-    curr_val &= core#OCPTRIM_MASK
-    curr_val := (curr_val | current) & core#OCP_MASK
-    writereg(core#OCP, 1, @curr_val)
+    lvl := ((curr_lvl & core#OCPTRIM_MASK) | lvl) & core#OCP_MASK
+    writereg(core#OCP, 1, @lvl)
 
 PUB OpMode(mode): curr_mode
 ' Set operating mode
@@ -829,9 +800,8 @@ PUB OpMode(mode): curr_mode
         other:
             return (curr_mode >> core#MODE) & core#MODE_BITS
 
-    curr_mode &= core#MODE_MASK
-    curr_mode := (curr_mode | mode) & core#OPMODE_MASK
-    writereg(core#OPMODE, 1, @curr_mode)
+    mode := ((curr_mode & core#MODE_MASK) | mode) & core#OPMODE_MASK
+    writereg(core#OPMODE, 1, @mode)
 
 PUB OvercurrentProtection(state): curr_state
 ' Enable PA overcurrent protection
@@ -844,32 +814,29 @@ PUB OvercurrentProtection(state): curr_state
         other:
             return ((curr_state >> core#OCPON) & %1) == 1
 
-    curr_state &= core#OCPON_MASK
-    curr_state := (curr_state | state) & core#OCP_MASK
-    writereg(core#OCP, 1, @curr_state)
+    state := ((curr_state & core#OCPON_MASK) | state) & core#OCP_MASK
+    writereg(core#OCP, 1, @state)
 
 PUB PayloadLen(length): curr_len
 ' Set payload/packet length, in bytes
-'   Behavior differs depending on setting of PacketFormat:
-'       If PacketFormat == PKTLEN_FIXED, this sets payload length
-'       If PacketFormat == PKTLEN_VAR, this sets max length in RX, and is ignored in TX
+'   Behavior differs depending on setting of PayloadLenCfg():
+'       If PKTLEN_FIXED, this sets payload length
+'       If PKTLEN_VAR, this sets max length in RX, and is ignored in TX
 '   Valid values: 0..255
 '   Any other value polls the chip and returns the current setting
-    curr_len := 0
-    readreg(core#PAYLOADLENGTH, 1, @curr_len)'XXX MOVE TO GET CASE
     case length
         0..255:
+            writereg(core#PAYLOADLENGTH, 1, @length)
         other:
-            return curr_len
-
-    writereg(core#PAYLOADLENGTH, 1, @length)'XXX MOVE TO SET CASE
+            curr_len := 0
+            readreg(core#PAYLOADLENGTH, 1, @curr_len)
+            return
 
 PUB PayloadLenCfg(mode): curr_mode
-' Set payload/packet length, in bytes
-'   Behavior differs depending on setting of PacketFormat:
-'       If PacketFormat == PKTLEN_FIXED, this sets payload length
-'       If PacketFormat == PKTLEN_VAR, this sets max length in RX, and is ignored in TX
-'   Valid values: 0..255
+' Set payload/packet length mode
+'   Valid values:
+'       PKTLEN_FIXED: fixed payload length
+'       PKTLEN_VAR: variable payload length
 '   Any other value polls the chip and returns the current setting
     curr_mode := 0
     readreg(core#PKTCFG1, 1, @curr_mode)
@@ -879,9 +846,8 @@ PUB PayloadLenCfg(mode): curr_mode
         other:
             return (curr_mode >> core#PKTFORMAT) & %1
 
-    curr_mode &= core#PKTFORMAT
-    curr_mode := (curr_mode | mode) & core#PKTCFG1_MASK
-    writereg(core#PKTCFG1, 1, @curr_mode)
+    mode := ((curr_mode & core#PKTFORMAT) | mode) & core#PKTCFG1_MASK
+    writereg(core#PKTCFG1, 1, @mode)
 
 PUB PayloadSent{}: flag
 ' Flag indicating packet sent
@@ -897,30 +863,27 @@ PUB PreambleLen(length): curr_len
 ' Set number of length in bytes
 '   Valid values: 0..65535
 '   Any other value polls the chip and returns the current setting
-    curr_len := 0
-    readreg(core#PREAMBLEMSB, 2, @curr_len)'XXX MOVE TO GET CASE
     case length
         0..65535:
+            writereg(core#PREAMBLEMSB, 2, @length)
         other:
-            return curr_len
-
-    writereg(core#PREAMBLEMSB, 2, @length)'XXX MOVE TO SET CASE
+            curr_len := 0
+            readreg(core#PREAMBLEMSB, 2, @curr_len)
+            return
 
 PUB RampTime(rtime): curr_rtime
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
 '       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
 '   Any other value polls the chip and returns the current setting
-    readreg(core#PARAMP, 1, @curr_rtime)'XXX MOVE TO GET CASE
     case rtime := lookdown(rtime: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
         1..16:
-            rtime := (rtime-1) & core#PARAMP
+            rtime := ((rtime-1) & core#PA_RAMP_BITS) & core#PARAMP_MASK
+            writereg(core#PARAMP, 1, @rtime)
         other:
+            readreg(core#PARAMP, 1, @curr_rtime)
             curr_rtime := curr_rtime & core#PA_RAMP_BITS
             return lookupz(curr_rtime: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
-
-    curr_rtime := rtime & core#PARAMP_MASK'XXX MOVE TO SET CASE
-    writereg(core#PARAMP, 1, @curr_rtime)
 
 PUB RCOscCal(state): curr_state
 ' Trigger calibration of RC oscillator
@@ -937,8 +900,8 @@ PUB RCOscCal(state): curr_state
         other:
             return ((curr_state >> core#RCCALDONE) & %1) == 1
 
-    curr_state := (curr_state | state) & core#OSC1_MASK
-    writereg(core#OSC1, 1, @curr_state)
+    state := (curr_state | state) & core#OSC1_MASK
+    writereg(core#OSC1, 1, @state)
 
 PUB RSSI{}: level | tmp
 ' Received Signal Strength Indicator
@@ -957,8 +920,8 @@ PUB RXBandwidth(bw): curr_bw | bw_m, bw_e
 ' Set receiver channel filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600, 20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000, 166700, 200000, 250000, 333300, 400000, 500000
 '   Any other value polls the chip and returns the current setting
-    bw := 0
-    readreg(core#RXBW, 1, @bw)
+    curr_bw := 0
+    readreg(core#RXBW, 1, @curr_bw)
     case bw
         2_600..500_000:
             bw_e := bw_m := lookdownz(bw: 500000, 400000, 333300, 250000, 200000, 166700, 125000, 100000, 83300, 62500, 50000, 41700, 31300, 25000, 20800, 15600, 12500, 10400, 7800, 6300, 5200, 3900, 3100, 2600)
@@ -970,8 +933,7 @@ PUB RXBandwidth(bw): curr_bw | bw_m, bw_e
             curr_bw.byte[2] := lookupz( (curr_bw.byte[0] >> core#RXBWMANT) & core#RXBWMANT_BITS: 16, 20, 24)' XXX BREAK APART
             return FXOSC / ( curr_bw.byte[2] * (1 << (curr_bw.byte[3] + 2)) )
 
-    bw &= core#RXBW_MASK
-    bw := (bw | bw) & core#RXBW_MASK
+    bw := ((curr_bw & core#RX_BW_MASK) | bw) & core#RXBW_MASK
     writereg(core#RXBW, 1, @bw)
 
 PUB RXPayload(nr_bytes, ptr_buff)
@@ -983,7 +945,7 @@ PUB RXPayload(nr_bytes, ptr_buff)
 
 PUB RXMode{}
 ' Change chip state to RX (receive)
-    OpMode (OPMODE_RX)
+    opmode(OPMODE_RX)
 
 PUB SensitivityBoost{} | tmp
 
@@ -1003,13 +965,12 @@ PUB Sequencer(mode): curr_mode
         other:
             return (curr_mode >> core#SEQOFF) & %1
 
-    curr_mode &= core#SEQOFF_MASK
-    curr_mode := (curr_mode | mode) & core#OPMODE_MASK
-    writereg(core#OPMODE, 1, @curr_mode)
+    mode := ((curr_mode & core#SEQOFF_MASK) | mode) & core#OPMODE_MASK
+    writereg(core#OPMODE, 1, @mode)
 
 PUB Sleep{}
 ' Power down chip
-    OpMode(OPMODE_SLEEP)
+    opmode(OPMODE_SLEEP)
 
 PUB SyncMode(param)
 ' dummy method
@@ -1039,9 +1000,8 @@ PUB SyncWordEnabled(state): curr_state
         other:
             return ((curr_state >> core#SYNCON) & %1) == 1
 
-    curr_state &= core#SYNCON_MASK
-    curr_state := (curr_state | state) & core#SYNCCFG_MASK
-    writereg(core#SYNCCFG, 1, @curr_state)
+    state := ((curr_state & core#SYNCON_MASK) | state) & core#SYNCCFG_MASK
+    writereg(core#SYNCCFG, 1, @state)
 
 PUB SyncWordLength(length): curr_len
 ' Set number of length in sync word
@@ -1055,9 +1015,8 @@ PUB SyncWordLength(length): curr_len
         other:
             return ((curr_len >> core#SYNCSIZE) & core#SYNCSIZE) + 1
 
-    curr_len &= core#SYNCSIZE_MASK
-    curr_len := (curr_len | length) & core#SYNCCFG_MASK
-    writereg(core#SYNCCFG, 1, @curr_len)
+    length := ((curr_len & core#SYNCSIZE_MASK) | length) & core#SYNCCFG_MASK
+    writereg(core#SYNCCFG, 1, @length)
 
 PUB SyncWordMaxBitErr(bits): curr_bits
 ' Set maximum number of tolerated bit errors in sync word
@@ -1070,9 +1029,8 @@ PUB SyncWordMaxBitErr(bits): curr_bits
         other:
             return (curr_bits & core#SYNCTOL)
 
-    curr_bits &= core#SYNCTOL_MASK
-    curr_bits := (curr_bits | bits) & core#SYNCCFG_MASK
-    writereg(core#SYNCCFG, 1, @curr_bits)
+    bits := ((curr_bits & core#SYNCTOL_MASK) | bits) & core#SYNCCFG_MASK
+    writereg(core#SYNCCFG, 1, @bits)
 
 PUB Temperature{}: temp | tmp
 ' Read temperature
@@ -1111,40 +1069,38 @@ PUB TXPower(pwr): curr_pwr
     case pwr
         -18..13:
             pwr := (pwr + 18) & core#OUTPWR
-            curr_pwr &= core#OUTPWR_MASK                                ' Zero out the existing power level setting
-            curr_pwr &= core#PA0ON_MASK                                      '   and all of the PAx bits
-            curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK              '
-            curr_pwr := curr_pwr | (1 << core#PA0ON)                          ' Turn on only the PA0 bit
-            curr_pwr.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
+            ' zero out the existing power level setting and PAx bits
+            curr_pwr := curr_pwr & core#OUTPWR_MASK & core#PA0ON_MASK
+            curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK
+            curr_pwr |= (1 << core#PA0ON)       ' Turn on only the PA0 bit
+            curr_pwr.byte[1] := core#PA1_NORMAL ' Turn off the PA_BOOST circuit
             curr_pwr.byte[2] := core#PA2_NORMAL
         14..17:
             pwr := (pwr + 14) & core#OUTPWR_MASK
-            curr_pwr &= core#OUTPWR_MASK
-            curr_pwr &= core#PA0ON_MASK
+            curr_pwr := curr_pwr & core#OUTPWR_MASK & core#PA0ON_MASK
             curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK
-            curr_pwr := curr_pwr | (1 << core#PA1ON) | (1 << core#PA2ON)
-            curr_pwr.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
+            curr_pwr |= (1 << core#PA1ON) | (1 << core#PA2ON)
+            curr_pwr.byte[1] := core#PA1_NORMAL ' Turn off the PA_BOOST circuit
             curr_pwr.byte[2] := core#PA2_NORMAL
         18..20:
             pwr := (pwr + 11) & core#OUTPWR_MASK
-            curr_pwr &= core#OUTPWR_MASK
-            curr_pwr &= core#PA0ON_MASK
+            curr_pwr := curr_pwr & core#OUTPWR_MASK & core#PA0ON_MASK
             curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK
-            curr_pwr := curr_pwr | (1 << core#PA1ON) | (1 << core#PA2ON)  ' Turn on the PA1 and 2 bits
-            curr_pwr.byte[1] := core#PA1_BOOST                               '   and the PA_BOOST circuit
+            curr_pwr := curr_pwr | (1 << core#PA1ON) | (1 << core#PA2ON)' Turn on the PA1 and 2 bits
+            curr_pwr.byte[1] := core#PA1_BOOST  '   and the PA_BOOST circuit
             curr_pwr.byte[2] := core#PA2_BOOST
         other:
-            curr_pwr := curr_pwr & core#OUTPWR_BITS                       ' Determine offset to calculate current
-            case (curr_pwr >> core#PA2ON) & core#PA012_BITS              ' TXPower by checking which PAx bits are set
-                %100:                                                   ' Only PA0 is set
+            curr_pwr := curr_pwr & core#OUTPWR_BITS ' Determine offset to calculate current
+            case (curr_pwr >> core#PA2ON) & core#PA012_BITS' TXPower by checking which PAx bits are set
+                %100:                           ' Only PA0 is set
                     curr_pwr -= 18
-                %011, %010:                                             ' PA1 and possibly PA2 are set
+                %011, %010:                     ' PA1 and possibly PA2 are set
                     readreg(core#TESTPA1, 1, @curr_pwr.byte[1])
                     readreg(core#TESTPA2, 1, @curr_pwr.byte[2])
                     if curr_pwr.byte[1] == core#PA1_BOOST and curr_pwr.byte[2] == core#PA2_BOOST
-                        curr_pwr -= 11                                    ' PA_BOOST is active
+                        curr_pwr -= 11          ' PA_BOOST is active
                     else
-                        curr_pwr -= 14                                    ' PA_BOOST is inactive
+                        curr_pwr -= 14          ' PA_BOOST is inactive
             return
 
     curr_pwr := (curr_pwr | pwr) & core#PALVL_MASK
@@ -1166,9 +1122,8 @@ PUB TXStartCondition(cond): curr_cond
         other:
             return (curr_cond >> core#TXSTARTCOND) & %1
 
-    curr_cond &= core#TXSTARTCOND_MASK
-    curr_cond := (curr_cond | cond) & core#FIFOTHRESH_MASK
-    writereg(core#FIFOTHRESH, 1, @curr_cond)
+    cond := ((curr_cond & core#TXSTARTCOND_MASK) | cond) & core#FIFOTHRESH_MASK
+    writereg(core#FIFOTHRESH, 1, @cond)
 
 PUB WaitRX{} | tmp
 ' Force the receiver in wait mode (continuous RX)

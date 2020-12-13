@@ -69,6 +69,7 @@ CON
     AFCCTRL                     = $0B
     AFCCTRL_MASK                = $20
         AFCLOWBETAON            = 5
+        AFCLOWBETAON_MASK       = (1 << AFCLOWBETAON) ^ AFCCTRL_MASK
 
     LOWBAT                      = $0C
     LOWBAT_MASK                 = $1F
