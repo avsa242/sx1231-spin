@@ -216,9 +216,9 @@ PUB AFCAuto(enabled) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := 0
     readreg(core#AFCFEI, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0, 1:
-            enabled := (||enabled << core#AFCAUTOON)
+            enabled := (||(enabled) << core#AFCAUTOON)
         other:
             result := ((tmp >> core#AFCAUTOON) & %1) * TRUE
             return
@@ -293,9 +293,9 @@ PUB AutoRestartRX(enabled) | tmp
 '   NOTE: Restart occurs after payload is ready and the packet has been read from the FIFO
     tmp := 0
     readreg(core#PKTCFG2, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0, 1:
-            enabled := ||enabled << core#AUTORSTARTRXON
+            enabled := ||(enabled) << core#AUTORSTARTRXON
         other:
             result := ((tmp >> core#AUTORSTARTRXON) & %1) * TRUE
             return
@@ -353,9 +353,9 @@ PUB CRCCheckEnabled(enabled) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := 0
     readreg(core#PKTCFG1, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0, 1:
-            enabled := (||enabled & %1) << core#CRCON
+            enabled := (||(enabled) & %1) << core#CRCON
         other:
             result := ((tmp >> core#CRCON) & %1) * TRUE
             return
@@ -412,7 +412,7 @@ PUB DataWhitening(enabled) | tmp
 '   NOTE: This setting and ManchesterEnc are mutually exclusive; enabling this will disable ManchesterEnc
     tmp := 0
     readreg(core#PKTCFG1, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0:
         1:
             enabled := DCFREE_WHITE << core#DCFREE
@@ -447,9 +447,9 @@ PUB Encryption(enabled) | tmp
 '   NOTE: Encryption is limited to payloads of a maximum of 66 bytes
     tmp := 0
     readreg(core#PKTCFG2, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0, 1:
-            enabled := ||enabled & %1
+            enabled := ||(enabled) & %1
         other:
             result := (tmp & %1) * TRUE
             return
@@ -673,9 +673,9 @@ PUB Listen(enabled) | tmp
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Should be enable when in standby mode
     readreg(core#OPMODE, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0, 1:
-            enabled := (||enabled) << core#LISTENON
+            enabled := (||(enabled)) << core#LISTENON
         other:
             result := ((tmp >> core#LISTENON) & %1) * TRUE
             return result
@@ -747,9 +747,9 @@ PUB LowBattMon(enabled) | tmp
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     readreg(core#LOWBAT, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0, 1:
-            enabled := (||enabled) << core#LOWBATON
+            enabled := (||(enabled)) << core#LOWBATON
         other:
             result := ((tmp >> core#LOWBATON) & %1) * TRUE
             return result
@@ -765,7 +765,7 @@ PUB ManchesterEnc(enabled) | tmp
 '   NOTE: This setting and DataWhitening are mutually exclusive; enabling this will disable DataWhitening
     tmp := 0
     readreg(core#PKTCFG1, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0:
         1:
             enabled := DCFREE_MANCH << core#DCFREE
@@ -851,9 +851,9 @@ PUB OvercurrentProtection(enabled) | tmp
 '   Valid values: *TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     readreg(core#OCP, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         0, 1:
-            enabled := (||enabled) << core#OCPON
+            enabled := (||(enabled)) << core#OCPON
         other:
             result := ((tmp >> core#OCPON) & %1) * TRUE
             return result
@@ -944,9 +944,9 @@ PUB RCOscCal(enabled) | tmp
 '       FALSE: RC calibration in progress
 '       TRUE: RC calibration complete
     readreg(core#OSC1, 1, @tmp)
-    case ||enabled
+    case ||(enabled)
         1:
-            enabled := (||enabled) << core#RCCALSTART
+            enabled := (||(enabled)) << core#RCCALSTART
         other:
             result := ((tmp >> core#RCCALDONE) & %1) * TRUE
             return result
