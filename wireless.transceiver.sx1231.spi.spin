@@ -203,8 +203,7 @@ PUB AddressCheck(mode): curr_mode
         ADDRCHK_NONE, ADDRCHK_CHK_NO_BCAST, ADDRCHK_CHK_BCAST:
             mode <<= core#ADDRFILT
         other:
-            result := ((curr_mode >> core#ADDRFILT) & core#ADDRFILT_BITS)
-            return
+            return ((curr_mode >> core#ADDRFILT) & core#ADDRFILT_BITS)
 
     curr_mode &= core#ADDRFILT_MASK
     curr_mode := (curr_mode | mode) & core#PKTCFG1_MASK
@@ -220,8 +219,7 @@ PUB AFCAuto(state): curr_state
         0, 1:
             state := (||(state) << core#AFCAUTOON)
         other:
-            result := ((curr_state >> core#AFCAUTOON) & %1) * TRUE
-            return
+            return ((curr_state >> core#AFCAUTOON) & %1) * TRUE
 
     curr_state &= core#AFCAUTOON_MASK
     curr_state := (curr_state | state) & core#AFCFEI_MASK
@@ -297,8 +295,7 @@ PUB AutoRestartRX(state): curr_state
         0, 1:
             state := ||(state) << core#AUTORSTARTRXON
         other:
-            result := ((curr_state >> core#AUTORSTARTRXON) & %1) * TRUE
-            return
+            return ((curr_state >> core#AUTORSTARTRXON) & %1) * TRUE
 
     curr_state &= core#AUTORSTARTRXON
     curr_state := (curr_state | state) & core#PKTCFG2_MASK
@@ -335,8 +332,7 @@ PUB CarrierFreq(freq): curr_freq
             freq := freq / FSTEP
             freq &= core#FRF_MASK
         other:
-            curr_freq &= core#FRF_MASK
-            return curr_freq * FSTEP
+            return (curr_freq & core#FRF_MASK) * FSTEP
 
     curr_freq := freq & core#FRF_MASK   'XXX move to set case
     writereg(core#FRFMSB, 3, @curr_freq)
@@ -357,8 +353,7 @@ PUB CRCCheckEnabled(state): curr_state
         0, 1:
             state := (||(state) & %1) << core#CRCON
         other:
-            curr_state := ((curr_state >> core#CRCON) & %1) * TRUE
-            return
+            return ((curr_state >> core#CRCON) & %1) * TRUE
 
     curr_state &= core#CRCON_MASK
     curr_state := (curr_state | state) & core#PKTCFG1_MASK
@@ -379,8 +374,7 @@ PUB DataMode(mode): curr_mode
         DATAMODE_PKT, DATAMODE_CONT_W_SYNC, DATAMODE_CONT_WO_SYNC:
             mode := mode << core#DATAMODE
         other:
-            result := (curr_mode >> core#DATAMODE) & core#DATAMODE_BITS
-            return result
+            return (curr_mode >> core#DATAMODE) & core#DATAMODE_BITS
 
     curr_mode &= core#DATAMODE_MASK
     curr_mode := (curr_mode | mode) & core#DATAMOD_MASK
@@ -450,8 +444,7 @@ PUB Encryption(state): curr_state
         0, 1:
             state := ||(state) & %1
         other:
-            curr_state := (curr_state & %1) * TRUE
-            return
+            return (curr_state & %1) * TRUE
 
     curr_state &= core#AESON_MASK
     curr_state := (curr_state | state) & core#PKTCFG2_MASK
@@ -549,7 +542,7 @@ PUB FIFOEmpty{}: flag
 '       FALSE (0) if FIFO contains at least one byte
     flag := $00
     readreg(core#IRQFLAGS2, 1, @flag)
-    flag := (((flag >> core#FIFONOTEMPTY) & %1) ^ %1) * TRUE
+    return (((flag >> core#FIFONOTEMPTY) & %1) ^ %1) * TRUE
 
 PUB FIFOFull{}: flag
 ' Flag indicating FIFO full
@@ -558,7 +551,7 @@ PUB FIFOFull{}: flag
 '       FALSE (0) if there's at least one byte available
     flag := $00
     readreg(core#IRQFLAGS2, 1, @flag)
-    flag := ((flag >> core#FIFOFULL) & %1) * TRUE
+    return ((flag >> core#FIFOFULL) & %1) * TRUE
 
 PUB FIFOThreshold(thresh): curr_thr
 ' Set threshold for triggering FIFO level interrupt
@@ -591,8 +584,7 @@ PUB FreqDeviation(fdev): curr_fdev
         600..300_000:
             fdev := (fdev / FSTEP) & core#FDEV_MASK
         other:
-            curr_fdev &= core#FDEV_MASK
-            return curr_fdev * FSTEP
+            return (curr_fdev & core#FDEV_MASK) * FSTEP
 
     writereg(core#FDEVMSB, 2, @fdev)'XXX MOVE TO SET CASE
 
@@ -1009,8 +1001,7 @@ PUB Sequencer(mode): curr_mode
         OPMODE_AUTO, OPMODE_MANUAL:
             mode := mode << core#SEQOFF
         other:
-            result := (curr_mode >> core#SEQOFF) & %1
-            return result
+            return (curr_mode >> core#SEQOFF) & %1
 
     curr_mode &= core#SEQOFF_MASK
     curr_mode := (curr_mode | mode) & core#OPMODE_MASK
@@ -1154,7 +1145,7 @@ PUB TXPower(pwr): curr_pwr
                         curr_pwr -= 11                                    ' PA_BOOST is active
                     else
                         curr_pwr -= 14                                    ' PA_BOOST is inactive
-            return curr_pwr
+            return
 
     curr_pwr := (curr_pwr | pwr) & core#PALVL_MASK
     writereg(core#PALVL, 1, @curr_pwr.byte[0])
@@ -1199,7 +1190,7 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
             io.high(_CS)
 
         other:
-            return FALSE
+            return
 
 PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes to device from ptr_buff
@@ -1212,7 +1203,7 @@ PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
             io.high(_CS)
 
         other:
-            return FALSE
+            return
 
 DAT
 {
