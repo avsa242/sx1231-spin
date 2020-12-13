@@ -91,14 +91,14 @@ CON
         PA0ON                   = 7
         PA1ON                   = 6
         PA2ON                   = 5
-        OUTPWR               = 0
+        OUTPWR                  = 0
         PA012_BITS              = %111
-        OUTPWR_BITS          = %11111
+        OUTPWR_BITS             = %11111
         PA0ON_MASK              = (1 << PA0ON) ^ PALVL_MASK
         PA1ON_MASK              = (1 << PA1ON) ^ PALVL_MASK
         PA2ON_MASK              = (1 << PA2ON) ^ PALVL_MASK
         PA012ON_MASK            = (PA012_BITS << PA0ON) ^ PALVL_MASK
-        OUTPWR_MASK          = OUTPWR_BITS ^ PALVL_MASK
+        OUTPWR_MASK             = OUTPWR_BITS ^ PALVL_MASK
 
     PARAMP                      = $12
     PARAMP_MASK                 = $0F
@@ -248,13 +248,13 @@ CON
     PKTCFG2                     = $3D
     PKTCFG2_MASK                = $F7
         INTPKTDLY               = 4
-        RSTARTRX                 = 2
-        AUTORSTARTRXON           = 1
+        RSTARTRX                = 2
+        AUTORSTARTRXON          = 1
         AESON                   = 0
         INTPKTDLY_BITS          = %1111
         INTPKTDLY_MASK          = (INTPKTDLY_BITS << INTPKTDLY) ^ PKTCFG2_MASK
-        RSTARTRX_MASK            = (1 << RSTARTRX) ^ PKTCFG2_MASK
-        AUTORSTARTRXON_MASK      = (1 << AUTORSTARTRXON) ^ PKTCFG2_MASK
+        RSTARTRX_MASK           = (1 << RSTARTRX) ^ PKTCFG2_MASK
+        AUTORSTARTRXON_MASK     = (1 << AUTORSTARTRXON) ^ PKTCFG2_MASK
         AESON_MASK              = 1 ^ PKTCFG2_MASK
 
     #$3E, AESKEY1, AESKEY2, AESKEY3, AESKEY4, AESKEY5, AESKEY6, AESKEY7,{
