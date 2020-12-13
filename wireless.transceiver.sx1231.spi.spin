@@ -139,49 +139,49 @@ PUB Stop{}
 
 PUB Defaults{} | tmp[4]
 ' Factory defaults
-    AddressCheck(ADDRCHK_NONE)
-    AFCAuto(FALSE)
-    AFCMethod(AFC_STANDARD)
-    AutoRestartRX(TRUE)
-    BroadcastAddress($00)
-    CarrierFreq(915_000_000)
-    CRCCheckEnabled(TRUE)
-    DataMode(DATAMODE_PKT)
-    DataRate(4800)
-    DataWhitening(FALSE)
-    Encryption(FALSE)
+    addresscheck(ADDRCHK_NONE)
+    afcauto(FALSE)
+    afcmethod(AFC_STANDARD)
+    autorestartrx(TRUE)
+    broadcastaddress($00)
+    carrierfreq(915_000_000)
+    crccheckenabled(TRUE)
+    datamode(DATAMODE_PKT)
+    datarate(4800)
+    datawhitening(FALSE)
+    encryption(FALSE)
     bytefill(@tmp, $00, 16)
-    EncryptionKey(KEY_WR, @tmp)
-    EnterCondition(ENTCOND_NONE)
-    ExitCondition(EXITCOND_NONE)
-    FIFOThreshold(15)
-    FreqDeviation(5000)
-    GaussianFilter(BT_NONE)
-    IntermediateMode(IMODE_SLEEP)
-    Listen(FALSE)
-    LNAGain(LNA_AGC)
-    LNAZInput(200)
-    LowBattLevel(1_835)
-    LowBattMon(FALSE)
-    ManchesterEnc(FALSE)
-    Modulation(MOD_FSK)
-    NodeAddress($00)
-    OCPCurrent(95)
-    OpMode(OPMODE_STDBY)
-    OvercurrentProtection(TRUE)
-    PayloadLen(64)
-    PayloadLenCfg(PKTLEN_FIXED)
-    PreambleLen(3)
-    RampTime(40)
-    RXBandwidth(10_400)
-    Sequencer(OPMODE_AUTO)
+    encryptionkey(KEY_WR, @tmp)
+    entercondition(ENTCOND_NONE)
+    exitcondition(EXITCOND_NONE)
+    fifothreshold(15)
+    freqdeviation(5000)
+    gaussianfilter(BT_NONE)
+    intermediatemode(IMODE_SLEEP)
+    listen(FALSE)
+    lnagain(LNA_AGC)
+    lnazinput(200)
+    lowbattlevel(1_835)
+    lowbattmon(FALSE)
+    manchesterenc(FALSE)
+    modulation(MOD_FSK)
+    nodeaddress($00)
+    ocpcurrent(95)
+    opmode(OPMODE_STDBY)
+    overcurrentprotection(TRUE)
+    payloadlen(64)
+    payloadlencfg(PKTLEN_FIXED)
+    preamblelen(3)
+    ramptime(40)
+    rxbandwidth(10_400)
+    sequencer(OPMODE_AUTO)
     bytefill(@tmp, $01, 8)
-    SyncWord(SW_WRITE, @tmp)
-    SyncWordEnabled(TRUE)
-    SyncWordLength(4)
-    SyncWordMaxBitErr(0)
-    TXPower(13)
-    TXStartCondition(TXSTART_FIFONOTEMPTY)
+    syncword(SW_WRITE, @tmp)
+    syncwordenabled(TRUE)
+    syncwordlength(4)
+    syncwordmaxbiterr(0)
+    txpower(13)
+    txstartcondition(TXSTART_FIFONOTEMPTY)
 
 PUB AbortListen{} | tmp
 ' Abort listen mode when used together with Listen(FALSE)
@@ -323,22 +323,22 @@ PUB BroadcastAddress(addr) | tmp
 
     writereg(core#BCASTADRS, 1, @addr)
 
-PUB CarrierFreq(Hz) | tmp
+PUB CarrierFreq(freq) | tmp
 ' Set Carrier frequency, in Hz
 '   Valid values:
 '       290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Set value will be rounded
     readreg(core#FRFMSB, 3, @tmp)'XXX move to get case
-    case Hz
+    case freq
         290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
-            Hz := Hz / FSTEP
-            Hz &= core#FRF_MASK
+            freq := freq / FSTEP
+            freq &= core#FRF_MASK
         other:
             tmp &= core#FRF_MASK
             return tmp * FSTEP
 
-    tmp := Hz & core#FRF_MASK   'XXX move to set case
+    tmp := freq & core#FRF_MASK   'XXX move to set case
     writereg(core#FRFMSB, 3, @tmp)
 
 PUB CarrierSense(param)
@@ -684,7 +684,7 @@ PUB Listen(enabled) | tmp
     tmp := (tmp | enabled) & core#OPMODE_MASK
     writereg(core#OPMODE, 1, @tmp)
 
-PUB LNAGain(dB) | tmp
+PUB LNAGain(gain) | tmp
 ' Set LNA gain, in dB relative to highest gain
 '   Valid values:
 '      *LNA_AGC (0): Gain is set by the internal AGC loop
@@ -696,15 +696,15 @@ PUB LNAGain(dB) | tmp
 '       -48: (Highest gain - 48dB)
 '   Any other value polls the chip and returns the current setting
     readreg(core#LNA, 1, @tmp)
-    case dB := lookdown(dB: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
+    case gain := lookdown(gain: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
         1..7:
-            dB := dB-1 & core#LNAGAINSEL
+            gain := gain-1 & core#LNAGAINSEL
         other:'XXX Should this read the LNACURRENTGAIN field instead?
             result := tmp & core#LNAGAINSEL_BITS
             return lookupz(result: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
 
-    tmp &= core#LNAGAINSEL
-    tmp := (tmp | dB) & core#LNA_MASK
+    tmp &= core#LNAGAINSEL_MASK
+    tmp := (tmp | gain) & core#LNA_MASK
     writereg(core#LNA, 1, @tmp)
 
 PUB LNAZInput(ohms) | tmp
@@ -725,21 +725,21 @@ PUB LNAZInput(ohms) | tmp
     writereg(core#LNA, 1, @tmp)
 
 
-PUB LowBattLevel(mV) | tmp
+PUB LowBattLevel(lvl) | tmp
 ' Set low battery threshold, in millivolts
 '   Valid values:
 '       1695, 1764, *1835, 1905, 1976, 2045, 2116, 2185
 '   Any other value polls the chip and returns the current setting
     readreg(core#LOWBAT, 1, @tmp)
-    case mV := lookdown(mV: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
+    case lvl := lookdown(lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
         1..8:
-            mV := (mV-1) & core#LOWBATTRIM
+            lvl := (lvl-1) & core#LOWBATTRIM
         other:
             result := tmp & core#LOWBATTRIM_BITS
             return lookupz(result: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
 
     tmp &= core#LOWBATTRIM_MASK
-    tmp := (tmp | mV) & core#LOWBAT_MASK
+    tmp := (tmp | lvl) & core#LOWBAT_MASK
     writereg(core#LOWBAT, 1, @tmp)
 
 PUB LowBattMon(enabled) | tmp
@@ -808,22 +808,22 @@ PUB NodeAddress(addr) | tmp
 
     writereg(core#NODEADRS, 1, @addr)'XXX MOVE TO SET CASE
 
-PUB OCPCurrent(mA) | tmp
+PUB OCPCurrent(current) | tmp
 ' Set PA overcurrent protection level, in milliamps
 '   Valid values:
 '       45..120 (Default: 95)
-'   NOTE: Set value will be rounded to the nearest 5mA
+'   NOTE: Set value will be rounded to the nearest 5current
 '   Any other value polls the chip and returns the current setting
     readreg(core#OCP, 1, @tmp)
-    case mA
+    case current
         45..120:
-            mA := (mA-45)/5 & core#OCPTRIM
+            current := (current-45)/5 & core#OCPTRIM
         other:
             result := 45 + 5 * (tmp & core#OCPTRIM_BITS)
             return result
 
     tmp &= core#OCPTRIM_MASK
-    tmp := (tmp | mA) & core#OCP_MASK
+    tmp := (tmp | current) & core#OCP_MASK
     writereg(core#OCP, 1, @tmp)
 
 PUB OpMode(mode) | tmp
@@ -919,20 +919,20 @@ PUB PreambleLen(bytes) | tmp
 
     writereg(core#PREAMBLEMSB, 2, @bytes)'XXX MOVE TO SET CASE
 
-PUB RampTime(uSec) | tmp
+PUB RampTime(rtime) | tmp
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
 '       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
 '   Any other value polls the chip and returns the current setting
     readreg(core#PARAMP, 1, @tmp)'XXX MOVE TO GET CASE
-    case uSec := lookdown(uSec: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
+    case rtime := lookdown(rtime: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
         1..16:
-            uSec := (uSec-1) & core#PARAMP
+            rtime := (rtime-1) & core#PARAMP
         other:
             result := tmp & core#PA_RAMP_BITS
             return lookupz(result: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
 
-    tmp := uSec & core#PARAMP_MASK'XXX MOVE TO SET CASE
+    tmp := rtime & core#PARAMP_MASK'XXX MOVE TO SET CASE
     writereg(core#PARAMP, 1, @tmp)
 
 PUB RCOscCal(enabled) | tmp
@@ -967,18 +967,18 @@ PUB RSSI{} | tmp
     result := ~result
     result >>= 1
 
-PUB RXBandwidth(Hz) | tmp, tmp_m, tmp_e
+PUB RXBandwidth(bw) | tmp, tmp_m, tmp_e
 ' Set receiver channel filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600, 20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000, 166700, 200000, 250000, 333300, 400000, 500000
 '   Any other value polls the chip and returns the current setting
     tmp := 0
     readreg(core#RXBW, 1, @tmp)
-    case Hz
+    case bw
         2_600..500_000:
-            tmp_e := tmp_m := lookdownz(Hz: 500000, 400000, 333300, 250000, 200000, 166700, 125000, 100000, 83300, 62500, 50000, 41700, 31300, 25000, 20800, 15600, 12500, 10400, 7800, 6300, 5200, 3900, 3100, 2600)
+            tmp_e := tmp_m := lookdownz(bw: 500000, 400000, 333300, 250000, 200000, 166700, 125000, 100000, 83300, 62500, 50000, 41700, 31300, 25000, 20800, 15600, 12500, 10400, 7800, 6300, 5200, 3900, 3100, 2600)
             tmp_m := lookupz(tmp_m: %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10) << core#RXBWMANT
             tmp_e := lookupz(tmp_e: 00, 00, 00, 01, 01, 01, 02, 02, 02, 03, 03, 03, 04, 04, 04, 05, 05, 05, 06, 06, 06, 07, 07, 07)
-            Hz := tmp_m | tmp_e
+            bw := tmp_m | tmp_e
         other:
             tmp.byte[3] := tmp.byte[0] & core#RXBWEXP
             tmp.byte[2] := lookupz( (tmp.byte[0] >> core#RXBWMANT) & core#RXBWMANT_BITS: 16, 20, 24)' XXX BREAK APART
@@ -986,7 +986,7 @@ PUB RXBandwidth(Hz) | tmp, tmp_m, tmp_e
             return
 
     tmp &= core#RXBW_MASK
-    tmp := (tmp | Hz) & core#RXBW_MASK
+    tmp := (tmp | bw) & core#RXBW_MASK
     writereg(core#RXBW, 1, @tmp)
 
 PUB RXPayload(nr_bytes, ptr_buff)
@@ -1117,16 +1117,16 @@ PUB TXPayload(nr_bytes, ptr_buff)
 '   Any other value is ignored
     writereg(core#FIFO, nr_bytes, ptr_buff)
 
-PUB TXPower(dBm) | tmp
+PUB TXPower(pwr) | tmp
 ' Set transmit output power, in dBm
 '   Valid values:
 '       -18..17
 '   Any other value polls the chip and returns the current setting
     tmp := 0
     readreg(core#PALVL, 1, @tmp.byte[0])
-    case dBm
+    case pwr
         -18..13:
-            dBm := (dBm + 18) & core#OUTPWR
+            pwr := (pwr + 18) & core#OUTPWR
             tmp &= core#OUTPWR_MASK                                ' Zero out the existing power level setting
             tmp &= core#PA0ON_MASK                                      '   and all of the PAx bits
             tmp := tmp & core#PA1ON_MASK & core#PA2ON_MASK              '
@@ -1134,7 +1134,7 @@ PUB TXPower(dBm) | tmp
             tmp.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
             tmp.byte[2] := core#PA2_NORMAL
         14..17:
-            dBm := (dBm + 14) & core#OUTPWR_MASK
+            pwr := (pwr + 14) & core#OUTPWR_MASK
             tmp &= core#OUTPWR_MASK
             tmp &= core#PA0ON_MASK
             tmp := tmp & core#PA1ON_MASK & core#PA2ON_MASK
@@ -1142,7 +1142,7 @@ PUB TXPower(dBm) | tmp
             tmp.byte[1] := core#PA1_NORMAL                              ' Turn off the PA_BOOST circuit
             tmp.byte[2] := core#PA2_NORMAL
         18..20:
-            dBm := (dBm + 11) & core#OUTPWR_MASK
+            pwr := (pwr + 11) & core#OUTPWR_MASK
             tmp &= core#OUTPWR_MASK
             tmp &= core#PA0ON_MASK
             tmp := tmp & core#PA1ON_MASK & core#PA2ON_MASK
@@ -1163,7 +1163,7 @@ PUB TXPower(dBm) | tmp
                         result -= 14                                    ' PA_BOOST is inactive
             return result
 
-    tmp := (tmp | dBm) & core#PALVL_MASK
+    tmp := (tmp | pwr) & core#PALVL_MASK
     writereg(core#PALVL, 1, @tmp.byte[0])
     writereg(core#TESTPA1, 1, @tmp.byte[1])
     writereg(core#TESTPA2, 1, @tmp.byte[2])
