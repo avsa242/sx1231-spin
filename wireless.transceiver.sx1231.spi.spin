@@ -219,7 +219,7 @@ PUB AFCAuto(state): curr_state
         0, 1:
             state := (||(state) << core#AFCAUTOON)
         other:
-            return ((curr_state >> core#AFCAUTOON) & %1) * TRUE
+            return ((curr_state >> core#AFCAUTOON) & %1) == 1
 
     curr_state &= core#AFCAUTOON_MASK
     curr_state := (curr_state | state) & core#AFCFEI_MASK
@@ -229,7 +229,7 @@ PUB AFCComplete{}: flag
 ' Flag indicating AFC (auto or manual) completed
 '   Returns: TRUE (-1) if complete, FALSE (0) otherwise
     readreg(core#AFCFEI, 1, @flag)
-    flag := ((flag >> core#AFCDONE) & %1) * TRUE
+    flag := ((flag >> core#AFCDONE) & %1) == 1
 
 PUB AFCMethod(mode): curr_mode
 ' Set AFC mode/routine
@@ -295,7 +295,7 @@ PUB AutoRestartRX(state): curr_state
         0, 1:
             state := ||(state) << core#AUTORSTARTRXON
         other:
-            return ((curr_state >> core#AUTORSTARTRXON) & %1) * TRUE
+            return ((curr_state >> core#AUTORSTARTRXON) & %1) == 1
 
     curr_state &= core#AUTORSTARTRXON
     curr_state := (curr_state | state) & core#PKTCFG2_MASK
@@ -305,7 +305,7 @@ PUB BattLow{}: flag
 ' Flag indicating battery voltage low
 '   Returns TRUE if battery low, FALSE otherwise
     readreg(core#LOWBAT, 1, @flag)
-    flag := ((flag >> core#LOWBATMON) & %1)* TRUE
+    flag := ((flag >> core#LOWBATMON) & %1) == 1
 
 PUB BroadcastAddress(addr): curr_addr
 ' Set broadcast address
@@ -353,7 +353,7 @@ PUB CRCCheckEnabled(state): curr_state
         0, 1:
             state := (||(state) & %1) << core#CRCON
         other:
-            return ((curr_state >> core#CRCON) & %1) * TRUE
+            return ((curr_state >> core#CRCON) & %1) == 1
 
     curr_state &= core#CRCON_MASK
     curr_state := (curr_state | state) & core#PKTCFG1_MASK
@@ -444,7 +444,7 @@ PUB Encryption(state): curr_state
         0, 1:
             state := ||(state) & %1
         other:
-            return (curr_state & %1) * TRUE
+            return (curr_state & %1) == 1
 
     curr_state &= core#AESON_MASK
     curr_state := (curr_state | state) & core#PKTCFG2_MASK
@@ -516,7 +516,7 @@ PUB FEIComplete{}: flag
 '   Returns: TRUE if complete, FALSE otherwise
     flag := $00
     readreg(core#AFCFEI, 1, @flag)
-    return ((flag >> core#FEIDONE) & %1) * TRUE
+    return ((flag >> core#FEIDONE) & %1) == 1
 
 PUB FEIError{}: ferr
 ' Frequency error
@@ -542,7 +542,7 @@ PUB FIFOEmpty{}: flag
 '       FALSE (0) if FIFO contains at least one byte
     flag := $00
     readreg(core#IRQFLAGS2, 1, @flag)
-    return (((flag >> core#FIFONOTEMPTY) & %1) ^ %1) * TRUE
+    return (((flag >> core#FIFONOTEMPTY) & %1) ^ %1) == 1
 
 PUB FIFOFull{}: flag
 ' Flag indicating FIFO full
@@ -551,7 +551,7 @@ PUB FIFOFull{}: flag
 '       FALSE (0) if there's at least one byte available
     flag := $00
     readreg(core#IRQFLAGS2, 1, @flag)
-    return ((flag >> core#FIFOFULL) & %1) * TRUE
+    return ((flag >> core#FIFOFULL) & %1) == 1
 
 PUB FIFOThreshold(thresh): curr_thr
 ' Set threshold for triggering FIFO level interrupt
@@ -668,7 +668,7 @@ PUB Listen(state): curr_state
         0, 1:
             state := (||(state)) << core#LISTENON
         other:
-            return ((curr_state >> core#LISTENON) & %1) * TRUE
+            return ((curr_state >> core#LISTENON) & %1) == 1
 
     curr_state &= core#LISTENON_MASK
     curr_state := (curr_state | state) & core#OPMODE_MASK
@@ -741,7 +741,7 @@ PUB LowBattMon(state): curr_state
         0, 1:
             state := (||(state)) << core#LOWBATON
         other:
-            return ((curr_state >> core#LOWBATON) & %1) * TRUE
+            return ((curr_state >> core#LOWBATON) & %1) == 1
 
     curr_state &= core#LOWBATON_MASK
     curr_state := (curr_state | state) & core#LOWBAT_MASK
@@ -842,7 +842,7 @@ PUB OvercurrentProtection(state): curr_state
         0, 1:
             state := (||(state)) << core#OCPON
         other:
-            return ((curr_state >> core#OCPON) & %1) * TRUE
+            return ((curr_state >> core#OCPON) & %1) == 1
 
     curr_state &= core#OCPON_MASK
     curr_state := (curr_state | state) & core#OCP_MASK
@@ -891,7 +891,7 @@ PUB PayloadSent{}: flag
 '   NOTE: Once set, this flag clears when exiting TX mode
     flag := $00
     readreg(core#IRQFLAGS2, 1, @flag)
-    return ((flag >> core#PKTSENT) & %1) * TRUE
+    return ((flag >> core#PKTSENT) & %1) == 1
 
 PUB PreambleLen(length): curr_len
 ' Set number of length in bytes
@@ -935,7 +935,7 @@ PUB RCOscCal(state): curr_state
         1:
             state := (||(state)) << core#RCCALSTART
         other:
-            return ((curr_state >> core#RCCALDONE) & %1) * TRUE
+            return ((curr_state >> core#RCCALDONE) & %1) == 1
 
     curr_state := (curr_state | state) & core#OSC1_MASK
     writereg(core#OSC1, 1, @curr_state)
@@ -1037,7 +1037,7 @@ PUB SyncWordEnabled(state): curr_state
         0, 1:
             state := ||state << core#SYNCON
         other:
-            return ((curr_state >> core#SYNCON) & %1) * TRUE
+            return ((curr_state >> core#SYNCON) & %1) == 1
 
     curr_state &= core#SYNCON_MASK
     curr_state := (curr_state | state) & core#SYNCCFG_MASK
