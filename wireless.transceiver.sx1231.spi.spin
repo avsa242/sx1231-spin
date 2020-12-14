@@ -554,15 +554,14 @@ PUB FreqDeviation(fdev): curr_fdev
 '       Default is 5_000
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Set value will be rounded
-    curr_fdev := 0
-    readreg(core#FDEVMSB, 2, @curr_fdev)' XXX MOVE TO GET CASE
     case fdev
         600..300_000:
             fdev := (fdev / FSTEP) & core#FDEV_MASK
+            writereg(core#FDEVMSB, 2, @fdev)
         other:
+            curr_fdev := 0
+            readreg(core#FDEVMSB, 2, @curr_fdev)
             return (curr_fdev & core#FDEV_MASK) * FSTEP
-
-    writereg(core#FDEVMSB, 2, @fdev)'XXX MOVE TO SET CASE
 
 PUB FSTX{}
 ' dummy method
