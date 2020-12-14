@@ -674,9 +674,9 @@ PUB LNAZInput(impedance): curr_imp
 '       50, *200
 '   Any other value polls the chip and returns the current setting
     readreg(core#LNA, 1, @curr_imp)
-    case impedance := lookdown(impedance: 50, 200)
+    case impedance
         1, 2:
-            impedance := (impedance-1) << core#LNAZIN
+            impedance := lookdownz(impedance: 50, 200) << core#LNAZIN
         other:
             curr_imp := (curr_imp >> core#LNAZIN) & 1
             return lookupz(curr_imp: 50, 200)
