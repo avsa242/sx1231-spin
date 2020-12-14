@@ -250,11 +250,7 @@ PUB AFCOffset{}: offs
 '   Returns: Frequency offset in Hz
     offs := 0
     readreg(core#AFCMSB, 2, @offs)
-    if offs & $8000  'XXX use spin sign-extend
-        offs := (65536-offs) * FSTEP
-    else
-        offs *= FSTEP
-    return
+    return (~~offs) * FSTEP
 
 PUB AFCStart{} | tmp
 ' Trigger a manual AFC
