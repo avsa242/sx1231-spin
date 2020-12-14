@@ -912,22 +912,23 @@ PUB RSSI{}: level | tmp
     level := ~level
     level >>= 1
 
-PUB RXBandwidth(bw): curr_bw | bw_m, bw_e
+PUB RXBandwidth(bw): curr_bw | bw_m, bw_e   'XXX only calcs for FSK mode
 ' Set receiver channel filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600, 20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000, 166700, 200000, 250000, 333300, 400000, 500000
 '   Any other value polls the chip and returns the current setting
     curr_bw := 0
     readreg(core#RXBW, 1, @curr_bw)
     case bw
-        2_600..500_000:
+        2_600..500_000: 'XXX calc this instead of using tables
             bw_e := bw_m := lookdownz(bw: 500000, 400000, 333300, 250000, 200000, 166700, 125000, 100000, 83300, 62500, 50000, 41700, 31300, 25000, 20800, 15600, 12500, 10400, 7800, 6300, 5200, 3900, 3100, 2600)
             bw_m := lookupz(bw_m: %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10, %00, %01, %10) << core#RXBWMANT
             bw_e := lookupz(bw_e: 00, 00, 00, 01, 01, 01, 02, 02, 02, 03, 03, 03, 04, 04, 04, 05, 05, 05, 06, 06, 06, 07, 07, 07)
             curr_bw := bw_m | bw_e
         other:
-            curr_bw.byte[3] := curr_bw.byte[0] & core#RXBWEXP
-            curr_bw.byte[2] := lookupz( (curr_bw.byte[0] >> core#RXBWMANT) & core#RXBWMANT_BITS: 16, 20, 24)' XXX BREAK APART
-            return FXOSC / ( curr_bw.byte[2] * (1 << (curr_bw.byte[3] + 2)) )
+            bw_e := curr_bw & core#RXBWEXP_BITS
+            bw_m := (curr_bw >> core#RXBWMANT) & core#RXBWMANT_BITS
+            bw_m := lookupz(bw_m: 16, 20, 24)
+            return FXOSC / (bw_m * (1 << (bw_e + 2)))
 
     bw := ((curr_bw & core#RX_BW_MASK) | bw) & core#RXBW_MASK
     writereg(core#RXBW, 1, @bw)
