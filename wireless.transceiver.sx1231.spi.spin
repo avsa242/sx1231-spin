@@ -1067,54 +1067,52 @@ PUB TXPayload(nr_bytes, ptr_buff)
 '   Any other value is ignored
     writereg(core#FIFO, nr_bytes, ptr_buff)
 
-PUB TXPower(pwr): curr_pwr
+PUB TXPower(pwr): curr_pwr | pa1, pa2
 ' Set transmit output power, in dBm
 '   Valid values:
 '       -18..17
 '   Any other value polls the chip and returns the current setting
     curr_pwr := 0
-    readreg(core#PALVL, 1, @curr_pwr.byte[0])
+    readreg(core#PALVL, 1, @curr_pwr)
     case pwr
-        -18..13:
-            pwr := (pwr + 18) & core#OUTPWR
+        -18..13, 14..17, 18..20:
             ' zero out the existing power level setting and PAx bits
             curr_pwr := curr_pwr & core#OUTPWR_MASK & core#PA0ON_MASK
             curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK
+    case pwr
+        -18..13:                                ' PA0 on, PA1 and PA2 off
+            pwr := (pwr + 18) & core#OUTPWR
             curr_pwr |= (1 << core#PA0ON)       ' Turn on only the PA0 bit
-            curr_pwr.byte[1] := core#PA1_NORMAL ' Turn off the PA_BOOST circuit
-            curr_pwr.byte[2] := core#PA2_NORMAL
-        14..17:
+            pa1 := core#PA1_NORMAL              ' Turn off the PA_BOOST circuit
+            pa2 := core#PA2_NORMAL
+        14..17:                                 ' PA_BOOST off
             pwr := (pwr + 14) & core#OUTPWR_MASK
-            curr_pwr := curr_pwr & core#OUTPWR_MASK & core#PA0ON_MASK
-            curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK
             curr_pwr |= (1 << core#PA1ON) | (1 << core#PA2ON)
-            curr_pwr.byte[1] := core#PA1_NORMAL ' Turn off the PA_BOOST circuit
-            curr_pwr.byte[2] := core#PA2_NORMAL
-        18..20:
+            pa1 := core#PA1_NORMAL
+            pa2 := core#PA2_NORMAL
+        18..20:                                 ' PA1 and PA2 on
             pwr := (pwr + 11) & core#OUTPWR_MASK
-            curr_pwr := curr_pwr & core#OUTPWR_MASK & core#PA0ON_MASK
-            curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK
-            curr_pwr := curr_pwr | (1 << core#PA1ON) | (1 << core#PA2ON)' Turn on the PA1 and 2 bits
-            curr_pwr.byte[1] := core#PA1_BOOST  '   and the PA_BOOST circuit
-            curr_pwr.byte[2] := core#PA2_BOOST
+            curr_pwr := curr_pwr | (1 << core#PA1ON) | (1 << core#PA2ON)
+            pa1 := core#PA1_BOOST               ' PA_BOOST on
+            pa2 := core#PA2_BOOST
         other:
-            curr_pwr := curr_pwr & core#OUTPWR_BITS ' Determine offset to calculate current
-            case (curr_pwr >> core#PA2ON) & core#PA012_BITS' TXPower by checking which PAx bits are set
-                %100:                           ' Only PA0 is set
+            curr_pwr := curr_pwr & core#OUTPWR_BITS
+            case (curr_pwr >> core#PA2ON) & core#PA012_BITS
+                %100:                           ' PA0
                     curr_pwr -= 18
-                %011, %010:                     ' PA1 and possibly PA2 are set
-                    readreg(core#TESTPA1, 1, @curr_pwr.byte[1])
-                    readreg(core#TESTPA2, 1, @curr_pwr.byte[2])
-                    if curr_pwr.byte[1] == core#PA1_BOOST and curr_pwr.byte[2] == core#PA2_BOOST
-                        curr_pwr -= 11          ' PA_BOOST is active
+                %011, %010:                     ' PA1, PA2
+                    readreg(core#TESTPA1, 1, @pa1)
+                    readreg(core#TESTPA2, 1, @pa2)
+                    if pa1 == core#PA1_BOOST and pa2 == core#PA2_BOOST
+                        curr_pwr -= 11          ' pwr offset with PA_BOOST
                     else
-                        curr_pwr -= 14          ' PA_BOOST is inactive
+                        curr_pwr -= 14          ' pwr offset without PA_BOOST
             return
 
-    curr_pwr := (curr_pwr | pwr) & core#PALVL_MASK
-    writereg(core#PALVL, 1, @curr_pwr.byte[0])
-    writereg(core#TESTPA1, 1, @curr_pwr.byte[1])
-    writereg(core#TESTPA2, 1, @curr_pwr.byte[2])
+    pwr := (curr_pwr | pwr) & core#PALVL_MASK
+    writereg(core#PALVL, 1, @pwr)
+    writereg(core#TESTPA1, 1, @pa1)
+    writereg(core#TESTPA2, 1, @pa2)
 
 PUB TXStartCondition(cond): curr_cond
 ' Define cond to begin packet transmission
