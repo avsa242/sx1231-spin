@@ -658,9 +658,9 @@ PUB LNAGain(gain): curr_gain
 '       -48: (Highest gain - 48dB)
 '   Any other value polls the chip and returns the current setting
     readreg(core#LNA, 1, @curr_gain)
-    case gain := lookdown(gain: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
-        1..7:
-            gain := gain-1 & core#LNAGAINSEL
+    case gain
+        -6, -12, -24, -36, -48:
+            gain := lookdownz(gain: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
         other:'XXX Should this read the LNACURRENTGAIN field instead?
             curr_gain := curr_gain & core#LNAGAINSEL_BITS
             return lookupz(curr_gain: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
