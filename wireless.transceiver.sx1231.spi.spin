@@ -105,6 +105,10 @@ CON
     SYNCMODE_3032_CS        = 0
     AGC_OFF                 = 0
 
+' Sensitivity modes
+    SENS_NORM               = $1b
+    SENS_HI                 = $2d
+
 VAR
 
     long _CS, _SCK, _MOSI, _MISO
@@ -944,10 +948,19 @@ PUB RXMode{}
 ' Change chip state to RX (receive)
     opmode(OPMODE_RX)
 
-PUB SensitivityBoost{} | tmp
-
-    tmp := $2D'XXX MAKE THIS LOOK LESS MAGIC
-    writereg(core#TESTLNA, 1, @tmp)
+PUB SensitivityMode(mode): curr_mode
+' Set receiver sensitivity level/mode
+'   Valid values:
+'      *SENS_NORM: normal sensitivity
+'       SENS_HI: high sensitivity
+'   Any other value polls the chip and returns the current setting
+    case mode
+        SENS_NORM, SENS_HI:
+            writereg(core#TESTLNA, 1, @mode)
+        other:
+            curr_mode := 0
+            readreg(core#TESTLNA, 1, @curr_mode)
+            return
 
 PUB Sequencer(mode): curr_mode
 ' Control automatic sequencer
