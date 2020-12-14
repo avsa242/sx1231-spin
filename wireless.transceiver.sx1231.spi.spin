@@ -1004,9 +1004,9 @@ PUB SyncWordEnabled(state): curr_state
 '   Any other value polls the chip and returns the current setting
     curr_state := 0
     readreg(core#SYNCCFG, 1, @curr_state)
-    case ||state
+    case ||(state)
         0, 1:
-            state := ||state << core#SYNCON
+            state := ||(state) << core#SYNCON
         other:
             return ((curr_state >> core#SYNCON) & 1) == 1
 
@@ -1014,7 +1014,7 @@ PUB SyncWordEnabled(state): curr_state
     writereg(core#SYNCCFG, 1, @state)
 
 PUB SyncWordLength(length): curr_len
-' Set number of length in sync word
+' Set length of sync word, in bytes
 '   Valid values: 1..8
 '   Any other value polls the chip and returns the current setting
     curr_len := 0
@@ -1044,20 +1044,18 @@ PUB SyncWordMaxBitErr(bits): curr_bits
 
 PUB Temperature{}: temp | tmp
 ' Read temperature
-'   Returns: Degrees C
-    tmp := (1 << core#TEMPMEASSTART)    ' Trigger a temperature measurement
+'   Returns: Hundredths of a degree C
+'   NOTE: The receiver can't be used while measuring temperature
+    tmp := (1 << core#TEMPMEASSTART)            ' start measurement
     writereg(core#TEMP1, 1, @tmp)
     tmp := 0
-    repeat                                  ' Wait until the measurement is complete
-        readreg(core#TEMP1, 1, @tmp)
-    while ((tmp >> core#TEMPMEASRUN) & 1)
+    repeat
+        readreg(core#TEMP1, 1, @tmp)            ' wait until measurement
+    while ((tmp >> core#TEMPMEASRUN) & 1)       '   complete
 
     temp := 0
     readreg(core#TEMP2, 1, @temp)
-    if temp & $80'XXX USE SPIN SIGN EXT
-        return 256-temp
-    else
-        return temp
+    return ~temp * 100
 
 PUB TXMode{}
 ' Change chip state to transmit
