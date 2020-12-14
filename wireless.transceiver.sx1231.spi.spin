@@ -690,9 +690,9 @@ PUB LowBattLevel(lvl): curr_lvl
 '       1695, 1764, *1835, 1905, 1976, 2045, 2116, 2185
 '   Any other value polls the chip and returns the current setting
     readreg(core#LOWBAT, 1, @curr_lvl)
-    case lvl := lookdown(lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
+    case lvl
         1..8:
-            lvl := (lvl-1) & core#LOWBATTRIM
+            lvl := lookdownz(lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
         other:
             curr_lvl &= core#LOWBATTRIM_BITS
             return lookupz(curr_lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
