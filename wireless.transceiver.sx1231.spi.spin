@@ -503,10 +503,7 @@ PUB FEIError{}: ferr
 '   Returns: FEI measurement, in Hz
     ferr := 0
     readreg(core#AFCFEI, 2, @ferr)
-    if ferr & $8000 'XXX USE SPIN SIGN EXT
-        ferr := (65536-ferr) * FSTEP
-    else
-        ferr *= FSTEP
+    return (~~ferr) * FSTEP
 
 PUB FEIStart{} | tmp
 ' Trigger a manual FEI measurement
