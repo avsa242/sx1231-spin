@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Dec 13, 2020
+    Updated Dec 14, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -166,7 +166,10 @@ CON
     AFCLSB                      = $20
     FEIMSB                      = $21
     FEILSB                      = $22
+
     RSSICFG                     = $23
+        RSSIDONE                = %10
+
     RSSIVALUE                   = $24
     DIOMAPPING1                 = $25
     DIOMAPPING2                 = $26

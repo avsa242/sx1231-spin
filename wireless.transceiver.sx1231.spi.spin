@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC
     Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Dec 13, 2020
+    Updated Dec 14, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -27,7 +27,7 @@ CON
     OPMODE_RX               = 4
 
 ' Data processing modes
-    DATAMODE_PKT         = 0
+    DATAMODE_PKT            = 0
     DATAMODE_CONT_W_SYNC    = 2
     DATAMODE_CONT_WO_SYNC   = 3
 
@@ -910,11 +910,10 @@ PUB RSSI{}: level | tmp
     writereg(core#RSSICFG, 1, @tmp)
     repeat
         readreg(core#RSSICFG, 1, @tmp)
-    until tmp & %10'XXX MAKE THIS LOOK LESS MAGIC
+    until tmp & core#RSSIDONE
 
     readreg(core#RSSIVALUE, 1, @level)
-    level := ~level
-    level >>= 1
+    return (~level) >> 1
 
 PUB RXBandwidth(bw): curr_bw | bw_m, bw_e   'XXX only calcs for FSK mode
 ' Set receiver channel filter bandwidth, in Hz
@@ -1115,10 +1114,11 @@ PUB TXPower(pwr): curr_pwr | pa1, pa2
     writereg(core#TESTPA2, 1, @pa2)
 
 PUB TXStartCondition(cond): curr_cond
-' Define cond to begin packet transmission
+' Define condition to begin packet transmission
 '   Valid values:
-'       TXSTART_FIFOLVL (0): If the number of bytes in the FIFO exceeds FIFOThreshold
-'       TXSTART_FIFONOTEMPTY (1): If there's at least one byte in the FIFO
+'       TXSTART_FIFOLVL (0): If the number of bytes in the FIFO exceeds
+'           FIFOThreshold()
+'      *TXSTART_FIFONOTEMPTY (1): If there's at least one byte in the FIFO
 '   Any other value polls the chip and returns the current setting
     curr_cond := 0
     readreg(core#FIFOTHRESH, 1, @curr_cond)
