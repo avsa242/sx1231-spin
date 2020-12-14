@@ -675,7 +675,7 @@ PUB LNAZInput(impedance): curr_imp
 '   Any other value polls the chip and returns the current setting
     readreg(core#LNA, 1, @curr_imp)
     case impedance
-        1, 2:
+        50, 200:
             impedance := lookdownz(impedance: 50, 200) << core#LNAZIN
         other:
             curr_imp := (curr_imp >> core#LNAZIN) & 1
@@ -691,7 +691,7 @@ PUB LowBattLevel(lvl): curr_lvl
 '   Any other value polls the chip and returns the current setting
     readreg(core#LOWBAT, 1, @curr_lvl)
     case lvl
-        1..8:
+        1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185:
             lvl := lookdownz(lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
         other:
             curr_lvl &= core#LOWBATTRIM_BITS
