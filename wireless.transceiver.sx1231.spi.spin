@@ -707,7 +707,7 @@ PUB LowBattMon(state): curr_state
     readreg(core#LOWBAT, 1, @curr_state)
     case ||(state)
         0, 1:
-            state := (||(state)) << core#LOWBATON
+            state := ||(state) << core#LOWBATON
         other:
             return ((curr_state >> core#LOWBATON) & 1) == 1
 
@@ -718,12 +718,13 @@ PUB ManchesterEnc(state): curr_state
 ' Enable Manchester encoding/decoding
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-'   NOTE: This setting and DataWhitening are mutually exclusive; enabling this will disable DataWhitening
+'   NOTE: This setting and DataWhitening() are mutually exclusive;
+'       enabling this will disable DataWhitening()
     curr_state := 0
     readreg(core#PKTCFG1, 1, @curr_state)
     case ||(state)
-        0:
-        1:
+        0:                                      ' disabled state is just 0, so
+        1:                                      '   just leave it as-is
             state := DCFREE_MANCH << core#DCFREE
         other:
             curr_state := ((curr_state >> core#DCFREE) & core#DCFREE_BITS)
@@ -787,8 +788,8 @@ PUB OpMode(mode): curr_mode
 '   Any other value polls the chip and returns the current setting
     readreg(core#OPMODE, 1, @curr_mode)
     case mode
-        %000..%100:
-            mode := mode << core#MODE
+        OPMODE_SLEEP..OPMODE_RX:
+            mode <<= core#MODE
         other:
             return (curr_mode >> core#MODE) & core#MODE_BITS
 
@@ -802,7 +803,7 @@ PUB OvercurrentProtection(state): curr_state
     readreg(core#OCP, 1, @curr_state)
     case ||(state)
         0, 1:
-            state := (||(state)) << core#OCPON
+            state := ||(state) << core#OCPON
         other:
             return ((curr_state >> core#OCPON) & 1) == 1
 
@@ -868,14 +869,17 @@ PUB RampTime(rtime): curr_rtime
 '   Valid values:
 '       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
 '   Any other value polls the chip and returns the current setting
-    case rtime := lookdown(rtime: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
-        1..16:
-            rtime := ((rtime-1) & core#PA_RAMP_BITS) & core#PARAMP_MASK
+    case rtime
+        3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10:
+            rtime := lookdownz(rtime: 3400, 2000, 1000, 500, 250, 125, 100,{
+}           62, 50, 40, 31, 25, 20, 15, 12, 10)
+            rtime := (rtime & core#PA_RAMP_BITS) & core#PARAMP_MASK
             writereg(core#PARAMP, 1, @rtime)
         other:
             readreg(core#PARAMP, 1, @curr_rtime)
-            curr_rtime := curr_rtime & core#PA_RAMP_BITS
-            return lookupz(curr_rtime: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
+            curr_rtime &= core#PA_RAMP_BITS
+            return lookupz(curr_rtime: 3400, 2000, 1000, 500, 250, 125, 100,{
+}           62, 50, 40, 31, 25, 20, 15, 12, 10)
 
 PUB RCOscCal(state): curr_state
 ' Trigger calibration of RC oscillator
@@ -888,7 +892,7 @@ PUB RCOscCal(state): curr_state
     readreg(core#OSC1, 1, @curr_state)
     case ||(state)
         1:
-            state := (||(state)) << core#RCCALSTART
+            state := ||(state) << core#RCCALSTART
         other:
             return ((curr_state >> core#RCCALDONE) & 1) == 1
 
