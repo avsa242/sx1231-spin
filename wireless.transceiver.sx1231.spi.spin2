@@ -214,7 +214,7 @@ PUB AbortListen() | tmp
     tmp := (tmp | (1 << core.LISTENABT)) & core.OPMODE_MASK
     writereg(core.OPMODE, 1, @tmp)
 
-PUB AddressCheck(mode): curr_mode
+PUB AddressCheck(mode=-2): curr_mode
 ' Enable address checking/matching/filtering
 '   Valid values:
 '       ADDRCHK_NONE (%00): No address check
@@ -232,7 +232,7 @@ PUB AddressCheck(mode): curr_mode
     mode := ((curr_mode & core.ADDRFILT_MASK) | mode) & core.PKTCFG1_MASK
     writereg(core.PKTCFG1, 1, @mode)
 
-PUB AFCAuto(state): curr_state
+PUB AFCAuto(state=-2): curr_state
 ' Enable automatic AFC
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -253,7 +253,7 @@ PUB AFCComplete(): flag
     readreg(core.AFCFEI, 1, @flag)
     return ((flag >> core.AFCDONE) & 1) == 1
 
-PUB AFCMethod(mode): curr_mode
+PUB AFCMethod(mode=-2): curr_mode
 ' Set AFC mode/routine
 '   Valid values:
 '       AFC_STANDARD (0): Standard AFC routine
@@ -282,27 +282,27 @@ PUB AFCStart() | tmp
     tmp |= %1   '1 << core.AFCSTART
     writereg(core.AFCFEI, 1, @tmp)
 
-PUB AfterRX(next_state): curr_state
+PUB AfterRX(next_state=-2): curr_state
 ' Defines the state the radio transitions to after a packet is successfully received
     curr_state := intermediatemode(next_state)
 
-PUB AfterTX(next_state): curr_state
+PUB AfterTX(next_state=-2): curr_state
 ' Defines the state the radio transitions to after a packet is successfully transmitted
     curr_state := intermediatemode(next_state)
 
-PUB AGCFilterLength(param)
+PUB AGCFilterLength(param=-2)
 ' dummy method
 
-PUB AGCMode(param)
+PUB AGCMode(param=-2)
 ' dummy method
 
-PUB AppendStatus(param)
+PUB AppendStatus(param=-2)
 ' dummy method
 
-PUB AutoCal(param)
+PUB AutoCal(param=-2)
 ' dummy method
 
-PUB AutoRestartRX(state): curr_state
+PUB AutoRestartRX(state=-2): curr_state
 ' Enable automatic RX restart (RSSI phase)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -324,7 +324,7 @@ PUB BattLow(): flag
     readreg(core.LOWBAT, 1, @flag)
     return ((flag >> core.LOWBATMON) & 1) == 1
 
-PUB BroadcastAddress(addr): curr_addr
+PUB BroadcastAddress(addr=-2): curr_addr
 ' Set broadcast address
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
@@ -336,7 +336,7 @@ PUB BroadcastAddress(addr): curr_addr
             readreg(core.BCASTADRS, 1, @curr_addr)
             return
 
-PUB CarrierFreq(freq): curr_freq
+PUB CarrierFreq(freq=-2): curr_freq
 ' Set Carrier frequency, in Hz
 '   Valid values:
 '       290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000
@@ -350,13 +350,13 @@ PUB CarrierFreq(freq): curr_freq
             readreg(core.FRFMSB, 3, @curr_freq)
             return u64.multdiv(curr_freq, FSTEP, 1_000)
 
-PUB CarrierSense(param)
+PUB CarrierSense(param=-2)
 ' dummy method
 
-PUB Channel(param)
+PUB Channel(param=-2)
 ' dummy method
 
-PUB CRCCheckEnabled(state): curr_state
+PUB CRCCheckEnabled(state=-2): curr_state
 ' Enable CRC calculation (TX) and checking (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -374,7 +374,7 @@ PUB CRCCheckEnabled(state): curr_state
 PUB CRCLength(param)
 ' dummy method
 
-PUB DataMode(mode): curr_mode
+PUB DataMode(mode=-2): curr_mode
 ' Set data processing mode
 '   Valid values:
 '       DATAMODE_PKT (0): Packet mode
@@ -391,7 +391,7 @@ PUB DataMode(mode): curr_mode
     mode := ((curr_mode & core.DATAMODE_MASK) | mode) & core.DATAMOD_MASK
     writereg(core.DATAMOD, 1, @mode)
 
-PUB DataRate(rate): curr_rate
+PUB DataRate(rate=-2): curr_rate
 ' Set on-air data rate, in bits per second
 '   Valid values:
 '       1_200..300_000
@@ -406,7 +406,7 @@ PUB DataRate(rate): curr_rate
             readreg(core.BITRATEMSB, 2, @curr_rate)
             return FXOSC / curr_rate
 
-PUB DataWhitening(state): curr_state
+PUB DataWhitening(state=-2): curr_state
 ' Enable data whitening
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -425,7 +425,7 @@ PUB DataWhitening(state): curr_state
     state := ((curr_state & core.DCFREE_MASK) | state) & core.PKTCFG1_MASK
     writereg(core.PKTCFG1, 1, @curr_state)
 
-PUB DCBlock(param)
+PUB DCBlock(param=-2)
 ' dummy method
 
 PUB DeviceID(): id
@@ -438,10 +438,10 @@ PUB DeviceID(): id
 '       $24:    ???
     readreg(core.VERSION, 1, @id)
 
-PUB DVGAGain(param)
+PUB DVGAGain(param=-2)
 ' dummy method
 
-PUB Encryption(state): curr_state
+PUB Encryption(state=-2): curr_state
 ' Enable AES encryption/decryption
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -470,7 +470,7 @@ PUB EncryptionKey(rw, ptr_buff) | tmp
         other:
             readreg(core.AESKEY1, 16, ptr_buff)
 
-PUB EnterCondition(cond): curr_cond
+PUB EnterCondition(cond=-2): curr_cond
 ' Set interrupt condition for entering intermediate mode
 '   Valid values:
 '       ENTCOND_NONE (%000)            Automodes off
@@ -493,7 +493,7 @@ PUB EnterCondition(cond): curr_cond
     cond := ((curr_cond & core.ENTCOND_MASK) | cond) & core.AUTOMODES_MASK
     writereg(core.AUTOMODES, 1, @cond)
 
-PUB ExitCondition(cond): curr_cond
+PUB ExitCondition(cond=-2): curr_cond
 ' Set interrupt condition for entering intermediate mode
 '   Valid values:
 '       EXITCOND_NONE (%000)           Automodes off
@@ -557,7 +557,7 @@ PUB FIFOFull(): flag
     readreg(core.IRQFLAGS2, 1, @flag)
     return ((flag >> core.FIFOFULL) & 1) == 1
 
-PUB FIFOThreshold(thresh): curr_thr
+PUB FIFOThreshold(thresh=-2): curr_thr
 ' Set threshold for triggering FIFO level interrupt
 '   Valid values: 0..127
 '   Any other value polls the chip and returns the current setting
@@ -574,7 +574,7 @@ PUB FIFOThreshold(thresh): curr_thr
 PUB FlushTX()
 ' dummy method
 
-PUB FreqDeviation(fdev): curr_fdev
+PUB FreqDeviation(fdev=-2): curr_fdev
 ' Set carrier deviation, in Hz
 '   Valid values:
 '       600..300_000
@@ -593,7 +593,7 @@ PUB FreqDeviation(fdev): curr_fdev
 PUB FSTX()
 ' dummy method
 
-PUB GaussianFilter(param): curr_param
+PUB GaussianFilter(param=-2): curr_param
 ' Set Gaussian filter/data shaping parameters
 '   Valid values:
 '       BT_NONE (0): No shaping
@@ -615,7 +615,7 @@ PUB Idle()
 ' Change chip state to idle (standby)
     opmode(OPMODE_STDBY)
 
-PUB IntermediateMode(mode): curr_mode
+PUB IntermediateMode(mode=-2): curr_mode
 ' Set intermediate operating mode
 '   Valid values:
 '       IMODE_SLEEP (%00): Sleep
@@ -655,10 +655,10 @@ PUB Interrupt(): mask
 '   0   - Battery voltage below level set by LowBattLevel()
     readreg(core.IRQFLAGS1, 2, @mask)
 
-PUB IntFreq(param)
+PUB IntFreq(param=-2)
 ' dummy method
 
-PUB Listen(state): curr_state
+PUB Listen(state=-2): curr_state
 ' Enable listen mode
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -673,7 +673,7 @@ PUB Listen(state): curr_state
     state := ((curr_state & core.LISTENON_MASK) | state) & core.OPMODE_MASK
     writereg(core.OPMODE, 1, @state)
 
-PUB LNAGain(gain): curr_gain
+PUB LNAGain(gain=-255): curr_gain
 ' Set LNA gain, in dB relative to highest gain
 '   Valid values:
 '      *LNA_AGC (0): Gain is set by the internal AGC loop
@@ -695,7 +695,7 @@ PUB LNAGain(gain): curr_gain
     gain := ((curr_gain & core.LNAGAINSEL_MASK) | gain) & core.LNA_MASK
     writereg(core.LNA, 1, @gain)
 
-PUB LNAZInput(impedance): curr_imp
+PUB LNAZInput(impedance=-2): curr_imp
 ' Set LNA's input impedance, in ohms
 '   Valid values:
 '       50, *200
@@ -711,7 +711,7 @@ PUB LNAZInput(impedance): curr_imp
     impedance := ((curr_imp & core.LNAZIN_MASK) | impedance) & core.LNA_MASK
     writereg(core.LNA, 1, @impedance)
 
-PUB LowBattLevel(lvl): curr_lvl
+PUB LowBattLevel(lvl=-2): curr_lvl
 ' Set low battery threshold, in millivolts
 '   Valid values:
 '       1695, 1764, *1835, 1905, 1976, 2045, 2116, 2185
@@ -727,7 +727,7 @@ PUB LowBattLevel(lvl): curr_lvl
     lvl := ((curr_lvl & core.LOWBATTRIM_MASK) | lvl) & core.LOWBAT_MASK
     writereg(core.LOWBAT, 1, @lvl)
 
-PUB LowBattMon(state): curr_state
+PUB LowBattMon(state=-2): curr_state
 ' Enable low battery detector signal
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -741,7 +741,7 @@ PUB LowBattMon(state): curr_state
     state := ((curr_state & core.LOWBAT_MASK) | state) & core.LOWBAT_MASK
     writereg(core.LOWBAT, 1, @state)
 
-PUB ManchesterEnc(state): curr_state
+PUB ManchesterEnc(state=-2): curr_state
 ' Enable Manchester encoding/decoding
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -760,7 +760,7 @@ PUB ManchesterEnc(state): curr_state
     state := ((curr_state & core.DCFREE_MASK) | state) & core.PKTCFG1_MASK
     writereg(core.PKTCFG1, 1, @state)
 
-PUB Modulation(mode): curr_mode
+PUB Modulation(mode=-2): curr_mode
 ' Set modulation mode
 '   Valid values:
 '       MOD_FSK (0): Frequency Shift Keyed
@@ -776,7 +776,7 @@ PUB Modulation(mode): curr_mode
     mode := ((curr_mode & core.MODTYPE_MASK) | mode) & core.DATAMOD_MASK
     writereg(core.DATAMOD, 1, @mode)
 
-PUB NodeAddress(addr): curr_addr
+PUB NodeAddress(addr=-2): curr_addr
 ' Set node address
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
@@ -788,7 +788,7 @@ PUB NodeAddress(addr): curr_addr
             readreg(core.NODEADRS, 1, @curr_addr)
             return
 
-PUB OCPCurrent(lvl): curr_lvl
+PUB OCPCurrent(lvl=-2): curr_lvl
 ' Set PA overcurrent protection level, in milliamps
 '   Valid values:
 '       45..120 (Default: 95)
@@ -804,7 +804,7 @@ PUB OCPCurrent(lvl): curr_lvl
     lvl := ((curr_lvl & core.OCPTRIM_MASK) | lvl) & core.OCP_MASK
     writereg(core.OCP, 1, @lvl)
 
-PUB OpMode(mode): curr_mode
+PUB OpMode(mode=-2): curr_mode
 ' Set operating mode
 '   Valid values:
 '       OPMODE_SLEEP (0): Sleep mode
@@ -823,7 +823,7 @@ PUB OpMode(mode): curr_mode
     mode := ((curr_mode & core.MODE_MASK) | mode) & core.OPMODE_MASK
     writereg(core.OPMODE, 1, @mode)
 
-PUB OvercurrentProtection(state): curr_state
+PUB OvercurrentProtection(state=-2): curr_state
 ' Enable PA overcurrent protection
 '   Valid values: *TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -837,7 +837,7 @@ PUB OvercurrentProtection(state): curr_state
     state := ((curr_state & core.OCPON_MASK) | state) & core.OCP_MASK
     writereg(core.OCP, 1, @state)
 
-PUB PayloadLen(length): curr_len
+PUB PayloadLen(length=-2): curr_len
 ' Set payload/packet length, in bytes
 '   Behavior differs depending on setting of PayloadLenCfg():
 '       If PKTLEN_FIXED, this sets payload length
@@ -852,7 +852,7 @@ PUB PayloadLen(length): curr_len
             readreg(core.PAYLOADLENGTH, 1, @curr_len)
             return
 
-PUB PayloadLenCfg(mode): curr_mode
+PUB PayloadLenCfg(mode=-2): curr_mode
 ' Set payload/packet length mode
 '   Valid values:
 '       PKTLEN_FIXED: fixed payload length
@@ -879,7 +879,7 @@ PUB PayloadSent(): flag
     readreg(core.IRQFLAGS2, 1, @flag)
     return ((flag >> core.PKTSENT) & 1) == 1
 
-PUB PreambleLen(length): curr_len
+PUB PreambleLen(length=-2): curr_len
 ' Set number of length in bytes
 '   Valid values: 0..65535
 '   Any other value polls the chip and returns the current setting
@@ -891,7 +891,7 @@ PUB PreambleLen(length): curr_len
             readreg(core.PREAMBLEMSB, 2, @curr_len)
             return
 
-PUB RampTime(rtime): curr_rtime
+PUB RampTime(rtime=-2): curr_rtime
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
 '       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
@@ -908,7 +908,7 @@ PUB RampTime(rtime): curr_rtime
             return lookupz(curr_rtime: 3400, 2000, 1000, 500, 250, 125, 100,{
 }           62, 50, 40, 31, 25, 20, 15, 12, 10)
 
-PUB RCOscCal(state): curr_state
+PUB RCOscCal(state=-2): curr_state
 ' Trigger calibration of RC oscillator
 '   Valid values:
 '       TRUE (-1 or 1)
@@ -938,7 +938,7 @@ PUB RSSI(): level | tmp
     readreg(core.RSSIVALUE, 1, @level)
     return (level >> 1) * -1
 
-PUB RXBandwidth(bw): curr_bw | bw_m, bw_e   'XXX only calcs for FSK mode
+PUB RXBandwidth(bw=-2): curr_bw | bw_m, bw_e   'XXX only calcs for FSK mode
 ' Set receiver channel filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600, 20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000, 166700, 200000, 250000, 333300, 400000, 500000
 '   Any other value polls the chip and returns the current setting
@@ -970,7 +970,7 @@ PUB RXMode()
 ' Change chip state to RX (receive)
     opmode(OPMODE_RX)
 
-PUB SensitivityMode(mode): curr_mode
+PUB SensitivityMode(mode=-2): curr_mode
 ' Set receiver sensitivity level/mode
 '   Valid values:
 '      *SENS_NORM: normal sensitivity
@@ -984,7 +984,7 @@ PUB SensitivityMode(mode): curr_mode
             readreg(core.TESTLNA, 1, @curr_mode)
             return
 
-PUB Sequencer(mode): curr_mode
+PUB Sequencer(mode=-2): curr_mode
 ' Control automatic sequencer
 '   Valid values:
 '       *OPMODE_AUTO (0): Automatic sequence, as selected by OpMode()
@@ -1004,7 +1004,7 @@ PUB Sleep()
 ' Power down chip
     opmode(OPMODE_SLEEP)
 
-PUB SyncMode(param)
+PUB SyncMode(param=-2)
 ' dummy method
 
 PUB SyncWord(rw, ptr_buff)'XXX SEE IF THIS CAN BE MADE API-COMPLIANT (1 PARAM)
@@ -1020,7 +1020,7 @@ PUB SyncWord(rw, ptr_buff)'XXX SEE IF THIS CAN BE MADE API-COMPLIANT (1 PARAM)
         other:
             readreg(core.SYNCVALUE1, 8, ptr_buff)  'XXX Future test: set nr_bytes arg to SyncWordBytes(-2)?
 
-PUB SyncWordEnabled(state): curr_state
+PUB SyncWordEnabled(state=-2): curr_state
 ' Enable sync word generation (TX) and detection (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -1035,7 +1035,7 @@ PUB SyncWordEnabled(state): curr_state
     state := ((curr_state & core.SYNCON_MASK) | state) & core.SYNCCFG_MASK
     writereg(core.SYNCCFG, 1, @state)
 
-PUB SyncWordLength(length): curr_len
+PUB SyncWordLength(length=-2): curr_len
 ' Set length of sync word, in bytes
 '   Valid values: 1..8
 '   Any other value polls the chip and returns the current setting
@@ -1050,7 +1050,7 @@ PUB SyncWordLength(length): curr_len
     length := ((curr_len & core.SYNCSIZE_MASK) | length) & core.SYNCCFG_MASK
     writereg(core.SYNCCFG, 1, @length)
 
-PUB SyncWordMaxBitErr(bits): curr_bits
+PUB SyncWordMaxBitErr(bits=-2): curr_bits
 ' Set maximum number of tolerated bit errors in sync word
 '   Valid values: 0..7
 '   Any other value polls the chip and returns the current setting
@@ -1089,7 +1089,7 @@ PUB TXPayload(nr_bytes, ptr_buff)
 '   Any other value is ignored
     writereg(core.FIFO, nr_bytes, ptr_buff)
 
-PUB TXPower(pwr): curr_pwr | pa1, pa2
+PUB TXPower(pwr=-255): curr_pwr | pa1, pa2
 ' Set transmit output power, in dBm
 '   Valid values:
 '       -18..20
@@ -1128,7 +1128,7 @@ PUB TXPower(pwr): curr_pwr | pa1, pa2
     writereg(core.TESTPA1, 1, @pa1)
     writereg(core.TESTPA2, 1, @pa2)
 
-PUB TXStartCondition(cond): curr_cond
+PUB TXStartCondition(cond=-2): curr_cond
 ' Define condition to begin packet transmission
 '   Valid values:
 '       TXSTART_FIFOLVL (0): If the number of bytes in the FIFO exceeds
