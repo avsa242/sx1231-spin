@@ -916,7 +916,7 @@ PUB RSSI{}: level | tmp
     until tmp & core#RSSIDONE
 
     readreg(core#RSSIVALUE, 1, @level)
-    return (~level) >> 1
+    return (level >> 1) * -1
 
 PUB RXBandwidth(bw): curr_bw | bw_m, bw_e   'XXX only calcs for FSK mode
 ' Set receiver channel filter bandwidth, in Hz
