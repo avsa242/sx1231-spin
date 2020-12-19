@@ -220,7 +220,7 @@ PUB AFCAuto(state): curr_state
     readreg(core#AFCFEI, 1, @curr_state)
     case ||(state)
         0, 1:
-            state := (||(state) << core#AFCAUTOON)
+            state := ||(state) << core#AFCAUTOON
         other:
             return ((curr_state >> core#AFCAUTOON) & 1) == 1
 
@@ -231,7 +231,7 @@ PUB AFCComplete{}: flag
 ' Flag indicating AFC (auto or manual) completed
 '   Returns: TRUE (-1) if complete, FALSE (0) otherwise
     readreg(core#AFCFEI, 1, @flag)
-    flag := ((flag >> core#AFCDONE) & 1) == 1
+    return ((flag >> core#AFCDONE) & 1) == 1
 
 PUB AFCMethod(mode): curr_mode
 ' Set AFC mode/routine
@@ -302,7 +302,7 @@ PUB BattLow{}: flag
 ' Flag indicating battery voltage low
 '   Returns TRUE if battery low, FALSE otherwise
     readreg(core#LOWBAT, 1, @flag)
-    flag := ((flag >> core#LOWBATMON) & 1) == 1
+    return ((flag >> core#LOWBATMON) & 1) == 1
 
 PUB BroadcastAddress(addr): curr_addr
 ' Set broadcast address
@@ -344,7 +344,7 @@ PUB CRCCheckEnabled(state): curr_state
     readreg(core#PKTCFG1, 1, @curr_state)
     case ||(state)
         0, 1:
-            state := (||(state) & 1) << core#CRCON
+            state := ||(state) << core#CRCON
         other:
             return ((curr_state >> core#CRCON) & 1) == 1
 
@@ -390,7 +390,8 @@ PUB DataWhitening(state): curr_state
 ' Enable data whitening
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-'   NOTE: This setting and ManchesterEnc are mutually exclusive; enabling this will disable ManchesterEnc
+'   NOTE: This setting and ManchesterEnc() are mutually exclusive;
+'       enabling this will disable ManchesterEnc()
     curr_state := 0
     readreg(core#PKTCFG1, 1, @curr_state)
     case ||(state)
@@ -487,7 +488,9 @@ PUB ExitCondition(cond): curr_cond
     curr_cond := 0
     readreg(core#AUTOMODES, 1, @curr_cond)
     case cond
-        EXITCOND_NONE, EXITCOND_FIFOEMPTY, EXITCOND_FIFOLVL, EXITCOND_CRCOK, EXITCOND_PAYLDRDY, EXITCOND_SYNCADD, EXITCOND_PKTSENT, EXITCOND_TIMEOUT:
+        EXITCOND_NONE, EXITCOND_FIFOEMPTY, EXITCOND_FIFOLVL, EXITCOND_CRCOK,{
+}       EXITCOND_PAYLDRDY, EXITCOND_SYNCADD, EXITCOND_PKTSENT,{
+}       EXITCOND_TIMEOUT:
             cond <<= core#EXITCOND
         other:
             return (curr_cond >> core#EXITCOND) & core#EXITCOND_BITS
@@ -590,7 +593,7 @@ PUB GaussianFilter(param): curr_param
 
 PUB Idle{}
 ' Change chip state to idle (standby)
-    OpMode (OPMODE_STDBY)
+    opmode(OPMODE_STDBY)
 
 PUB IntermediateMode(mode): curr_mode
 ' Set intermediate operating mode
@@ -614,22 +617,22 @@ PUB IntermediateMode(mode): curr_mode
 PUB Interrupt{}: mask
 ' Read interrupt state
 '   Bits:
-'   15  - FIFO is full
-'   14  - FIFO isn't empty
-'   13  - FIFO level exceeds threshold set by FIFOThreshold()
-'   12  - FIFO overrun
-'   11  - Payload sent
-'   10  - Payload ready
-'   9   - RX Payload CRC OK
-'   8   - Battery voltage below level set by LowBattLevel()
-'   7   - OpMode ready
-'   6   - RX mode only: After RSSI, AGC and AFC
-'   5   - TX mode only: after PA ramp up
-'   4   - FS, RX, TX OpModes: PLL locked
-'   3   - RX mode only: RSSI exceeds level set by RSSIThreshold()
-'   2   - Timeout
-'   1   - Entered intermediate mode
-'   0   - Syncword and address (if enabled) match
+'   15  - OpMode ready
+'   14  - RX mode only: After RSSI, AGC and AFC
+'   13  - TX mode only: after PA ramp up
+'   12  - FS, RX, TX OpModes: PLL locked
+'   11  - RX mode only: RSSI exceeds level set by RSSIThreshold()
+'   10  - Timeout
+'   9   - Entered intermediate mode
+'   8   - Syncword and address (if enabled) match
+'   7   - FIFO is full
+'   6   - FIFO isn't empty
+'   5   - FIFO level exceeds threshold set by FIFOThreshold()
+'   4   - FIFO overrun
+'   3   - Payload sent
+'   2   - Payload ready
+'   1   - RX Payload CRC OK
+'   0   - Battery voltage below level set by LowBattLevel()
     readreg(core#IRQFLAGS1, 2, @mask)
 
 PUB IntFreq(param)
@@ -746,7 +749,7 @@ PUB Modulation(mode): curr_mode
     readreg(core#DATAMOD, 1, @curr_mode)
     case mode
         MOD_FSK, MOD_OOK:
-            mode := mode << core#MODTYPE
+            mode <<= core#MODTYPE
         other:
             return (curr_mode >> core#MODTYPE) & core#MODTYPE_BITS
 
@@ -843,7 +846,7 @@ PUB PayloadLenCfg(mode): curr_mode
         other:
             return (curr_mode >> core#PKTFORMAT) & 1
 
-    mode := ((curr_mode & core#PKTFORMAT) | mode) & core#PKTCFG1_MASK
+    mode := ((curr_mode & core#PKTFORMAT_MASK) | mode) & core#PKTCFG1_MASK
     writereg(core#PKTCFG1, 1, @mode)
 
 PUB PayloadSent{}: flag
