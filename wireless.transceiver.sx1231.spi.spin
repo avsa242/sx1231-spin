@@ -126,7 +126,7 @@ PUB Null{}
 PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
     if okay := spi.start(core#CLK_DLY, core#CPOL)
-        longmove(@_CS, CS_PIN, 4)
+        longmove(@_CS, @CS_PIN, 4)
         io.high(_CS)
         io.output(_CS)
 
