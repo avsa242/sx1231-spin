@@ -63,7 +63,7 @@ PUB Main{} | count
 
         sx1231.idle{}                           ' start in idle/standby
         sx1231.txpayload(8, @_buffer)           ' queue the data
-        sx1231.txmode                           ' transmit
+        sx1231.txmode{}                         ' transmit
 
         repeat until sx1231.payloadsent{}       ' wait until TX complete
 
