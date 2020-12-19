@@ -1157,7 +1157,7 @@ PUB WaitRX{} | tmp
 PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read nr_bytes from device into ptr_buff
     case reg_nr
-        $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
+        $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
             io.low(_CS)
             spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg_nr)
             repeat tmp from nr_bytes-1 to 0
@@ -1170,7 +1170,7 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes to device from ptr_buff
     case reg_nr
-        $00..$13, $18..$4F, $58..59, $5F, $6F, $71:
+        $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
             io.low(_CS)
             spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg_nr|core#W)
             repeat tmp from nr_bytes-1 to 0
