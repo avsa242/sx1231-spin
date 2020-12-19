@@ -12,9 +12,9 @@
 
 CON
 
-' SX1231 Oscillator Frequency
+' SX1231 Oscillator Frequency, and frequency step size
     FXOSC                   = 32_000_000
-    FSTEP                   = FXOSC / (1 << 19)
+    FSTEP                   = 61_035            ' (FXOSC * 1_000) / (1 << 19)
 
 ' Sequencer operating modes
     OPMODE_AUTO             = 0
@@ -137,6 +137,7 @@ OBJ
     core: "core.con.sx1231"
     time: "time"
     io  : "io"
+    u64 : "math.unsigned64"
 
 PUB Null{}
 ' This is not a top-level object
@@ -342,11 +343,11 @@ PUB CarrierFreq(freq): curr_freq
 '   NOTE: Set value will be rounded
     case freq
         290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
-            freq := (freq / FSTEP) & core#FRF_MASK
+            freq := u64.multdiv(freq, 1_000, FSTEP)
             writereg(core#FRFMSB, 3, @freq)
         other:
             readreg(core#FRFMSB, 3, @curr_freq)
-            return (curr_freq & core#FRF_MASK) * FSTEP
+            return u64.multdiv(curr_freq, FSTEP, 1_000)
 
 PUB CarrierSense(param)
 ' dummy method
@@ -581,12 +582,12 @@ PUB FreqDeviation(fdev): curr_fdev
 '   NOTE: Set value will be rounded
     case fdev
         600..300_000:
-            fdev := (fdev / FSTEP) & core#FDEV_MASK
+            fdev := u64.multdiv(fdev, 1_000, FSTEP)
             writereg(core#FDEVMSB, 2, @fdev)
         other:
             curr_fdev := 0
             readreg(core#FDEVMSB, 2, @curr_fdev)
-            return (curr_fdev & core#FDEV_MASK) * FSTEP
+            return u64.multdiv(curr_fdev, FSTEP, 1_000)
 
 PUB FSTX{}
 ' dummy method
