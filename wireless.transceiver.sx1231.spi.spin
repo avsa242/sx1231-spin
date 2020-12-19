@@ -1090,46 +1090,38 @@ PUB TXPayload(nr_bytes, ptr_buff)
 PUB TXPower(pwr): curr_pwr | pa1, pa2
 ' Set transmit output power, in dBm
 '   Valid values:
-'       -18..17
+'       -18..20
 '   Any other value polls the chip and returns the current setting
     curr_pwr := 0
     readreg(core#PALVL, 1, @curr_pwr)
     case pwr
-        -18..13, 14..17, 18..20:
-            ' zero out the existing power level setting and PAx bits
-            curr_pwr := curr_pwr & core#OUTPWR_MASK & core#PA0ON_MASK
-            curr_pwr := curr_pwr & core#PA1ON_MASK & core#PA2ON_MASK
-    case pwr
         -18..13:                                ' PA0 on, PA1 and PA2 off
-            pwr := (pwr + 18) & core#OUTPWR
-            curr_pwr |= (1 << core#PA0ON)       ' Turn on only the PA0 bit
+            pwr := (pwr + 18) | (1 << core#PA0ON)
             pa1 := core#PA1_NORMAL              ' Turn off the PA_BOOST circuit
             pa2 := core#PA2_NORMAL
-        14..17:                                 ' PA_BOOST off
-            pwr := (pwr + 14) & core#OUTPWR_MASK
-            curr_pwr |= (1 << core#PA1ON) | (1 << core#PA2ON)
-            pa1 := core#PA1_NORMAL
+        14..17:                                 ' PA1 on, PA2 on
+            pwr := (pwr + 14) | (1 << core#PA1ON) | (1 << core#PA2ON)
+            pa1 := core#PA1_NORMAL              ' PA_BOOST off
             pa2 := core#PA2_NORMAL
         18..20:                                 ' PA1 and PA2 on
-            pwr := (pwr + 11) & core#OUTPWR_MASK
-            curr_pwr := curr_pwr | (1 << core#PA1ON) | (1 << core#PA2ON)
+            pwr := (pwr + 11) | (1 << core#PA1ON) | (1 << core#PA2ON)
             pa1 := core#PA1_BOOST               ' PA_BOOST on
             pa2 := core#PA2_BOOST
         other:
-            curr_pwr := curr_pwr & core#OUTPWR_BITS
             case (curr_pwr >> core#PA2ON) & core#PA012_BITS
                 %100:                           ' PA0
+                    curr_pwr &= core#OUTPWR_BITS
                     curr_pwr -= 18
                 %011, %010:                     ' PA1, PA2
                     readreg(core#TESTPA1, 1, @pa1)
                     readreg(core#TESTPA2, 1, @pa2)
+                    curr_pwr &= core#OUTPWR_BITS
                     if pa1 == core#PA1_BOOST and pa2 == core#PA2_BOOST
                         curr_pwr -= 11          ' pwr offset with PA_BOOST
                     else
                         curr_pwr -= 14          ' pwr offset without PA_BOOST
             return
 
-    pwr := (curr_pwr | pwr) & core#PALVL_MASK
     writereg(core#PALVL, 1, @pwr)
     writereg(core#TESTPA1, 1, @pa1)
     writereg(core#TESTPA2, 1, @pa2)
