@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Dec 14, 2020
+    Updated Dec 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -34,7 +34,7 @@ CON
         SEQOFF_MASK             = (1 << SEQOFF) ^ OPMODE_MASK
         LISTENON_MASK           = (1 << LISTENON) ^ OPMODE_MASK
         LISTENABT_MASK          = (1 << LISTENABT) ^ OPMODE_MASK
-        MODE_MASK               = MODE_BITS ^ OPMODE_MASK
+        MODE_MASK               = (MODE_BITS << MODE) ^ OPMODE_MASK
 
     DATAMOD                     = $02
     DATAMOD_MASK                = $6B

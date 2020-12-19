@@ -68,13 +68,13 @@ PUB Main() | count
         repeat until sx1231.payloadsent()       ' wait until TX complete
 
         ' sleep after transmit to avoid continuously transmitting a carrier
-        sx1231.sleep()                          ' scas* important
+        sx1231.sleep()                          ' *** important
 
         count++
         ser.position(0, 5)
         ser.str(string("Sending: "))
         ser.str(@_buffer)
-        waitms(5000)                       ' wait in between packets
+        waitms(5000)                            ' wait in between packets
                                                 ' (don't abuse the airwaves)
 
 PUB Setup()
