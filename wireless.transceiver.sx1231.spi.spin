@@ -144,15 +144,17 @@ PUB Null{}
 
 PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
-    if okay := spi.start(core#CLK_DLY, core#CPOL)
-        longmove(@_CS, @CS_PIN, 4)
-        io.high(_CS)
-        io.output(_CS)
+    if lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and {
+}   lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
+        if okay := spi.start(core#CLK_DLY, core#CPOL)
+            longmove(@_CS, @CS_PIN, 4)
+            io.high(_CS)
+            io.output(_CS)
 
-        time.msleep (10)
+            time.msleep (10)
 
-        if lookdown(deviceid{}: $21, $22, $23, $24)
-            return okay
+            if lookdown(deviceid{}: $21, $22, $23, $24)
+                return okay
 
     return FALSE                                ' something above failed
 
