@@ -109,6 +109,24 @@ CON
     SENS_NORM               = $1b
     SENS_HI                 = $2d
 
+' Interrupts
+    OPMODE_RDY              = 1 << 15
+    RXREADY                 = 1 << 14
+    TXREADY                 = 1 << 13
+    PLL_LOCKED              = 1 << 12
+    RSSI_THR                = 1 << 11
+    TIMEOUT                 = 1 << 10
+    INTERM_MODE             = 1 << 9
+    SYNC_ADDR_MATCH         = 1 << 8
+    FIFO_FULL               = 1 << 7
+    FIFO_NOTEMPTY           = 1 << 6
+    FIFO_THR                = 1 << 5
+    FIFO_OVER               = 1 << 4
+    PAYLD_SENT              = 1 << 3
+    PAYLD_RDY               = 1 << 2
+    PAYLD_CRCOK             = 1 << 1
+    BATT_LOW                = 1
+
 VAR
 
     long _CS, _SCK, _MOSI, _MISO
