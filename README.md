@@ -7,6 +7,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 
 ## Salient Features
 
+* SPI connection at up to 1MHz (P1), 10MHz (P2)
 * Set on-air bitrate
 * Set carrier center freq
 * Set carrier deviation freq
@@ -18,8 +19,8 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 * Enable and read on-chip low-battery status
 * Address matching/filtering (including broadcast)
 * CRC generation/checking
-* Data whitening or Manchester encoding
-* Encryption
+* Data whitening or Manchester encoding (untested)
+* Encryption (untested)
 
 ## Requirements
 
@@ -33,7 +34,7 @@ P2/SPIN2:
 ## Compiler Compatibility
 
 * P1/SPIN1: OpenSpin (tested with 1.00.81)
-* P2/SPIN2: FastSpin (tested with 4.1.10-beta)
+* P2/SPIN2: FastSpin (tested with 5.0.0)
 * ~~BST~~ (incompatible - no preprocessor)
 * ~~Propeller Tool~~ (incompatible - no preprocessor)
 * ~~PNut~~ (incompatible - no preprocessor)
@@ -41,21 +42,19 @@ P2/SPIN2:
 ## Limitations
 
 * Very early in development; may malfunction or outright fail to build
+* RXBandwidth() calculates register settings only for FSK mode
+* Because of the max length of the syncword supported by the chip (8 bytes/64bits), the API for SyncWord() currently breaks the standard, by providing two parameters
 
 ## TODO
 
 - [x] Verify modulated transmission
-- [ ] Add some simple demos
-- [ ] Add support for reading RSSI
+- [x] Add some simple demos
+- [x] Add support for reading RSSI
 - [ ] Add support for setting GPIO pin functions
-- [ ] Add support for reading the rest of the IRQ flags
+- [x] Add support for reading the rest of the IRQ flags
 - [ ] Add support for setting RSSI threshold (carrier detect)
 - [ ] Add support for PLL lock status
-- [ ] Add support for setting RX bandwidth
+- [ ] Add support for setting RX bandwidth (WIP)
 - [ ] Add support for setting freq by channel (emulated - use current channel bandwidth * channel number)
 - [ ] Update API to current standard (wireless.transceiver API)
-- [ ] Fix carrier frequency error
-- [ ] Fix transmit power issues (-2dB is loud, -3dB barely received at the highest receiver gain settings)
-- [ ] Verify reception from another SX1231 unit
-- [ ] Verify reception of an SX1231 transmission by a different, compatible unit (e.g., CC1101)
 
