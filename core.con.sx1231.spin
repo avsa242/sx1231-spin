@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Dec 19, 2020
+    Updated Dec 20, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -172,32 +172,27 @@ CON
 
     RSSIVALUE                   = $24
 
-    DIOMAPPING1                 = $25
-    DIOMAPPING1_MASK            = $FF
-        DIO0MAPPING             = 4
-        DIO1MAPPING             = 4
-        DIO2MAPPING             = 4
-        DIO3MAPPING             = 4
-        DIO0MAPPING_BITS        = %11
-        DIO1MAPPING_BITS        = %11
-        DIO2MAPPING_BITS        = %11
-        DIO3MAPPING_BITS        = %11
-        DIO0MAPPING_MASK        = (DIO0MAPPING_BITS << DIO0MAPPING) ^ DIOMAPPING1_MASK
-        DIO1MAPPING_MASK        = (DIO1MAPPING_BITS << DIO1MAPPING) ^ DIOMAPPING1_MASK
-        DIO2MAPPING_MASK        = (DIO2MAPPING_BITS << DIO2MAPPING) ^ DIOMAPPING1_MASK
-        DIO3MAPPING_MASK        = (DIO3MAPPING_BITS << DIO3MAPPING) ^ DIOMAPPING1_MASK
+    DIOMAP1                     = $25
+    DIOMAP1_MASK                = $FF
+        DIO0                    = 6
+        DIO1                    = 4
+        DIO2                    = 2
+        DIO3                    = 0
+        DIO_BITS                = %11           ' used for all DIOx fields
+        DIO0_MASK               = (DIO_BITS << DIO0) ^ DIOMAP1_MASK
+        DIO1_MASK               = (DIO_BITS << DIO1) ^ DIOMAP1_MASK
+        DIO2_MASK               = (DIO_BITS << DIO2) ^ DIOMAP1_MASK
+        DIO3_MASK               = (DIO_BITS << DIO3) ^ DIOMAP1_MASK
 
-    DIOMAPPING2                 = $26
-    DIOMAPPING2_MASK            = $F7
-        DIO4MAPPING             = 6
-        DIO5MAPPING             = 4
+    DIOMAP2                     = $26
+    DIOMAP2_MASK                = $F7
+        DIO4                    = 6
+        DIO5                    = 4
         CLKOUT                  = 0
         CLKOUT_BITS             = %111
-        DIO4MAPPING_BITS        = %11
-        DIO5MAPPING_BITS        = %11
-        DIO4MAPPING_MASK        = (DIO4MAPPING_BITS << DIO4MAPPING) ^ DIOMAPPING2_MASK
-        DIO5MAPPING_MASK        = (DIO5MAPPING_BITS << DIO5MAPPING) ^ DIOMAPPING2_MASK
-        CLKOUT_MASK             = CLKOUT_BITS ^ DIOMAPPING2_MASK
+        DIO4_MASK               = (DIO_BITS << DIO4) ^ DIOMAP2_MASK
+        DIO5_MASK               = (DIO_BITS << DIO5) ^ DIOMAP2_MASK
+        CLKOUT_MASK             = CLKOUT_BITS ^ DIOMAP2_MASK
 
     IRQFLAGS1                   = $27
 

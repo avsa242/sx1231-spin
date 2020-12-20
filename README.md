@@ -21,6 +21,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 * CRC generation/checking
 * Data whitening or Manchester encoding (untested)
 * Encryption (untested)
+* Configure GPIO (DIO0..5) functionality
 
 ## Requirements
 
@@ -50,7 +51,7 @@ P2/SPIN2:
 - [x] Verify modulated transmission
 - [x] Add some simple demos
 - [x] Add support for reading RSSI
-- [ ] Add support for setting GPIO pin functions
+- [x] Add support for setting GPIO pin functions
 - [x] Add support for reading the rest of the IRQ flags
 - [ ] Add support for setting RSSI threshold (carrier detect)
 - [ ] Add support for PLL lock status

@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC
     Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Dec 19, 2020
+    Updated Dec 20, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -111,8 +111,8 @@ CON
 
 ' Interrupts
     OPMODE_RDY              = 1 << 15
-    RXREADY                 = 1 << 14
-    TXREADY                 = 1 << 13
+    RXRDY                   = 1 << 14
+    TXRDY                   = 1 << 13
     PLL_LOCKED              = 1 << 12
     RSSI_THR                = 1 << 11
     TIMEOUT                 = 1 << 10
@@ -130,6 +130,45 @@ CON
 ' Clock output modes
     CLKOUT_RC               = 6
     CLKOUT_OFF              = 7
+
+' GPIO pin modes                                ' Usable when OpMode() ==
+    DIO0_LOWBAT             = 2                 ' SLEEP, STDBY, FS, TX
+    DIO0_PLLLOCK            = 3                 ' FS, TX
+    DIO0_CRCOK              = 0                 ' RX
+    DIO0_PAYLDRDY           = 1                 ' RX
+    DIO0_SYNCADDR           = 2                 ' RX
+    DIO0_RSSI               = 3                 ' RX
+    DIO0_PKTSENT            = 0                 ' TX
+    DIO0_TXRDY              = 1                 ' TX
+
+    DIO1_FIFOLVL            = 0                 ' All
+    DIO1_FIFOFULL           = 1                 ' All
+    DIO1_FIFONOTEMPTY       = 2                 ' All
+    DIO1_TIMEOUT            = 3                 ' RX
+    DIO1_PLLLOCK            = 3                 ' FS, TX
+
+    DIO2_FIFONOTEMPTY       = 0                 ' All
+    DIO2_DATA               = 1                 ' RX, TX
+    DIO2_LOWBAT             = 2                 ' All
+    DIO2_AUTOMODE           = 3                 ' All
+
+    DIO3_FIFOFULL           = 0                 ' All
+    DIO3_RSSI               = 1                 ' RX
+    DIO3_TXRDY              = 1                 ' TX
+    DIO3_LOWBAT             = 2                 ' SLEEP, STDBY, FS, TX
+    DIO3_SYNCADDR           = 2                 ' RX
+    DIO3_PLLLOCK            = 3                 ' FS, RX, TX
+
+    DIO4_RSSI               = 1                 ' RX
+    DIO4_TXRDY              = 1                 ' TX
+    DIO4_LOWBAT             = 2                 ' SLEEP, STDBY, FS, TX
+    DIO4_RXRDY              = 2                 ' RX
+    DIO4_PLLLOCK            = 3                 ' FS, RX, TX
+
+    DIO5_CLKOUT             = 0                 ' STDBY, FS, RX, TX
+    DIO5_DATA               = 1                 ' RX, TX
+    DIO5_LOWBAT             = 2                 ' All
+    DIO5_MODERDY            = 3                 ' All
 
 VAR
 
@@ -367,9 +406,9 @@ PUB ClkOut(divisor): curr_div
 '       1, 2, 4, 8, 16, 32, CLKOUT_RC (6), CLKOUT_OFF (7)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: For optimal efficiency, it is recommended to disable the
-        clock output (CLKOUT_OFF) unless needed
+'       clock output (CLKOUT_OFF) unless needed
     curr_div := 0
-    readreg(core#DIOMAPPING2, 1, @curr_div)
+    readreg(core#DIOMAP2, 1, @curr_div)
     case divisor
         1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF:
             divisor := lookdownz(divisor: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
@@ -377,8 +416,8 @@ PUB ClkOut(divisor): curr_div
             curr_div &= core#CLKOUT_BITS
             return lookupz(curr_div: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
 
-    divisor := ((curr_div & core#CLKOUT_MASK) | divisor) & core#DIOMAPPING2_MASK
-    writereg(core#DIOMAPPING2, 1, @divisor)
+    divisor := ((curr_div & core#CLKOUT_MASK) | divisor) & core#DIOMAP2_MASK
+    writereg(core#DIOMAP2, 1, @divisor)
 
 PUB CRCCheckEnabled(state): curr_state
 ' Enable CRC calculation (TX) and checking (RX)
@@ -634,6 +673,210 @@ PUB GaussianFilter(param): curr_param
 
     param := ((curr_param & core#MODSHP_MASK) | param) & core#DATAMOD_MASK
     writereg(core#DATAMOD, 1, @param)
+
+PUB GPIO0(mode): curr_mode
+' Assert DIO0 pin on set mode
+'   Valid values: (available functions are OpMode()-dependent)
+'       OPMODE_SLEEP:
+'           DIO0_LOWBAT (2)
+'       OPMODE_STDBY:
+'           DIO0_LOWBAT (2)
+'       OPMODE_FS:
+'           DIO0_LOWBAT (2)
+'           DIO0_PLLLOCK (3)
+'       OPMODE_RX:
+'           DIO0_CRCOK (0)
+'           DIO0_PAYLDRDY (1)
+'           DIO0_SYNCADDR (2)
+'           DIO0_RSSI (3)
+'       OPMODE_TX:
+'           DIO0_PKTSENT (0)
+'           DIO0_TXRDY (1)
+'           DIO0_LOWBAT (2)
+'           DIO0_PLLLOCK (3)
+    curr_mode := 0
+    readreg(core#DIOMAP1, 1, @curr_mode)
+    case mode
+        0..3:
+            mode <<= core#DIO0
+        other:
+            return (curr_mode >> core#DIO0) & core#DIO_BITS
+
+    mode := ((curr_mode & core#DIO0_MASK) | mode) & core#DIOMAP1_MASK
+    writereg(core#DIOMAP1, 1, @mode)
+
+PUB GPIO1(mode): curr_mode  'XXX
+' Assert DIO1 pin on set mode
+'   Valid values:
+'       OPMODE_SLEEP:
+'           DIO1_FIFOLVL (0)
+'           DIO1_FIFOFULL (1)
+'           DIO1_FIFONOTEMPTY (2)
+'       OPMODE_STDBY:
+'           DIO1_FIOFLVL (0)
+'           DIO1_FIFOFULL (1)
+'           DIO1_FIFONOTEMPTY (2)
+'       OPMODE_FS:
+'           DIO1_FIOFLVL (0)
+'           DIO1_FIFOFULL (1)
+'           DIO1_FIFONOTEMPTY (2)
+'           DIO1_PLLLOCK (3)
+'       OPMODE_RX:
+'           DIO1_FIOFLVL (0)
+'           DIO1_FIFOFULL (1)
+'           DIO1_FIFONOTEMPTY (2)
+'           DIO1_TIMEOUT (3)
+'       OPMODE_TX:
+'           DIO1_FIOFLVL (0)
+'           DIO1_FIFOFULL (1)
+'           DIO1_FIFONOTEMPTY (2)
+'           DIO1_PLLLOCK (3)
+    curr_mode := 0
+    readreg(core#DIOMAP1, 1, @curr_mode)
+    case mode
+        0..3:
+            mode <<= core#DIO1
+        other:
+            return (curr_mode >> core#DIO1) & core#DIO_BITS
+
+    mode := ((curr_mode & core#DIO1_MASK) | mode) & core#DIOMAP1_MASK
+    writereg(core#DIOMAP1, 1, @mode)
+
+PUB GPIO2(mode): curr_mode
+' Assert DIO2 pin on set mode
+'   Valid values:
+'       OPMODE_SLEEP:
+'           DIO2_FIFONOTEMPTY (0)
+'           DIO2_LOWBAT (2)
+'           DIO2_AUTOMODE (3)
+'       OPMODE_STDBY:
+'           DIO2_FIFONOTEMPTY (0)
+'           DIO2_LOWBAT (2)
+'           DIO2_AUTOMODE (3)
+'       OPMODE_FS:
+'           DIO2_FIFONOTEMPTY (0)
+'           DIO2_LOWBAT (2)
+'           DIO2_AUTOMODE (3)
+'       OPMODE_RX:
+'           DIO2_FIFONOTEMPTY (0)
+'           DIO2_DATA (1)
+'           DIO2_LOWBAT (2)
+'           DIO2_AUTOMODE (3)
+'       OPMODE_TX:
+'           DIO2_FIFONOTEMPTY (0)
+'           DIO2_DATA (1)
+'           DIO2_LOWBAT (2)
+'           DIO2_AUTOMODE (3)
+    curr_mode := 0
+    readreg(core#DIOMAP1, 1, @curr_mode)
+    case mode
+        0..3:
+            mode <<= core#DIO2
+        other:
+            return (curr_mode >> core#DIO2) & core#DIO_BITS
+
+    mode := ((curr_mode & core#DIO2_MASK) | mode) & core#DIOMAP1_MASK
+    writereg(core#DIOMAP1, 1, @mode)
+
+PUB GPIO3(mode): curr_mode
+' Assert DIO3 pin on set mode
+'   Valid values:
+'       OPMODE_SLEEP:
+'           DIO3_FIFOFULL (0)
+'           DIO3_LOWBAT (2)
+'       OPMODE_STDBY:
+'           DIO3_FIFOFULL (0)
+'           DIO3_LOWBAT (2)
+'       OPMODE_FS:
+'           DIO3_FIFOFULL (0)
+'           DIO3_LOWBAT (2)
+'           DIO3_PLLLOCK (3)
+'       OPMODE_RX:
+'           DIO3_FIFOFULL (0)
+'           DIO3_RSSI (1)
+'           DIO3_SYNCADDR (2)
+'           DIO3_PLLLOCK (3)
+'       OPMODE_TX:
+'           DIO3_FIFOFULL (0)
+'           DIO3_TXRDY (1)
+'           DIO3_LOWBAT (2)
+'           DIO3_PLLLOCK (3)
+    curr_mode := 0
+    readreg(core#DIOMAP1, 1, @curr_mode)
+    case mode
+        0..3:
+            mode <<= core#DIO3
+        other:
+            return curr_mode & core#DIO_BITS
+
+    mode := ((curr_mode & core#DIO3_MASK) | mode) & core#DIOMAP1_MASK
+    writereg(core#DIOMAP1, 1, @mode)
+
+PUB GPIO4(mode): curr_mode
+' Assert DIO4 pin on set mode
+'   Valid values:
+'       OPMODE_SLEEP:
+'           DIO4_LOWBAT (2)
+'       OPMODE_STDBY:
+'           DIO4_LOWBAT (2)
+'       OPMODE_FS:
+'           DIO4_LOWBAT (2)
+'           DIO4_PLLLOCK (3)
+'       OPMODE_RX:
+'           DIO4_TIMEOUT (0)
+'           DIO4_RSSI (1)
+'           DIO4_RXRDY (2)
+'           DIO4_PLLLOCK (3)
+'       OPMODE_TX:
+'           DIO4_MODERDY (0)
+'           DIO4_TXRDY (1)
+'           DIO4_LOWBAT (2)
+'           DIO4_PLLLOCK (3)
+    curr_mode := 0
+    readreg(core#DIOMAP2, 1, @curr_mode)
+    case mode
+        0..3:
+            mode <<= core#DIO4
+        other:
+            return (curr_mode >> core#DIO4) & core#DIO_BITS
+
+    mode := ((curr_mode & core#DIO4_MASK) | mode) & core#DIOMAP2_MASK
+    writereg(core#DIOMAP2, 1, @mode)
+
+PUB GPIO5(mode): curr_mode
+' Assert DIO5 pin on set mode
+'   Valid values:
+'       OPMODE_SLEEP:
+'           DIO5_LOWBAT (2)
+'           DIO5_MODERDY (3)
+'       OPMODE_STDBY:
+'           DIO5_CLKOUT (0)
+'           DIO5_LOWBAT (2)
+'           DIO5_MODERDY (3)
+'       OPMODE_FS:
+'           DIO5_CLKOUT (0)
+'           DIO5_LOWBAT (2)
+'           DIO5_MODERDY (3)
+'       OPMODE_RX:
+'           DIO5_CLKOUT (0)
+'           DIO5_DATA (1)
+'           DIO5_LOWBAT (2)
+'           DIO5_MODERDY (3)
+'       OPMODE_TX:
+'           DIO5_CLKOUT (0)
+'           DIO5_DATA (1)
+'           DIO5_LOWBAT (2)
+'           DIO5_MODERDY (3)
+    curr_mode := 0
+    readreg(core#DIOMAP2, 1, @curr_mode)
+    case mode
+        0..3:
+            mode <<= core#DIO5
+        other:
+            return (curr_mode >> core#DIO5) & core#DIO_BITS
+
+    mode := ((curr_mode & core#DIO5_MASK) | mode) & core#DIOMAP2_MASK
+    writereg(core#DIOMAP2, 1, @mode)
 
 PUB Idle{}
 ' Change chip state to idle (standby)
