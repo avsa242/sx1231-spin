@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC
     Copyright (c) 2020
     Started Apr 19, 2019
-    Updated Dec 14, 2020
+    Updated Dec 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -126,6 +126,10 @@ CON
     PAYLD_RDY               = 1 << 2
     PAYLD_CRCOK             = 1 << 1
     BATT_LOW                = 1
+
+' Clock output modes
+    CLKOUT_RC               = 6
+    CLKOUT_OFF              = 7
 
 VAR
 
@@ -355,6 +359,25 @@ PUB CarrierSense(param=-2)
 
 PUB Channel(param=-2)
 ' dummy method
+
+PUB ClkOut(divisor=-2): curr_div
+' Set clkout frequency, as a divisor of FXOSC
+'   Valid values:
+'       1, 2, 4, 8, 16, 32, CLKOUT_RC (6), CLKOUT_OFF (7)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: For optimal efficiency, it is recommended to disable the
+'       clock output (CLKOUT_OFF) unless needed
+    curr_div := 0
+    readreg(core.DIOMAPPING2, 1, @curr_div)
+    case divisor
+        1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF:
+            divisor := lookdownz(divisor: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
+        other:
+            curr_div &= core.CLKOUT_BITS
+            return lookupz(curr_div: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
+
+    divisor := ((curr_div & core.CLKOUT_MASK) | divisor) & core.DIOMAPPING2_MASK
+    writereg(core.DIOMAPPING2, 1, @divisor)
 
 PUB CRCCheckEnabled(state=-2): curr_state
 ' Enable CRC calculation (TX) and checking (RX)

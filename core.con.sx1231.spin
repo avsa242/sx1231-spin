@@ -171,8 +171,33 @@ CON
         RSSIDONE                = %10
 
     RSSIVALUE                   = $24
+
     DIOMAPPING1                 = $25
+    DIOMAPPING1_MASK            = $FF
+        DIO0MAPPING             = 4
+        DIO1MAPPING             = 4
+        DIO2MAPPING             = 4
+        DIO3MAPPING             = 4
+        DIO0MAPPING_BITS        = %11
+        DIO1MAPPING_BITS        = %11
+        DIO2MAPPING_BITS        = %11
+        DIO3MAPPING_BITS        = %11
+        DIO0MAPPING_MASK        = (DIO0MAPPING_BITS << DIO0MAPPING) ^ DIOMAPPING1_MASK
+        DIO1MAPPING_MASK        = (DIO1MAPPING_BITS << DIO1MAPPING) ^ DIOMAPPING1_MASK
+        DIO2MAPPING_MASK        = (DIO2MAPPING_BITS << DIO2MAPPING) ^ DIOMAPPING1_MASK
+        DIO3MAPPING_MASK        = (DIO3MAPPING_BITS << DIO3MAPPING) ^ DIOMAPPING1_MASK
+
     DIOMAPPING2                 = $26
+    DIOMAPPING2_MASK            = $F7
+        DIO4MAPPING             = 6
+        DIO5MAPPING             = 4
+        CLKOUT                  = 0
+        CLKOUT_BITS             = %111
+        DIO4MAPPING_BITS        = %11
+        DIO5MAPPING_BITS        = %11
+        DIO4MAPPING_MASK        = (DIO4MAPPING_BITS << DIO4MAPPING) ^ DIOMAPPING2_MASK
+        DIO5MAPPING_MASK        = (DIO5MAPPING_BITS << DIO5MAPPING) ^ DIOMAPPING2_MASK
+        CLKOUT_MASK             = CLKOUT_BITS ^ DIOMAPPING2_MASK
 
     IRQFLAGS1                   = $27
 
