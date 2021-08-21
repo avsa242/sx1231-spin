@@ -324,7 +324,7 @@ PUB AFCOffset{}: offs
 PUB AFCStart{} | tmp
 ' Trigger a manual AFC
     readreg(core#AFCFEI, 1, @tmp)
-    tmp |= %1   '1 << core#AFCSTART
+    tmp |= 1
     writereg(core#AFCFEI, 1, @tmp)
 
 PUB AfterRX(next_state): curr_state
@@ -1214,7 +1214,7 @@ PUB RSSI{}: level | tmp
     until tmp & core#RSSIDONE
 
     readreg(core#RSSIVALUE, 1, @level)
-    return (level >> 1) * -1
+    return -(level >> 1)
 
 PUB RXBandwidth(bw): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
 ' Set receiver channel filter bandwidth, in Hz
