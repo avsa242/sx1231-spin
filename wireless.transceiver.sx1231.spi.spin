@@ -3,9 +3,9 @@
     Filename: wireless.transceiver.sx1231.spi.spin
     Author: Jesse Burt
     Description: Driver for the Semtech SX1231 UHF Transceiver IC
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Apr 19, 2019
-    Updated Dec 20, 2020
+    Updated Aug 21, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -172,38 +172,37 @@ CON
 
 VAR
 
-    long _CS, _SCK, _MOSI, _MISO
+    long _CS
 
 OBJ
 
-    spi : "com.spi.4w"
-    core: "core.con.sx1231"
-    time: "time"
-    io  : "io"
-    u64 : "math.unsigned64"
+    spi : "com.spi.4w"                          ' PASM SPI engine
+    core: "core.con.sx1231"                     ' HW-specific constants
+    time: "time"                                ' timekeeping methods
+    u64 : "math.unsigned64"                     ' unsigned 64-bit int math
 
 PUB Null{}
 ' This is not a top-level object
 
-PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
-
+PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status
+' Start using custom I/O settings
     if lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and {
 }   lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
-        if okay := spi.start(core#CLK_DLY, core#CPOL)
-            longmove(@_CS, @CS_PIN, 4)
-            io.high(_CS)
-            io.output(_CS)
-
-            time.msleep (10)
-
+        if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core#SPI_MODE))
+            _CS := CS_PIN
+            outa[_CS] := 1
+            dira[_CS] := 1
+            time.usleep(core#T_POR)             ' wait for device startup
             if lookdown(deviceid{}: $21, $22, $23, $24)
-                return okay
-
-    return FALSE                                ' something above failed
+                return
+    ' if this point is reached, something above failed
+    ' Double check I/O pin assignments, connections, power
+    ' Lastly - make sure you have at least one free core/cog
+    return FALSE
 
 PUB Stop{}
-
-    spi.stop{}
+' Stop SPI engine
+    spi.deinit{}
 
 PUB Defaults{} | tmp[4]
 ' Factory defaults
@@ -1422,29 +1421,25 @@ PUB WaitRX{} | tmp
     tmp := (tmp | (1 << core#RSTARTRX)) & core#PKTCFG2_MASK
     writereg(core#PKTCFG2, 1, @tmp)
 
-PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
+PRI readReg(reg_nr, nr_bytes, ptr_buff)
 ' Read nr_bytes from device into ptr_buff
-    case reg_nr
+    case reg_nr                                 ' validate register #
         $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
-            io.low(_CS)
-            spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg_nr)
-            repeat tmp from nr_bytes-1 to 0
-                byte[ptr_buff][tmp] := spi.shiftin(_MISO, _SCK, core#MISO_BITORDER, 8)
-            io.high(_CS)
-
+            outa[_CS] := 0
+            spi.wr_byte(reg_nr)
+            spi.rdblock_msbf(ptr_buff, nr_bytes)
+            outa[_CS] := 1
         other:
             return
 
-PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
+PRI writereg(reg_nr, nr_bytes, ptr_buff)
 ' Write nr_bytes to device from ptr_buff
-    case reg_nr
+    case reg_nr                                 ' validate register #
         $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
-            io.low(_CS)
-            spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg_nr|core#W)
-            repeat tmp from nr_bytes-1 to 0
-                spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[ptr_buff][tmp])
-            io.high(_CS)
-
+            outa[_CS] := 0
+            spi.wr_byte(reg_nr | core#SPI_WR)   ' add write bit to reg #
+            spi.wrblock_msbf(ptr_buff, nr_bytes)
+            outa[_CS] := 1
         other:
             return
 

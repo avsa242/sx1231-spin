@@ -3,9 +3,9 @@
     Filename: core.con.sx1231.spin
     Author: Jesse Burt
     Description: Low-level constants
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Apr 19, 2019
-    Updated Dec 20, 2020
+    Updated Aug 21, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -13,13 +13,12 @@
 CON
 
 ' SPI Configuration
-    CPOL                        = 0
-    CLK_DLY                     = 1
     SCK_MAX_FREQ                = 10_000_000
-    MOSI_BITORDER               = 5             ' MSBFIRST
-    MISO_BITORDER               = 0             ' MSBPRE
+    SPI_MODE                    = 0
 
-    W                           = 1 << 7        ' wnr bit (Write access)
+    T_POR                       = 10_000        ' uSec
+
+    SPI_WR                      = 1 << 7        ' wnr bit (Write access)
 
 ' Register definitions
     FIFO                        = $00
@@ -98,7 +97,7 @@ CON
         PA0ON_MASK              = (1 << PA0ON) ^ PALVL_MASK
         PA1ON_MASK              = (1 << PA1ON) ^ PALVL_MASK
         PA2ON_MASK              = (1 << PA2ON) ^ PALVL_MASK
-        PA012ON_MASK            = (PA012_BITS << PA0ON) ^ PALVL_MASK
+        PA012ON_MASK            = (PA012_BITS << PA2ON) ^ PALVL_MASK
         OUTPWR_MASK             = OUTPWR_BITS ^ PALVL_MASK
 
     PARAMP                      = $12
