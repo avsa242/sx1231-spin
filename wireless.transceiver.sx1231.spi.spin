@@ -172,7 +172,7 @@ CON
 
 VAR
 
-    long _CS
+    long _CS, _RST
 
 OBJ
 
@@ -184,14 +184,16 @@ OBJ
 PUB Null{}
 ' This is not a top-level object
 
-PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status
+PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN): status
 ' Start using custom I/O settings
     if lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and {
 }   lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
         if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core#SPI_MODE))
             _CS := CS_PIN
+            _RST := RESET_PIN
             outa[_CS] := 1
             dira[_CS] := 1
+            reset{}                             ' soft-reset (if pin defined)
             time.usleep(core#T_POR)             ' wait for device startup
             if lookdown(deviceid{}: $21, $22, $23, $24)
                 return
@@ -893,11 +895,11 @@ PUB IntermediateMode(mode): curr_mode
     readreg(core#AUTOMODES, 1, @curr_mode)
     case mode
         IMODE_SLEEP, IMODE_STBY, IMODE_RX, IMODE_TX:
-            mode &= core#INTMDTMODE
+            mode &= core#INTMDTMODE_BITS
         other:
-            return (curr_mode >> core#INTMDTMODE) & core#INTMDTMODE_BITS
+            return (curr_mode & core#INTMDTMODE_BITS)
 
-    mode := ((curr_mode & core#INTMDTMODE_MASK) | mode) & core#AUTOMODES_MASK
+    mode := ((curr_mode & core#INTMDTMODE_MASK) | mode)
     writereg(core#AUTOMODES, 1, @mode)
 
 PUB Interrupt{}: mask
@@ -1192,10 +1194,20 @@ PUB RCOscCal(state): curr_state
     state := (curr_state | state) & core#OSC1_MASK
     writereg(core#OSC1, 1, @state)
 
+PUB Reset{}
+' Perform soft-reset
+    if lookdown(_RST: 0..31)                    ' if a valid pin is set,
+        outa[_RST] := 1                         ' pull RESET high for 100uS,
+        dira[_RST] := 1
+        time.usleep(core#T_RESACTIVE)
+        outa[_RST] := 0                         '   then let it float
+        dira[_RST] := 0
+        time.usleep(core#T_RES)                 ' wait for chip to be ready
+
 PUB RSSI{}: level | tmp
 ' Received Signal Strength Indicator
 '   Returns: Signal strength seen by transceiver, in dBm
-    tmp := %1
+    tmp := 1
     writereg(core#RSSICFG, 1, @tmp)
     repeat
         readreg(core#RSSICFG, 1, @tmp)

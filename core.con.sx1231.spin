@@ -17,6 +17,8 @@ CON
     SPI_MODE                    = 0
 
     T_POR                       = 10_000        ' uSec
+    T_RESACTIVE                 = 100
+    T_RES                       = 5_000
 
     SPI_WR                      = 1 << 7        ' wnr bit (Write access)
 
