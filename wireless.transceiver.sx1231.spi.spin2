@@ -2,11 +2,10 @@
     --------------------------------------------
     Filename: wireless.transceiver.sx1231.spi.spin2
     Author: Jesse Burt
-    Description: Driver for the Semtech SX1231 UHF Transceiver IC
-        (P2 version)
-    Copyright (c) 2020
+    Description: Driver for the Semtech SX1231 UHF Transceiver IC (P2 version)
+    Copyright (c) 2021
     Started Apr 19, 2019
-    Updated Dec 20, 2020
+    Updated Aug 21, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -112,8 +111,8 @@ CON
 
 ' Interrupts
     OPMODE_RDY              = 1 << 15
-    RXRDY                 = 1 << 14
-    TXRDY                 = 1 << 13
+    RXRDY                   = 1 << 14
+    TXRDY                   = 1 << 13
     PLL_LOCKED              = 1 << 12
     RSSI_THR                = 1 << 11
     TIMEOUT                 = 1 << 10
@@ -173,37 +172,39 @@ CON
 
 VAR
 
-    long _CS
+    long _CS, _RST
 
 OBJ
 
-    spi : "com.spi"
-    core: "core.con.sx1231"
-    time: "time"
-    io  : "io"
-    u64 : "math.unsigned64"
+    spi : "com.spi"                             ' smart-pin SPI engine
+    core: "core.con.sx1231"                     ' HW-specific constants
+    u64 : "math.unsigned64"                     ' unsigned 64-bit int math
 
 PUB Null()
 ' This is not a top-level object
 
-PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ=10_000_000): okay
-
+PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN, SCK_FREQ=10_000_000): status
+' Start using custom I/O settings
     if lookdown(CS_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and {
-}   lookdown(MOSI_PIN: 0..63) and lookdown(MISO_PIN: 0..63)
-        if okay := spi.start(SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
+}   lookdown(MOSI_PIN: 0..63) and lookdown(MISO_PIN: 0..63) and {
+}   SCK_FREQ <= core.SCK_MAX_FREQ
+        if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ, {
+}       core.SPI_MODE))
             _CS := CS_PIN
+            _RST := RESET_PIN
             pinh(_CS)
-
-            waitms (10)
-
+            reset()                             ' soft-reset (if pin defined)
+            waitus(core.T_POR)             ' wait for device startup
             if lookdown(deviceid(): $21, $22, $23, $24)
-                return okay
-
-    return FALSE                                ' something above failed
+                return
+    ' if this point is reached, something above failed
+    ' Double check I/O pin assignments, connections, power
+    ' Lastly - make sure you have at least one free core/cog
+    return FALSE
 
 PUB Stop()
-
-'
+' Stop SPI engine
+    spi.deinit()
 
 PUB Defaults() | tmp[4]
 ' Factory defaults
@@ -434,7 +435,7 @@ PUB CRCCheckEnabled(state=-2): curr_state
     state := ((curr_state & core.CRCON_MASK) | state) & core.PKTCFG1_MASK
     writereg(core.PKTCFG1, 1, @state)
 
-PUB CRCLength(param)
+PUB CRCLength(param=-2)
 ' dummy method
 
 PUB DataMode(mode=-2): curr_mode
@@ -737,7 +738,7 @@ PUB GPIO1(mode=-2): curr_mode  'XXX
         0..3:
             mode <<= core.DIO1
         other:
-            return (curr_mode >> core.DIO1) & core#DIO_BITS
+            return (curr_mode >> core.DIO1) & core.DIO_BITS
 
     mode := ((curr_mode & core.DIO1_MASK) | mode) & core.DIOMAP1_MASK
     writereg(core.DIOMAP1, 1, @mode)
@@ -771,10 +772,9 @@ PUB GPIO2(mode=-2): curr_mode
     readreg(core.DIOMAP1, 1, @curr_mode)
     case mode
         0..3:
-        DIO2_FIFONOTEMPTY, DIO2_LOWBAT, DIO2_DATA, DIO2_AUTOMODE:
             mode <<= core.DIO2
         other:
-            return (curr_mode >> core.DIO2) & core#DIO_BITS
+            return (curr_mode >> core.DIO2) & core.DIO_BITS
 
     mode := ((curr_mode & core.DIO2_MASK) | mode) & core.DIOMAP1_MASK
     writereg(core.DIOMAP1, 1, @mode)
@@ -783,8 +783,8 @@ PUB GPIO3(mode=-2): curr_mode
 ' Assert DIO3 pin on set mode
 '   Valid values:
 '       OPMODE_SLEEP:
-'           DIO3_FIFOFULL (0 (2)
-'           DIO3_LOWBATT
+'           DIO3_FIFOFULL (0)
+'           DIO3_LOWBAT (2)
 '       OPMODE_STDBY:
 '           DIO3_FIFOFULL (0)
 '           DIO3_LOWBAT (2)
@@ -808,7 +808,7 @@ PUB GPIO3(mode=-2): curr_mode
         0..3:
             mode <<= core.DIO3
         other:
-            return curr_mode & core#DIO_BITS
+            return curr_mode & core.DIO_BITS
 
     mode := ((curr_mode & core.DIO3_MASK) | mode) & core.DIOMAP1_MASK
     writereg(core.DIOMAP1, 1, @mode)
@@ -839,7 +839,7 @@ PUB GPIO4(mode=-2): curr_mode
         0..3:
             mode <<= core.DIO4
         other:
-            return (curr_mode >> core.DIO4) & core#DIO_BITS
+            return (curr_mode >> core.DIO4) & core.DIO_BITS
 
     mode := ((curr_mode & core.DIO4_MASK) | mode) & core.DIOMAP2_MASK
     writereg(core.DIOMAP2, 1, @mode)
@@ -874,7 +874,7 @@ PUB GPIO5(mode=-2): curr_mode
         0..3:
             mode <<= core.DIO5
         other:
-            return (curr_mode >> core.DIO5) & core#DIO_BITS
+            return (curr_mode >> core.DIO5) & core.DIO_BITS
 
     mode := ((curr_mode & core.DIO5_MASK) | mode) & core.DIOMAP2_MASK
     writereg(core.DIOMAP2, 1, @mode)
@@ -895,11 +895,11 @@ PUB IntermediateMode(mode=-2): curr_mode
     readreg(core.AUTOMODES, 1, @curr_mode)
     case mode
         IMODE_SLEEP, IMODE_STBY, IMODE_RX, IMODE_TX:
-            mode &= core.INTMDTMODE
+            mode &= core.INTMDTMODE_BITS
         other:
-            return (curr_mode >> core.INTMDTMODE) & core.INTMDTMODE_BITS
+            return (curr_mode & core.INTMDTMODE_BITS)
 
-    mode := ((curr_mode & core.INTMDTMODE_MASK) | mode) & core.AUTOMODES_MASK
+    mode := ((curr_mode & core.INTMDTMODE_MASK) | mode)
     writereg(core.AUTOMODES, 1, @mode)
 
 PUB Interrupt(): mask
@@ -1194,10 +1194,20 @@ PUB RCOscCal(state=-2): curr_state
     state := (curr_state | state) & core.OSC1_MASK
     writereg(core.OSC1, 1, @state)
 
+PUB Reset()
+' Perform soft-reset
+    if lookdown(_RST: 0..31)                    ' if a valid pin is set,
+        outa[_RST] := 1                         ' pull RESET high for 100uS,
+        dira[_RST] := 1
+        waitus(core.T_RESACTIVE)
+        outa[_RST] := 0                         '   then let it float
+        dira[_RST] := 0
+        waitus(core.T_RES)                 ' wait for chip to be ready
+
 PUB RSSI(): level | tmp
 ' Received Signal Strength Indicator
 '   Returns: Signal strength seen by transceiver, in dBm
-    tmp := %1
+    tmp := 1
     writereg(core.RSSICFG, 1, @tmp)
     repeat
         readreg(core.RSSICFG, 1, @tmp)
@@ -1423,29 +1433,25 @@ PUB WaitRX() | tmp
     tmp := (tmp | (1 << core.RSTARTRX)) & core.PKTCFG2_MASK
     writereg(core.PKTCFG2, 1, @tmp)
 
-PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
+PRI readReg(reg_nr, nr_bytes, ptr_buff)
 ' Read nr_bytes from device into ptr_buff
-    case reg_nr
+    case reg_nr                                 ' validate register #
         $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
             pinl(_CS)
-            spi.write(reg_nr)
-            repeat tmp from nr_bytes-1 to 0
-                byte[ptr_buff][tmp] := spi.read()
+            spi.wr_byte(reg_nr)
+            spi.rdblock_msbf(ptr_buff, nr_bytes)
             pinh(_CS)
-
         other:
             return
 
-PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
+PRI writereg(reg_nr, nr_bytes, ptr_buff)
 ' Write nr_bytes to device from ptr_buff
-    case reg_nr
+    case reg_nr                                 ' validate register #
         $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
             pinl(_CS)
-            spi.write(reg_nr | core.W)
-            repeat tmp from nr_bytes-1 to 0
-                spi.write(byte[ptr_buff][tmp])
+            spi.wr_byte(reg_nr | core.SPI_WR)   ' add write bit to reg #
+            spi.wrblock_msbf(ptr_buff, nr_bytes)
             pinh(_CS)
-
         other:
             return
 
