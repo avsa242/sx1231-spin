@@ -1216,6 +1216,19 @@ PUB RSSI(): level | tmp
     readreg(core.RSSIVALUE, 1, @level)
     return -(level >> 1)
 
+PUB RSSIThresh(thresh): curr_thr
+' Set threshold for triggering RSSI interrupt, in dBm
+'   Valid values: -127..0
+'   Any other value polls the chip and returns the current setting
+    case thresh
+        -127..0:
+            thresh := abs(thresh) * 2
+            writereg(core.RSSITHRESH, 1, @thresh)
+        other:
+            curr_thr := 0
+            readreg(core.RSSITHRESH, 1, @curr_thr)
+            return -(curr_thr / 2)
+
 PUB RXBandwidth(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
 ' Set receiver channel filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600,
