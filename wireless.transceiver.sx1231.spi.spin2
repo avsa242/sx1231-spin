@@ -1367,7 +1367,7 @@ PUB SyncWordLength(length=-2): curr_len
         other:
             return (((curr_len >> core.SYNCSIZE) & core.SYNCSIZE_BITS) + 1)
 
-    length := ((curr_len & core.SYNCSIZE_MASK) | length
+    length := ((curr_len & core.SYNCSIZE_MASK) | length)
     writereg(core.SYNCCFG, 1, @length)
 
 PUB SyncWordMaxBitErr(bits=-2): curr_bits
