@@ -27,15 +27,15 @@ This is a P8X32A/Propeller driver object for the Semtech SX1231 UHF Transceiver 
 
 P1/SPIN1:
 * spin-standard-library
-* 1 extra core/cog for the PASM SPI driver
+* 1 extra core/cog for the PASM SPI engine
 
 P2/SPIN2:
 * p2-spin-standard-library
 
 ## Compiler Compatibility
 
-* P1/SPIN1: OpenSpin (tested with 1.00.81)
-* P2/SPIN2: FlexSpin (tested with 5.0.0)
+* P1/SPIN1: OpenSpin (tested with 1.00.81), FlexSpin (tested with 6.0.0-beta)
+* P2/SPIN2: FlexSpin (tested with 6.0.0-beta)
 * ~~BST~~ (incompatible - no preprocessor)
 * ~~Propeller Tool~~ (incompatible - no preprocessor)
 * ~~PNut~~ (incompatible - no preprocessor)
@@ -43,7 +43,6 @@ P2/SPIN2:
 ## Limitations
 
 * Very early in development; may malfunction or outright fail to build
-* RXBandwidth() calculates register settings only for FSK mode
 * Because of the max length of the syncword supported by the chip (8 bytes/64bits), the API for SyncWord() currently breaks the standard, by providing two parameters
 
 ## TODO
@@ -53,9 +52,9 @@ P2/SPIN2:
 - [x] Add support for reading RSSI
 - [x] Add support for setting GPIO pin functions
 - [x] Add support for reading the rest of the IRQ flags
-- [ ] Add support for setting RSSI threshold (carrier detect)
+- [x] Add support for setting RSSI threshold (carrier detect)
 - [ ] Add support for PLL lock status
-- [ ] Add support for setting RX bandwidth (WIP)
+- [x] Add support for setting RX bandwidth
 - [ ] Add support for setting freq by channel (emulated - use current channel bandwidth * channel number)
 - [ ] Update API to current standard (wireless.transceiver API)
 
