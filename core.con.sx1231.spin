@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2021
     Started Apr 19, 2019
-    Updated Aug 21, 2021
+    Updated Aug 22, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -63,9 +63,11 @@ CON
         FRF_MASK                = $FF_FF_FF
 
     OSC1                        = $0A
-    OSC1_MASK                   = $80
-        RCCALSTART              = 7
-        RCCALDONE               = 6
+    OSC1_MASK                   = $81
+        RCCALSTART              = 7             ' W/O
+        RCCALDONE               = 6             ' R/O
+        OSC1_RSVD               = %000001
+        RCCALSTART_MASK         = (1 << RCCALSTART) ^ OSC1_MASK
 
     AFCCTRL                     = $0B
     AFCCTRL_MASK                = $20
