@@ -252,6 +252,25 @@ PUB Defaults{} | tmp[4]
     txpower(13)
     txstartcondition(TXSTART_FIFONOTEMPTY)
 
+PUB Preset_TX4k8{}
+' Transmit, 4800bps (uses Automodes to transition between sleep-TX-sleep)
+    reset{}                                     ' start with default settings
+
+    txstartcondition(TXSTART_FIFOLVL)           ' can TX only if FIFO > thresh
+    opmode(OPMODE_SLEEP)                        ' start in sleep mode
+    entercondition(ENTCOND_FIFOLVL)             ' next mode if FIFO > thresh
+    intermediatemode(IMODE_TX)                  ' next mode is transmit
+    exitcondition(EXITCOND_PKTSENT)             ' back to sleep, once sent
+
+PUB Preset_RX4k8{}
+' Receive, 4800bps (uses Automodes to transition between RX-sleep-RX)
+    reset{}
+
+    opmode(OPMODE_RX)                           ' start in RX mode
+    entercondition(ENTCOND_CRCOK)               ' next mode if CRC is good
+    intermediatemode(IMODE_SLEEP)               ' next mode is sleep
+    exitcondition(EXITCOND_FIFOEMPTY)           ' back to RX, once payld rcvd.
+
 PUB AbortListen{} | tmp
 ' Abort listen mode when used together with Listen(FALSE)
     tmp := 0
