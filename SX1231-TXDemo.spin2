@@ -1,8 +1,8 @@
 {
     --------------------------------------------
-    Filename: SX1231-TXDemo.spin
+    Filename: SX1231-TXDemo.spin2
     Author: Jesse Burt
-    Description: Simple transmit demo of the SX1231 driver
+    Description: Simple transmit demo of the SX1231 driver (P2 version)
     Copyright (c) 2021
     Started Dec 15, 2020
     Updated Aug 22, 2021
