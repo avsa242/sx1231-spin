@@ -34,8 +34,11 @@ P2/SPIN2:
 
 ## Compiler Compatibility
 
-* P1/SPIN1: OpenSpin (tested with 1.00.81), FlexSpin (tested with 6.0.0-beta)
-* P2/SPIN2: FlexSpin (tested with 6.0.0-beta)
+* P1/SPIN1 OpenSpin (bytecode): Untested (deprecated)
+* P1/SPIN1 FlexSpin (bytecode): OK, tested with 5.9.7-beta
+* P1/SPIN1 FlexSpin (native): OK, tested with 5.9.7-beta
+* ~~P2/SPIN2 FlexSpin (nu-code): FTBFS, tested with 5.9.7-beta~~
+* P2/SPIN2 FlexSpin (native): OK, tested with 5.9.7-beta
 * ~~BST~~ (incompatible - no preprocessor)
 * ~~Propeller Tool~~ (incompatible - no preprocessor)
 * ~~PNut~~ (incompatible - no preprocessor)
@@ -44,17 +47,4 @@ P2/SPIN2:
 
 * Very early in development; may malfunction or outright fail to build
 * Because of the max length of the syncword supported by the chip (8 bytes/64bits), the API for SyncWord() currently breaks the standard, by providing two parameters
-
-## TODO
-
-- [x] Verify modulated transmission
-- [x] Add some simple demos
-- [x] Add support for reading RSSI
-- [x] Add support for setting GPIO pin functions
-- [x] Add support for reading the rest of the IRQ flags
-- [x] Add support for setting RSSI threshold (carrier detect)
-- [ ] Add support for PLL lock status
-- [x] Add support for setting RX bandwidth
-- [ ] Add support for setting freq by channel (emulated - use current channel bandwidth * channel number)
-- [ ] Update API to current standard (wireless.transceiver API)
 
