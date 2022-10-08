@@ -5,7 +5,7 @@
     Description: Simple receive demo of the SX1231 driver (P2 version)
     Copyright (c) 2022
     Started Dec 15, 2020
-    Updated Aug 20, 2022
+    Updated Oct 8, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -37,7 +37,7 @@ VAR
 
     byte _buffer[256]
 
-PUB Main{} | sw[2], payld_len
+PUB main{} | sw[2], payld_len
 
     setup{}
     ser.position(0, 3)
@@ -47,23 +47,23 @@ PUB Main{} | sw[2], payld_len
                                                 ' RX-sleep-RX opmodes
 
 ' -- TX/RX settings
-    sx1231.carrierfreq(902_300_000)             ' US 902.3MHz
-    sx1231.payloadlen(8)                        ' test packet size
-    payld_len := sx1231.payloadlen(-2)          ' read back from radio
-    sx1231.fifothreshold(payld_len-1)           ' trigger int at payld len-1
+    sx1231.carrier_freq(902_300_000)            ' US 902.3MHz
+    sx1231.payld_len(8)                         ' test packet size
+    payld_len := sx1231.payld_len(-2)           ' read back from radio
+    sx1231.fifo_thresh(payld_len-1)             ' trigger int at payld len-1
     sw[0] := $E7E7E7E7                          ' sync word bytes
     sw[1] := $E7E7E7E7
-    sx1231.syncwordlength(8)                    ' 1..8
-    sx1231.syncword(sx1231#SW_WRITE, @sw)
+    sx1231.sync_word_len(8)                     ' 1..8
+    sx1231.sync_word(sx1231#SW_WRITE, @sw)
 ' --
 
 ' -- RX-specific settings
-    sx1231.rxmode{}
+    sx1231.rx_mode{}
 
     ' change these if having difficulty with reception
-    sx1231.lnagain(0)                           ' -6, -12, -24, -26, -48 dB
+    sx1231.lna_gain(0)                          ' -6, -12, -24, -26, -48 dB
                                                 ' or LNA_AGC (0), LNA_HIGH (1)
-    sx1231.rssithresh(-80)                      ' set rcvd signal level thresh
+    sx1231.rssi_int_thresh(-80)                 ' set rcvd signal level thresh
                                                 '   considered a valid signal
                                                 ' -127..0 (dBm)
 ' --
@@ -72,14 +72,14 @@ PUB Main{} | sw[2], payld_len
         bytefill(@_buffer, 0, 256)              ' clear local RX buffer
         ' if the FIFO fill level reaches the set threshold,
         '   read the payload in from the radio
-        if sx1231.interrupt{} & sx1231#FIFO_THR
-            sx1231.rxpayload(payld_len, @_buffer)
+        if sx1231.interrupt{} & sx1231#INT_FIFO_THR
+            sx1231.rx_payld(payld_len, @_buffer)
         ' display the received payload on the terminal
         ser.position(0, 5)
         ser.hexdump(@_buffer, 0, 4, payld_len, 16 <# payld_len)
-        repeat until sx1231.opmode(-2) == sx1231#OPMODE_SLEEP
+        repeat until (sx1231.opmode(-2) == sx1231#OPMODE_SLEEP)
 
-PUB Setup{}
+PUB setup{}
 
     ser.start(SER_BAUD)
     time.msleep(30)
