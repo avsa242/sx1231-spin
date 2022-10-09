@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC (P2 version)
     Copyright (c) 2022
     Started Apr 19, 2019
-    Updated Oct 8, 2022
+    Updated Oct 9, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -218,14 +218,14 @@ PUB defaults() | tmp[4]
     crc_check_ena(TRUE)
     data_mode(DATAMODE_PKT)
     data_rate(4800)
-    data_whitening(FALSE)
+    data_whiten_ena(FALSE)
     encrypt_ena(FALSE)
     bytefill(@tmp, $00, 16)
     encrypt_key(KEY_WR, @tmp)
     enter_cond(ENTCOND_NONE)
     exit_cond(EXITCOND_NONE)
     fifo_thresh(15)
-    freq_deviation(5000)
+    freq_dev(5000)
     gaussian_filt(BT_NONE)
     interm_mode(IMODE_SLEEP)
     listen(FALSE)
@@ -233,7 +233,7 @@ PUB defaults() | tmp[4]
     lna_z_input(200)
     low_batt_lvl(1_835)
     low_batt_mon_ena(FALSE)
-    manchester_enc_ena(FALSE)
+    manchest_enc_ena(FALSE)
     modulation(MOD_FSK)
     node_addr($00)
     ocp_current(95)
@@ -242,14 +242,14 @@ PUB defaults() | tmp[4]
     payld_len(64)
     payld_len_cfg(PKTLEN_FIXED)
     preamble_len(3)
-    ramp_time(40)
-    rx_bandw(10_400)
+    pa_ramp_time(40)
+    rx_bw(10_400)
     sequencer(OPMODE_AUTO)
     bytefill(@tmp, $01, 8)
-    sync_word(SW_WRITE, @tmp)
-    sync_word_ena(TRUE)
-    sync_word_len(4)
-    sync_word_max_bit_err(0)
+    syncwd(SW_WRITE, @tmp)
+    syncwd_ena(TRUE)
+    syncwd_len(4)
+    syncwd_max_bit_err(0)
     tx_pwr(13)
     tx_start_cond(TXSTART_FIFONOTEMPTY)
 
@@ -474,7 +474,7 @@ PUB data_rate(rate=-2): curr_rate
             readreg(core.BITRATEMSB, 2, @curr_rate)
             return (FXOSC / curr_rate)
 
-PUB data_whitening(state=-2): curr_state
+PUB data_whiten_ena(state=-2): curr_state
 ' Enable data whitening
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -634,7 +634,7 @@ PUB fifo_thresh(thresh=-2): curr_thr
     thresh := ((curr_thr & core.FIFOTHRESHOLD_MASK) | thresh)
     writereg(core.FIFOTHRESH, 1, @thresh)
 
-PUB freq_deviation(fdev=-2): curr_fdev
+PUB freq_dev(fdev=-2): curr_fdev
 ' Set carrier deviation, in Hz
 '   Valid values:
 '       600..300_000
@@ -1006,7 +1006,7 @@ PUB low_batt_mon_ena(state=-2): curr_state
     state := ((curr_state & core.LOWBAT_MASK) | state)
     writereg(core.LOWBAT, 1, @state)
 
-PUB manchester_enc_ena(state=-2): curr_state
+PUB manchest_enc_ena(state=-2): curr_state
 ' Enable Manchester encoding/decoding
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -1167,7 +1167,7 @@ PUB preamble_len(length=-2): curr_len
             readreg(core.PREAMBLEMSB, 2, @curr_len)
             return
 
-PUB ramp_time(rtime=-2): curr_rtime
+PUB pa_ramp_time(rtime=-2): curr_rtime
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
 '       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
@@ -1237,7 +1237,7 @@ PUB rssi_int_thresh(thresh): curr_thr
             readreg(core.RSSITHRESH, 1, @curr_thr)
             return -(curr_thr / 2)
 
-PUB rx_bandw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
+PUB rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
 ' Set receiver channel filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600,
 '       20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000,
@@ -1316,7 +1316,7 @@ PUB sleep()
 ' Power down chip
     opmode(OPMODE_SLEEP)
 
-PUB sync_word(rw, ptr_buff)
+PUB syncwd(rw, ptr_buff)
 ' Set sync word to value at ptr_buff
 '   Valid values:
 '       rw: SW_READ (0), SW_WRITE (1)
@@ -1329,7 +1329,7 @@ PUB sync_word(rw, ptr_buff)
         other:
             readreg(core.SYNCVALUE1, 8, ptr_buff)
 
-PUB sync_word_ena(state=-2): curr_state
+PUB syncwd_ena(state=-2): curr_state
 ' Enable sync word generation (TX) and detection (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
@@ -1344,7 +1344,7 @@ PUB sync_word_ena(state=-2): curr_state
     state := ((curr_state & core.SYNCON_MASK) | state)
     writereg(core.SYNCCFG, 1, @state)
 
-PUB sync_word_len(length=-2): curr_len
+PUB syncwd_len(length=-2): curr_len
 ' Set length of sync word, in bytes
 '   Valid values: 1..8
 '   Any other value polls the chip and returns the current setting
@@ -1359,7 +1359,7 @@ PUB sync_word_len(length=-2): curr_len
     length := ((curr_len & core.SYNCSIZE_MASK) | length)
     writereg(core.SYNCCFG, 1, @length)
 
-PUB sync_word_max_bit_err(bits=-2): curr_bits
+PUB syncwd_max_bit_err(bits=-2): curr_bits
 ' Set maximum number of tolerated bit errors in sync word
 '   Valid values: 0..7
 '   Any other value polls the chip and returns the current setting
