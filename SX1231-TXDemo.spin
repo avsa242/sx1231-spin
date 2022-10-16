@@ -5,7 +5,7 @@
     Description: Simple transmit demo of the SX1231 driver
     Copyright (c) 2022
     Started Dec 15, 2020
-    Updated Oct 8, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -29,7 +29,7 @@ CON
 OBJ
 
     ser   : "com.serial.terminal.ansi"
-    cfg   : "core.con.boardcfg.flip"
+    cfg   : "boardcfg.flip"
     time  : "time"
     str   : "string"
     sx1231: "wireless.transceiver.sx1231"
@@ -53,8 +53,8 @@ PUB main{} | sw[2], count
     sx1231.fifo_thresh(sx1231.payld_len(-2)-1)  ' trigger int at payld len-1
     sw[0] := $E7E7E7E7
     sw[1] := $E7E7E7E7
-    sx1231.sync_word_len(8)                     ' 1..8
-    sx1231.sync_word(1, @sw)
+    sx1231.syncwd_len(8)                     ' 1..8
+    sx1231.syncwd(1, @sw)
 ' --
 
 ' -- TX-specific settings

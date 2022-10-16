@@ -5,7 +5,7 @@
     Description: Simple receive demo of the SX1231 driver (P2 version)
     Copyright (c) 2022
     Started Dec 15, 2020
-    Updated Oct 8, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -29,7 +29,7 @@ CON
 OBJ
 
     ser   : "com.serial.terminal.ansi"
-    cfg   : "core.con.boardcfg.p2eval"
+    cfg   : "boardcfg.p2eval"
     sx1231: "wireless.transceiver.sx1231"
 
 VAR
@@ -52,8 +52,8 @@ PUB main() | sw[2], payld_len
     sx1231.fifo_thresh(payld_len-1)             ' trigger int at payld len-1
     sw[0] := $E7E7E7E7                          ' sync word bytes
     sw[1] := $E7E7E7E7
-    sx1231.sync_word_len(8)                     ' 1..8
-    sx1231.sync_word(sx1231.SW_WRITE, @sw)
+    sx1231.syncwd_len(8)                     ' 1..8
+    sx1231.syncwd(sx1231.SW_WRITE, @sw)
 ' --
 
 ' -- RX-specific settings
