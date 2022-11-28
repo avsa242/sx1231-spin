@@ -18,11 +18,11 @@ CON
     LED             = cfg.LED1
     SER_BAUD        = 2_000_000
 
-    CS_PIN          = 8
-    SCK_PIN         = 9
-    MOSI_PIN        = 10
-    MISO_PIN        = 11
-    RESET_PIN       = 12                        ' use is recommended
+    CS_PIN          = 0
+    SCK_PIN         = 1
+    MOSI_PIN        = 2
+    MISO_PIN        = 3
+    RESET_PIN       = 4                         ' use is recommended
                                                 '   (-1 to disable)
 ' --
 
@@ -41,7 +41,7 @@ PUB main() | count
 
     setup()
     ser.pos_xy(0, 3)
-    ser.strln(string("Transmit mode"))
+    ser.strln(@"Transmit mode")
     sx1231.preset_tx4k8()                       ' 4800bps, use Automodes to
                                                 ' handle transition between
                                                 ' sleep-TX-sleep opmodes
@@ -65,12 +65,12 @@ PUB main() | count
         bytefill(@_buffer, 0, 256)              ' clear local TX buffer
 
         ' the payload is the string 'TEST' with a 4-digit hexadecimal counter after
-        str.sprintf(@_buffer, @"TEST%4.4d", count)
+        str.sprintf1(@_buffer, @"TEST%04.4x", count)
         sx1231.tx_payld(8, @_buffer)            ' queue the data
 
         count++
         ser.pos_xy(0, 5)
-        ser.str(string("Sending: "))
+        ser.str(@"Sending: ")
         ser.str(@_buffer)
         waitms(1000)                            ' wait in between packets
                                                 ' (don't abuse the airwaves)
@@ -80,12 +80,12 @@ PUB setup()
     ser.start(SER_BAUD)
     waitms(30)
     ser.clear()
-    ser.strln(string("Serial terminal started"))
+    ser.strln(@"Serial terminal started")
 
     if sx1231.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN)
-        ser.strln(string("SX1231 driver started"))
+        ser.strln(@"SX1231 driver started")
     else
-        ser.strln(string("SX1231 driver failed to start - halting"))
+        ser.strln(@"SX1231 driver failed to start - halting")
         repeat
 
 DAT

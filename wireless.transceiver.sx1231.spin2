@@ -5,7 +5,7 @@
     Description: Driver for the Semtech SX1231 UHF Transceiver IC (P2 version)
     Copyright (c) 2022
     Started Apr 19, 2019
-    Updated Nov 13, 2022
+    Updated Nov 28, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -176,9 +176,8 @@ VAR
 
 OBJ
 
-    spi : "com.spi.25mhz"                             ' smart-pin SPI engine
+    spi : "com.spi.25mhz"                       ' smart-pin SPI engine
     core: "core.con.sx1231"                     ' HW-specific constants
-    u64 : "math.unsigned64"                     ' unsigned 64-bit int math
 
 PUB null()
 ' This is not a top-level object
@@ -401,11 +400,11 @@ PUB carrier_freq(freq=-2): curr_freq
 '   NOTE: Set value will be rounded
     case freq
         290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
-            freq := u64.multdiv(freq, 1_000, FSTEP)
+            freq := muldiv64(freq, 1_000, FSTEP)
             writereg(core.FRFMSB, 3, @freq)
         other:
             readreg(core.FRFMSB, 3, @curr_freq)
-            return u64.multdiv(curr_freq, FSTEP, 1_000)
+            return muldiv64(curr_freq, FSTEP, 1_000)
 
 PUB clk_out(divisor=-2): curr_div
 ' Set clkout frequency, as a divisor of FXOSC
@@ -643,12 +642,12 @@ PUB freq_dev(fdev=-2): curr_fdev
     case fdev
         600..300_000:
             ' freq deviation reg = (freq deviation / FSTEP)
-            fdev := u64.multdiv(fdev, 1_000, FSTEP)
+            fdev := muldiv64(fdev, 1_000, FSTEP)
             writereg(core.FDEVMSB, 2, @fdev)
         other:
             curr_fdev := 0
             readreg(core.FDEVMSB, 2, @curr_fdev)
-            return u64.multdiv(curr_fdev, FSTEP, 1_000)
+            return muldiv64(curr_fdev, FSTEP, 1_000)
 
 PUB gaussian_filt(mode=-2): curr_mode
 ' Set Gaussian filter/data shaping modeeters

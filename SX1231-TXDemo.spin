@@ -22,7 +22,7 @@ CON
     SCK_PIN         = 1
     MOSI_PIN        = 2
     MISO_PIN        = 3
-    RESET_PIN       = 12                        ' use is recommended
+    RESET_PIN       = 4                         ' use is recommended
                                                 '   (-1 to disable)
 ' --
 

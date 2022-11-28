@@ -18,11 +18,11 @@ CON
     LED             = cfg.LED1
     SER_BAUD        = 2_000_000
 
-    CS_PIN          = 8
-    SCK_PIN         = 9
-    MOSI_PIN        = 10
-    MISO_PIN        = 11
-    RESET_PIN       = 12                        ' use is recommended
+    CS_PIN          = 0
+    SCK_PIN         = 1
+    MOSI_PIN        = 2
+    MISO_PIN        = 3
+    RESET_PIN       = 4                         ' use is recommended
                                                 '   (-1 to disable)
 ' --
 
@@ -40,7 +40,7 @@ PUB main() | sw[2], payld_len
 
     setup()
     ser.pos_xy(0, 3)
-    ser.strln(string("Receive mode"))
+    ser.strln(@"Receive mode")
     sx1231.preset_rx4k8{}                       ' 4800bps, use Automodes to
                                                 ' handle transition between
                                                 ' RX-sleep-RX opmodes
@@ -81,12 +81,12 @@ PUB setup()
     ser.start(SER_BAUD)
     waitms(30)
     ser.clear()
-    ser.strln(string("Serial terminal started"))
+    ser.strln(@"Serial terminal started")
 
     if sx1231.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN)
-        ser.strln(string("SX1231 driver started"))
+        ser.strln(@"SX1231 driver started")
     else
-        ser.strln(string("SX1231 driver failed to start - halting"))
+        ser.strln(@"SX1231 driver failed to start - halting")
         repeat
 
 DAT
