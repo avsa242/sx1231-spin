@@ -341,6 +341,36 @@ PUB afc_auto_ena(state=-2): curr_state
             return (((curr_state >> core.AFCAUTOON) & 1) == 1)
 
 
+PUB afc_complete(): flag
+' Flag indicating AFC (auto or manual) completed
+'   Returns: TRUE (-1) if complete, FALSE (0) otherwise
+    flag := readreg(core.AFCFEI)
+    return (((flag >> core.AFCDONE) & 1) == 1)
+
+
+PUB afc_method(mode=-2): curr_mode
+' Set AFC mode/routine
+'   Valid values:
+'       AFC_STANDARD (0): Standard AFC routine
+'       AFC_IMPROVED (1): Improved AFC routine, for signals with modulation index < 2
+'   Any other value polls the chip and returns the current setting
+    curr_mode := readreg(core.AFCCTRL)
+    case mode
+        AFC_STANDARD, AFC_IMPROVED:
+            mode := mode << core.AFCLOWBETAON
+            mode := ((curr_mode & core.AFCLOWBETAON_MASK) | mode)
+            writereg(core.AFCCTRL, 1, mode)
+        other:
+            return ((curr_mode >> core.AFCLOWBETAON) & 1)
+
+
+PUB afc_offset(): offs
+' Read AFC frequency offset
+'   Returns: Frequency offset in Hz
+    offs := readreg(core.AFCMSB, 2)
+    return (offs signx 15) * FSTEP
+
+
 PUB afc_rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
 ' Set AFC filter bandwidth, in Hz
 '   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600,
@@ -370,36 +400,6 @@ PUB afc_rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
             mant := ((curr_bw >> core.RXBWMANT) & core.RXBWMANT_BITS)
             mant := lookupz(mant: 16, 20, 24)
             return (FXOSC / (mant * (1 << (exp + exp_mod))))
-
-
-PUB afc_complete(): flag
-' Flag indicating AFC (auto or manual) completed
-'   Returns: TRUE (-1) if complete, FALSE (0) otherwise
-    flag := readreg(core.AFCFEI)
-    return (((flag >> core.AFCDONE) & 1) == 1)
-
-
-PUB afc_method(mode=-2): curr_mode
-' Set AFC mode/routine
-'   Valid values:
-'       AFC_STANDARD (0): Standard AFC routine
-'       AFC_IMPROVED (1): Improved AFC routine, for signals with modulation index < 2
-'   Any other value polls the chip and returns the current setting
-    curr_mode := readreg(core.AFCCTRL)
-    case mode
-        AFC_STANDARD, AFC_IMPROVED:
-            mode := mode << core.AFCLOWBETAON
-            mode := ((curr_mode & core.AFCLOWBETAON_MASK) | mode)
-            writereg(core.AFCCTRL, 1, mode)
-        other:
-            return ((curr_mode >> core.AFCLOWBETAON) & 1)
-
-
-PUB afc_offset(): offs
-' Read AFC frequency offset
-'   Returns: Frequency offset in Hz
-    offs := readreg(core.AFCMSB, 2)
-    return (offs signx 15) * FSTEP
 
 
 PUB afc_start() | tmp
@@ -945,11 +945,6 @@ PUB interm_mode(mode=-2): curr_mode
             writereg(core.AUTOMODES, 1, mode)
         other:
             return (curr_mode & core.INTMDTMODE_BITS)
-
-
-pub int_clear()
-
-    writereg(core.IRQFLAGS2, 1, $08)
 
 
 PUB interrupt(): mask

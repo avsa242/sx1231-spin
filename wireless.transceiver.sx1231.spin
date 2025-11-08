@@ -335,9 +335,9 @@ PUB afc_auto_ena(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.AFCFEI)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.AFCAUTOON
+            state := abs(state) << core.AFCAUTOON
             state := ((curr_state & core.AFCAUTOON_MASK) | state)
             writereg(core.AFCFEI, 1, state)
         other:
@@ -374,6 +374,37 @@ PUB afc_offset(): offs
     return (~~offs) * FSTEP
 
 
+PUB afc_rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
+' Set AFC filter bandwidth, in Hz
+'   Valid values: 2600, 3100, 3900, 5200, 6300, 7800, 10400, 12500, 15600,
+'       20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000,
+'       166700, 200000, 250000, 333300, 400000, 500000
+'   Any other value polls the chip and returns the current setting
+    curr_bw := readreg(core.AFCBW)
+    ' exponent differs depending on FSK or OOK modulation
+    exp_mod := lookupz(modulation(): 2, 3)
+    case bw
+        2_600..500_000:
+            ' iterate through combinations of exponent and mantissa settings
+            '   until a (close) match to the requested BW is found
+            repeat exp from 7 to 0
+                repeat mant from 2 to 0
+                    mant_tmp := lookupz(mant: 16, 20, 24)
+                    rxb_calc := FXOSC / (mant_tmp * (1 << (exp + exp_mod)))
+                    if ( rxb_calc >= bw )
+                        quit
+                if ( rxb_calc >= bw )
+                    quit
+            bw := (mant << 3) | exp
+            bw := ((curr_bw & core.RX_BW_MASK) | bw)
+            writereg(core.AFCBW, 1, bw)
+        other:
+            exp := (curr_bw & core.RXBWEXP_BITS)
+            mant := ((curr_bw >> core.RXBWMANT) & core.RXBWMANT_BITS)
+            mant := lookupz(mant: 16, 20, 24)
+            return (FXOSC / (mant * (1 << (exp + exp_mod))))
+
+
 PUB afc_start() | tmp
 ' Trigger a manual AFC
     tmp := readreg(core.AFCFEI)                 ' read reg setting
@@ -399,9 +430,9 @@ PUB auto_restart_rx(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Restart occurs after payload is ready and the packet has been read from the FIFO
     curr_state := readreg(core.PKTCFG2)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.AUTORSTARTRXON
+            state := abs(state) << core.AUTORSTARTRXON
             state := ((curr_state & core.AUTORSTARTRXON_MASK) | state)
             writereg(core.PKTCFG2, 1, state)
         other:
@@ -465,9 +496,9 @@ PUB crc_check_ena(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.PKTCFG1)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.CRCON
+            state := abs(state) << core.CRCON
             state := ((curr_state & core.CRCON_MASK) | state)
             writereg(core.PKTCFG1, 1, state)
         other:
@@ -514,7 +545,7 @@ PUB data_whiten_ena(state=-2): curr_state
 '   NOTE: This setting and manchest_enc_ena() are mutually exclusive;
 '       enabling this will disable manchest_enc_ena()
     curr_state := readreg(core.PKTCFG1)
-    case ||(state)
+    case abs(state)
         0:
         1:
             state := DCFREE_WHITE << core.DCFREE
@@ -543,9 +574,9 @@ PUB encrypt_ena(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Encryption is limited to payloads of a maximum of 66 bytes
     curr_state := readreg(core.PKTCFG2)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) & 1
+            state := abs(state) & 1
             state := ((curr_state & core.AESON_MASK) | state)
             writereg(core.PKTCFG2, 1, state)
         other:
@@ -629,7 +660,7 @@ PUB fei_start() | tmp
 ' Trigger a manual FEI measurement
     tmp := readreg(core.AFCFEI)                 ' read reg settings
     tmp := tmp | (1 << core.FEISTART)           ' set the FEISTART bit
-    writereg(core.AFCFEI, 1, tmp)              ' write it back
+    writereg(core.AFCFEI, 1, tmp)               ' write it back
 
 
 PUB fifo_empty(): flag
@@ -947,9 +978,9 @@ PUB listen(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Should be enable when in standby mode
     curr_state := readreg(core.OPMODE)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.LISTENON
+            state := abs(state) << core.LISTENON
             state := ((curr_state & core.LISTENON_MASK) | state)
             writereg(core.OPMODE, 1, state)
         other:
@@ -1015,9 +1046,9 @@ PUB low_batt_mon_ena(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.LOWBAT)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.LOWBATON
+            state := abs(state) << core.LOWBATON
             state := ((curr_state & core.LOWBAT_MASK) | state)
             writereg(core.LOWBAT, 1, state)
         other:
@@ -1031,7 +1062,7 @@ PUB manchest_enc_ena(state=-2): curr_state
 '   NOTE: This setting and data_whiten_ena() are mutually exclusive;
 '       enabling this will disable data_whiten_ena()
     curr_state := readreg(core.PKTCFG1)
-    case ||(state)
+    case abs(state)
         0:                                      ' disabled state is just 0, so
         1:                                      '   just leave it as-is
             state := DCFREE_MANCH << core.DCFREE
@@ -1110,9 +1141,9 @@ PUB over_current_prot_ena(state=-2): curr_state
 '   Valid values: *TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.OCP)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.OCPON
+            state := abs(state) << core.OCPON
             state := ((curr_state & core.OCPON_MASK) | state)
             writereg(core.OCP, 1, state)
         other:
@@ -1203,9 +1234,9 @@ PUB rc_osc_cal(state=-2): curr_state
 '       FALSE: RC calibration in progress
 '       TRUE: RC calibration complete
     curr_state := readreg(core.OSC1)
-    case ||(state)
+    case abs(state)
         1:
-            state := ||(state) << core.RCCALSTART
+            state := abs(state) << core.RCCALSTART
             state := (curr_state & core.RCCALSTART_MASK | state) | core.OSC1_RSVD
             writereg(core.OSC1, 1, state)
         other:
@@ -1242,7 +1273,7 @@ PUB rssi_int_thresh(thresh=-255): curr_thr
 '   Any other value polls the chip and returns the current setting
     case thresh
         -127..0:
-            thresh := ||(thresh) * 2
+            thresh := abs(thresh) * 2
             writereg(core.RSSITHRESH, 1, thresh)
         other:
             curr_thr := readreg(core.RSSITHRESH)
@@ -1348,9 +1379,9 @@ PUB syncwd_ena(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.SYNCCFG)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.SYNCON
+            state := abs(state) << core.SYNCON
             state := ((curr_state & core.SYNCON_MASK) | state)
             writereg(core.SYNCCFG, 1, state)
         other:
