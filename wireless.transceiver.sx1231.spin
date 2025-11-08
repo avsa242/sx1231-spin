@@ -4,8 +4,8 @@
     Description:    Driver for the Semtech SX1231 UHF Transceiver IC
     Author:         Jesse Burt
     Started:        Apr 19, 2019
-    Updated:        Oct 14, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Nov 8, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -307,11 +307,10 @@ PUB preset_rx4k8()
 
 PUB abort_listen() | tmp
 ' Abort listen mode when used together with Listen(FALSE)
-    tmp := 0
-    readreg(core.OPMODE, 1, @tmp)
+    tmp := readreg(core.OPMODE)
     tmp &= core.LISTENABT_MASK
     tmp := (tmp | (1 << core.LISTENABT))
-    writereg(core.OPMODE, 1, @tmp)
+    writereg(core.OPMODE, 1, tmp)
 
 
 PUB addr_check(mode=-2): curr_mode
@@ -321,13 +320,12 @@ PUB addr_check(mode=-2): curr_mode
 '       ADDRCHK_CHK_NO_BCAST (%01): Check address, but ignore broadcast addresses
 '       ADDRCHK_CHK_00_BCAST (%10): Check address, and also respond to broadcast address
 '   Any other value polls the chip and returns the current setting
-    curr_mode := 0
-    readreg(core.PKTCFG1, 1, @curr_mode)
+    curr_mode := readreg(core.PKTCFG1)
     case mode
         ADDRCHK_NONE, ADDRCHK_CHK_NO_BCAST, ADDRCHK_CHK_BCAST:
             mode <<= core.ADDRFILT
             mode := ((curr_mode & core.ADDRFILT_MASK) | mode)
-            writereg(core.PKTCFG1, 1, @mode)
+            writereg(core.PKTCFG1, 1, mode)
         other:
             return ((curr_mode >> core.ADDRFILT) & core.ADDRFILT_BITS)
 
@@ -336,13 +334,12 @@ PUB afc_auto_ena(state=-2): curr_state
 ' Enable automatic AFC
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := 0
-    readreg(core.AFCFEI, 1, @curr_state)
+    curr_state := readreg(core.AFCFEI)
     case ||(state)
         0, 1:
             state := ||(state) << core.AFCAUTOON
             state := ((curr_state & core.AFCAUTOON_MASK) | state)
-            writereg(core.AFCFEI, 1, @state)
+            writereg(core.AFCFEI, 1, state)
         other:
             return (((curr_state >> core.AFCAUTOON) & 1) == 1)
 
@@ -350,8 +347,7 @@ PUB afc_auto_ena(state=-2): curr_state
 PUB afc_complete(): flag
 ' Flag indicating AFC (auto or manual) completed
 '   Returns: TRUE (-1) if complete, FALSE (0) otherwise
-    flag := 0
-    readreg(core.AFCFEI, 1, @flag)
+    flag := readreg(core.AFCFEI)
     return (((flag >> core.AFCDONE) & 1) == 1)
 
 
@@ -361,13 +357,12 @@ PUB afc_method(mode=-2): curr_mode
 '       AFC_STANDARD (0): Standard AFC routine
 '       AFC_IMPROVED (1): Improved AFC routine, for signals with modulation index < 2
 '   Any other value polls the chip and returns the current setting
-    curr_mode := 0
-    readreg(core.AFCCTRL, 1, @curr_mode)
+    curr_mode := readreg(core.AFCCTRL)
     case mode
         AFC_STANDARD, AFC_IMPROVED:
             mode := mode << core.AFCLOWBETAON
             mode := ((curr_mode & core.AFCLOWBETAON_MASK) | mode)
-            writereg(core.AFCCTRL, 1, @mode)
+            writereg(core.AFCCTRL, 1, mode)
         other:
             return ((curr_mode >> core.AFCLOWBETAON) & 1)
 
@@ -375,16 +370,15 @@ PUB afc_method(mode=-2): curr_mode
 PUB afc_offset(): offs
 ' Read AFC frequency offset
 '   Returns: Frequency offset in Hz
-    offs := 0
-    readreg(core.AFCMSB, 2, @offs)
+    offs := readreg(core.AFCMSB, 2)
     return (~~offs) * FSTEP
 
 
 PUB afc_start() | tmp
 ' Trigger a manual AFC
-    readreg(core.AFCFEI, 1, @tmp)               ' read reg setting
+    tmp := readreg(core.AFCFEI)                 ' read reg setting
     tmp |= 1                                    ' set the AFCSTART bit
-    writereg(core.AFCFEI, 1, @tmp)              ' write it back
+    writereg(core.AFCFEI, 1, tmp)               ' write it back
 
 
 PUB after_rx(next_state=-2): curr_state
@@ -404,13 +398,12 @@ PUB auto_restart_rx(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Restart occurs after payload is ready and the packet has been read from the FIFO
-    curr_state := 0
-    readreg(core.PKTCFG2, 1, @curr_state)
+    curr_state := readreg(core.PKTCFG2)
     case ||(state)
         0, 1:
             state := ||(state) << core.AUTORSTARTRXON
             state := ((curr_state & core.AUTORSTARTRXON_MASK) | state)
-            writereg(core.PKTCFG2, 1, @state)
+            writereg(core.PKTCFG2, 1, state)
         other:
             return (((curr_state >> core.AUTORSTARTRXON) & 1) == 1)
 
@@ -418,7 +411,7 @@ PUB auto_restart_rx(state=-2): curr_state
 PUB batt_low(): flag
 ' Flag indicating battery voltage low
 '   Returns TRUE if battery low, FALSE otherwise
-    readreg(core.LOWBAT, 1, @flag)
+    flag := readreg(core.LOWBAT)
     return ( ( (flag >> core.LOWBATMON) & 1) == 1)
 
 
@@ -428,10 +421,9 @@ PUB bcast_addr(addr=-2): curr_addr
 '   Any other value polls the chip and returns the current setting
     case addr
         $00..$FF:
-            writereg(core.BCASTADRS, 1, @addr)
+            writereg(core.BCASTADRS, 1, addr)
         other:
-            curr_addr := 0
-            readreg(core.BCASTADRS, 1, @curr_addr)
+            curr_addr := readreg(core.BCASTADRS)
             return
 
 
@@ -444,9 +436,9 @@ PUB carrier_freq(freq=-2): curr_freq
     case freq
         290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
             freq := u64.multdiv(freq, 1_000, FSTEP)
-            writereg(core.FRFMSB, 3, @freq)
+            writereg(core.FRFMSB, 3, freq)
         other:
-            readreg(core.FRFMSB, 3, @curr_freq)
+            curr_freq := readreg(core.FRFMSB, 3)
             return u64.multdiv(curr_freq, FSTEP, 1_000)
 
 
@@ -457,13 +449,12 @@ PUB clk_out(divisor=-2): curr_div
 '   Any other value polls the chip and returns the current setting
 '   NOTE: For optimal efficiency, it is recommended to disable the
 '       clock output (CLKOUT_OFF) unless needed
-    curr_div := 0
-    readreg(core.DIOMAP2, 1, @curr_div)
+    curr_div := readreg(core.DIOMAP2)
     case divisor
         1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF:
             divisor := lookdownz(divisor: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
             divisor := ((curr_div & core.CLKOUT_MASK) | divisor)
-            writereg(core.DIOMAP2, 1, @divisor)
+            writereg(core.DIOMAP2, 1, divisor)
         other:
             curr_div &= core.CLKOUT_BITS
             return lookupz(curr_div: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
@@ -473,13 +464,12 @@ PUB crc_check_ena(state=-2): curr_state
 ' Enable CRC calculation (TX) and checking (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := 0
-    readreg(core.PKTCFG1, 1, @curr_state)
+    curr_state := readreg(core.PKTCFG1)
     case ||(state)
         0, 1:
             state := ||(state) << core.CRCON
             state := ((curr_state & core.CRCON_MASK) | state)
-            writereg(core.PKTCFG1, 1, @state)
+            writereg(core.PKTCFG1, 1, state)
         other:
             return (((curr_state >> core.CRCON) & 1) == 1)
 
@@ -491,12 +481,12 @@ PUB data_mode(mode=-2): curr_mode
 '       DATAMODE_CONT_W_SYNC (2): Continuous mode with bit synchronizer
 '       DATAMODE_CONT_WO_SYNC (3): Continuous mode without bit synchronizer
 '   Any other value polls the chip and returns the current setting
-    readreg(core.DATAMOD, 1, @curr_mode)
+    curr_mode := readreg(core.DATAMOD)
     case mode
         DATAMODE_PKT, DATAMODE_CONT_W_SYNC, DATAMODE_CONT_WO_SYNC:
             mode := mode << core.DATAMODE
             mode := ((curr_mode & core.DATAMODE_MASK) | mode)
-            writereg(core.DATAMOD, 1, @mode)
+            writereg(core.DATAMOD, 1, mode)
         other:
             return ((curr_mode >> core.DATAMODE) & core.DATAMODE_BITS)
 
@@ -511,9 +501,9 @@ PUB data_rate(rate=-2): curr_rate
     case rate
         1_200..300_000:
             rate := (FXOSC / rate) & core.BITRATE_MASK
-            writereg(core.BITRATEMSB, 2, @rate)
+            writereg(core.BITRATEMSB, 2, rate)
         other:
-            readreg(core.BITRATEMSB, 2, @curr_rate)
+            curr_rate := readreg(core.BITRATEMSB, 2)
             return (FXOSC / curr_rate)
 
 
@@ -523,8 +513,7 @@ PUB data_whiten_ena(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting and manchest_enc_ena() are mutually exclusive;
 '       enabling this will disable manchest_enc_ena()
-    curr_state := 0
-    readreg(core.PKTCFG1, 1, @curr_state)
+    curr_state := readreg(core.PKTCFG1)
     case ||(state)
         0:
         1:
@@ -534,7 +523,7 @@ PUB data_whiten_ena(state=-2): curr_state
             return (curr_state == DCFREE_WHITE)
 
     state := ((curr_state & core.DCFREE_MASK) | state)
-    writereg(core.PKTCFG1, 1, @state)
+    writereg(core.PKTCFG1, 1, state)
 
 
 PUB dev_id(): id
@@ -545,8 +534,7 @@ PUB dev_id(): id
 '       $22:    V2b
 '       $23:    V2c
 '       $24:    ???
-    id := 0
-    readreg(core.VERSION, 1, @id)
+    id := readreg(core.VERSION)
 
 
 PUB encrypt_ena(state=-2): curr_state
@@ -554,13 +542,12 @@ PUB encrypt_ena(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Encryption is limited to payloads of a maximum of 66 bytes
-    curr_state := 0
-    readreg(core.PKTCFG2, 1, @curr_state)
+    curr_state := readreg(core.PKTCFG2)
     case ||(state)
         0, 1:
             state := ||(state) & 1
             state := ((curr_state & core.AESON_MASK) | state)
-            writereg(core.PKTCFG2, 1, @state)
+            writereg(core.PKTCFG2, 1, state)
         other:
             return ((curr_state & 1) == 1)
 
@@ -591,13 +578,12 @@ PUB enter_cond(cond=-2): curr_cond
 '       ENTCOND_PKTSENT (%110)         Rising edge of Packet sent
 '       ENTCOND_FIFOEMPTY (%111)       Falling edge of FIFO not empty (i.e., FIFO empty)
 '   Any other value polls the chip and returns the current setting
-    curr_cond := 0
-    readreg(core.AUTOMODES, 1, @curr_cond)
+    curr_cond := readreg(core.AUTOMODES)
     case cond
         ENTCOND_NONE, ENTCOND_FIFONOTEMPTY, ENTCOND_FIFOLVL, ENTCOND_CRCOK, ENTCOND_PAYLDRDY, ENTCOND_SYNCADD, ENTCOND_PKTSENT, ENTCOND_FIFOEMPTY:
             cond <<= core.ENTCOND
             cond := ((curr_cond & core.ENTCOND_MASK) | cond)
-            writereg(core.AUTOMODES, 1, @cond)
+            writereg(core.AUTOMODES, 1, cond)
         other:
             return ((curr_cond >> core.ENTCOND) & core.ENTCOND_BITS)
 
@@ -614,14 +600,13 @@ PUB exit_cond(cond=-2): curr_cond
 '       EXITCOND_PKTSENT (%110)        Rising edge of Packet sent
 '       EXITCOND_TIMEOUT (%111)        Rising edge of timeout
 '   Any other value polls the chip and returns the current setting
-    curr_cond := 0
-    readreg(core.AUTOMODES, 1, @curr_cond)
+    curr_cond := readreg(core.AUTOMODES)
     case cond
         EXITCOND_NONE, EXITCOND_FIFOEMPTY, EXITCOND_FIFOLVL, EXITCOND_CRCOK, EXITCOND_PAYLDRDY, ...
         EXITCOND_SYNCADD, EXITCOND_PKTSENT, EXITCOND_TIMEOUT:
             cond <<= core.EXITCOND
             cond := ((curr_cond & core.EXITCOND_MASK) | cond)
-            writereg(core.AUTOMODES, 1, @cond)
+            writereg(core.AUTOMODES, 1, cond)
         other:
             return ((curr_cond >> core.EXITCOND) & core.EXITCOND_BITS)
 
@@ -629,25 +614,22 @@ PUB exit_cond(cond=-2): curr_cond
 PUB fei_complete(): flag
 ' Flag indicating FEI measurement complete
 '   Returns: TRUE if complete, FALSE otherwise
-    flag := 0
-    readreg(core.AFCFEI, 1, @flag)
+    flag := readreg(core.AFCFEI)
     return ( ( (flag >> core.FEIDONE) & 1) == 1)
 
 
 PUB fei_error(): ferr
 ' Frequency error
 '   Returns: FEI measurement, in Hz (signed)
-    ferr := 0
-    readreg(core.AFCFEI, 2, @ferr)
+    ferr := readreg(core.AFCFEI, 2)
     return ((~~ferr) * FSTEP)
 
 
 PUB fei_start() | tmp
 ' Trigger a manual FEI measurement
-    tmp := 0
-    readreg(core.AFCFEI, 1, @tmp)               ' read reg settings
+    tmp := readreg(core.AFCFEI)                 ' read reg settings
     tmp := tmp | (1 << core.FEISTART)           ' set the FEISTART bit
-    writereg(core.AFCFEI, 1, @tmp)              ' write it back
+    writereg(core.AFCFEI, 1, tmp)              ' write it back
 
 
 PUB fifo_empty(): flag
@@ -655,8 +637,7 @@ PUB fifo_empty(): flag
 '   Returns:
 '       TRUE (-1): FIFO empty
 '       FALSE (0): FIFO contains at least one byte
-    flag := 0
-    readreg(core.IRQFLAGS2, 1, @flag)
+    flag := readreg(core.IRQFLAGS2)
     return ( ( ( (flag >> core.FIFONOTEMPTY) & 1) ^ 1) == 1)
 
 
@@ -665,8 +646,7 @@ PUB fifo_full(): flag
 '   Returns:
 '       TRUE (-1): FIFO full
 '       FALSE (0): at least one byte available
-    flag := 0
-    readreg(core.IRQFLAGS2, 1, @flag)
+    flag := readreg(core.IRQFLAGS2)
     return ( ( (flag >> core.FIFOFULL) & 1) == 1)
 
 
@@ -674,12 +654,11 @@ PUB fifo_thresh(thresh=-2): curr_thr
 ' Set threshold for triggering FIFO level interrupt
 '   Valid values: 0..127
 '   Any other value polls the chip and returns the current setting
-    curr_thr := 0
-    readreg(core.FIFOTHRESH, 1, @curr_thr)
+    curr_thr := readreg(core.FIFOTHRESH)
     case thresh
         0..127:
             thresh := ((curr_thr & core.FIFOTHRESHOLD_MASK) | thresh)
-            writereg(core.FIFOTHRESH, 1, @thresh)
+            writereg(core.FIFOTHRESH, 1, thresh)
         other:
             return (curr_thr & core.FIFOTHRESHOLD_BITS)
 
@@ -695,10 +674,9 @@ PUB freq_dev(fdev=-2): curr_fdev
         600..300_000:
             ' freq deviation reg = (freq deviation / FSTEP)
             fdev := u64.multdiv(fdev, 1_000, FSTEP)
-            writereg(core.FDEVMSB, 2, @fdev)
+            writereg(core.FDEVMSB, 2, fdev)
         other:
-            curr_fdev := 0
-            readreg(core.FDEVMSB, 2, @curr_fdev)
+            curr_fdev := readreg(core.FDEVMSB, 2)
             return u64.multdiv(curr_fdev, FSTEP, 1_000)
 
 
@@ -710,12 +688,12 @@ PUB gaussian_filt(mode=-2): curr_mode
 '       BT_0_5 (2): Gaussian filter, BT = 0.5
 '       BT_0_3 (3): Gaussian filter, BT = 0.3
 '   Any other value polls the chip and returns the current setting
-    readreg(core.DATAMOD, 1, @curr_mode)
+    curr_mode := readreg(core.DATAMOD)
     case mode
         BT_NONE..BT_0_3:
             mode := mode << core.MODSHP
             mode := ((curr_mode & core.MODSHP_MASK) | mode)
-            writereg(core.DATAMOD, 1, @mode)
+            writereg(core.DATAMOD, 1, mode)
         other:
             return ((curr_mode >> core.MODSHP) & core.MODSHP_BITS)
 
@@ -740,13 +718,12 @@ PUB gpio0(mode=-2): curr_mode
 '           DIO0_TXRDY (1)
 '           DIO0_LOWBAT (2)
 '           DIO0_PLLLOCK (3)
-    curr_mode := 0
-    readreg(core.DIOMAP1, 1, @curr_mode)
+    curr_mode := readreg(core.DIOMAP1)
     case mode
         0..3:
             mode <<= core.DIO0
             mode := ((curr_mode & core.DIO0_MASK) | mode)
-            writereg(core.DIOMAP1, 1, @mode)
+            writereg(core.DIOMAP1, 1, mode)
         other:
             return ((curr_mode >> core.DIO0) & core.DIO_BITS)
 
@@ -777,13 +754,12 @@ PUB gpio1(mode=-2): curr_mode
 '           DIO1_FIFOFULL (1)
 '           DIO1_FIFONOTEMPTY (2)
 '           DIO1_PLLLOCK (3)
-    curr_mode := 0
-    readreg(core.DIOMAP1, 1, @curr_mode)
+    curr_mode := readreg(core.DIOMAP1)
     case mode
         0..3:
             mode <<= core.DIO1
             mode := ((curr_mode & core.DIO1_MASK) | mode)
-            writereg(core.DIOMAP1, 1, @mode)
+            writereg(core.DIOMAP1, 1, mode)
         other:
             return ((curr_mode >> core.DIO1) & core.DIO_BITS)
 
@@ -813,13 +789,12 @@ PUB gpio2(mode=-2): curr_mode
 '           DIO2_DATA (1)
 '           DIO2_LOWBAT (2)
 '           DIO2_AUTOMODE (3)
-    curr_mode := 0
-    readreg(core.DIOMAP1, 1, @curr_mode)
+    curr_mode := readreg(core.DIOMAP1)
     case mode
         0..3:
             mode <<= core.DIO2
             mode := ((curr_mode & core.DIO2_MASK) | mode)
-            writereg(core.DIOMAP1, 1, @mode)
+            writereg(core.DIOMAP1, 1, mode)
         other:
             return ((curr_mode >> core.DIO2) & core.DIO_BITS)
 
@@ -847,13 +822,12 @@ PUB gpio3(mode=-2): curr_mode
 '           DIO3_TXRDY (1)
 '           DIO3_LOWBAT (2)
 '           DIO3_PLLLOCK (3)
-    curr_mode := 0
-    readreg(core.DIOMAP1, 1, @curr_mode)
+    curr_mode := readreg(core.DIOMAP1)
     case mode
         0..3:
             mode <<= core.DIO3
             mode := ((curr_mode & core.DIO3_MASK) | mode)
-            writereg(core.DIOMAP1, 1, @mode)
+            writereg(core.DIOMAP1, 1, mode)
         other:
             return (curr_mode & core.DIO_BITS)
 
@@ -878,13 +852,12 @@ PUB gpio4(mode=-2): curr_mode
 '           DIO4_TXRDY (1)
 '           DIO4_LOWBAT (2)
 '           DIO4_PLLLOCK (3)
-    curr_mode := 0
-    readreg(core.DIOMAP2, 1, @curr_mode)
+    curr_mode := readreg(core.DIOMAP2)
     case mode
         0..3:
             mode <<= core.DIO4
             mode := ((curr_mode & core.DIO4_MASK) | mode)
-            writereg(core.DIOMAP2, 1, @mode)
+            writereg(core.DIOMAP2, 1, mode)
         other:
             return ((curr_mode >> core.DIO4) & core.DIO_BITS)
 
@@ -913,13 +886,12 @@ PUB gpio5(mode=-2): curr_mode
 '           DIO5_DATA (1)
 '           DIO5_LOWBAT (2)
 '           DIO5_MODERDY (3)
-    curr_mode := 0
-    readreg(core.DIOMAP2, 1, @curr_mode)
+    curr_mode := readreg(core.DIOMAP2)
     case mode
         0..3:
             mode <<= core.DIO5
             mode := ((curr_mode & core.DIO5_MASK) | mode)
-            writereg(core.DIOMAP2, 1, @mode)
+            writereg(core.DIOMAP2, 1, mode)
         other:
             return ((curr_mode >> core.DIO5) & core.DIO_BITS)
 
@@ -937,13 +909,12 @@ PUB interm_mode(mode=-2): curr_mode
 '       IMODE_RX (%10): Receive
 '       IMODE_TX (%11): Transmit
 '   Any other value polls the chip and returns the current setting
-    curr_mode := 0
-    readreg(core.AUTOMODES, 1, @curr_mode)
+    curr_mode := readreg(core.AUTOMODES)
     case mode
         IMODE_SLEEP, IMODE_STBY, IMODE_RX, IMODE_TX:
             mode &= core.INTMDTMODE_BITS
             mode := ((curr_mode & core.INTMDTMODE_MASK) | mode)
-            writereg(core.AUTOMODES, 1, @mode)
+            writereg(core.AUTOMODES, 1, mode)
         other:
             return (curr_mode & core.INTMDTMODE_BITS)
 
@@ -967,8 +938,7 @@ PUB interrupt(): mask
 '   2   - Payload ready
 '   1   - RX Payload CRC OK
 '   0   - Battery voltage below level set by low_batt_lvl()
-    mask := 0
-    readreg(core.IRQFLAGS1, 2, @mask)
+    mask := readreg(core.IRQFLAGS1, 2)
 
 
 PUB listen(state=-2): curr_state
@@ -976,13 +946,12 @@ PUB listen(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Should be enable when in standby mode
-    curr_state := 0
-    readreg(core.OPMODE, 1, @curr_state)
+    curr_state := readreg(core.OPMODE)
     case ||(state)
         0, 1:
             state := ||(state) << core.LISTENON
             state := ((curr_state & core.LISTENON_MASK) | state)
-            writereg(core.OPMODE, 1, @state)
+            writereg(core.OPMODE, 1, state)
         other:
             return (((curr_state >> core.LISTENON) & 1) == 1)
 
@@ -998,13 +967,12 @@ PUB lna_gain(gain=-255): curr_gain
 '       -36: (Highest gain - 36dB)
 '       -48: (Highest gain - 48dB)
 '   Any other value polls the chip and returns the current setting
-    curr_gain := 0
-    readreg(core.LNA, 1, @curr_gain)
+    curr_gain := readreg(core.LNA)
     case gain
         -6, -12, -24, -36, -48:
             gain := lookdownz(gain: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
             gain := ((curr_gain & core.LNAGAINSEL_MASK) | gain)
-            writereg(core.LNA, 1, @gain)
+            writereg(core.LNA, 1, gain)
         other:'XXX Should this read the LNACURRENTGAIN field instead?
             curr_gain := curr_gain & core.LNAGAINSEL_BITS
             return lookupz(curr_gain: LNA_AGC, LNA_HIGH, -6, -12, -24, -36, -48)
@@ -1015,13 +983,12 @@ PUB lna_z_input(impedance=-2): curr_imp
 '   Valid values:
 '       50, *200
 '   Any other value polls the chip and returns the current setting
-    curr_imp := 0
-    readreg(core.LNA, 1, @curr_imp)
+    curr_imp := readreg(core.LNA)
     case impedance
         50, 200:
             impedance := lookdownz(impedance: 50, 200) << core.LNAZIN
             impedance := ((curr_imp & core.LNAZIN_MASK) | impedance)
-            writereg(core.LNA, 1, @impedance)
+            writereg(core.LNA, 1, impedance)
         other:
             curr_imp := (curr_imp >> core.LNAZIN) & 1
             return lookupz(curr_imp: 50, 200)
@@ -1032,13 +999,12 @@ PUB low_batt_lvl(lvl=-2): curr_lvl
 '   Valid values:
 '       1695, 1764, *1835, 1905, 1976, 2045, 2116, 2185
 '   Any other value polls the chip and returns the current setting
-    curr_lvl := 0
-    readreg(core.LOWBAT, 1, @curr_lvl)
+    curr_lvl := readreg(core.LOWBAT)
     case lvl
         1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185:
             lvl := lookdownz(lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
             lvl := ((curr_lvl & core.LOWBATTRIM_MASK) | lvl)
-            writereg(core.LOWBAT, 1, @lvl)
+            writereg(core.LOWBAT, 1, lvl)
         other:
             curr_lvl &= core.LOWBATTRIM_BITS
             return lookupz(curr_lvl: 1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185)
@@ -1048,13 +1014,12 @@ PUB low_batt_mon_ena(state=-2): curr_state
 ' Enable low battery detector signal
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := 0
-    readreg(core.LOWBAT, 1, @curr_state)
+    curr_state := readreg(core.LOWBAT)
     case ||(state)
         0, 1:
             state := ||(state) << core.LOWBATON
             state := ((curr_state & core.LOWBAT_MASK) | state)
-            writereg(core.LOWBAT, 1, @state)
+            writereg(core.LOWBAT, 1, state)
         other:
             return (((curr_state >> core.LOWBATON) & 1) == 1)
 
@@ -1065,8 +1030,7 @@ PUB manchest_enc_ena(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting and data_whiten_ena() are mutually exclusive;
 '       enabling this will disable data_whiten_ena()
-    curr_state := 0
-    readreg(core.PKTCFG1, 1, @curr_state)
+    curr_state := readreg(core.PKTCFG1)
     case ||(state)
         0:                                      ' disabled state is just 0, so
         1:                                      '   just leave it as-is
@@ -1076,7 +1040,7 @@ PUB manchest_enc_ena(state=-2): curr_state
             return (curr_state == DCFREE_MANCH)
 
     state := ((curr_state & core.DCFREE_MASK) | state)
-    writereg(core.PKTCFG1, 1, @state)
+    writereg(core.PKTCFG1, 1, state)
 
 
 PUB modulation(mode=-2): curr_mode
@@ -1085,13 +1049,12 @@ PUB modulation(mode=-2): curr_mode
 '       MOD_FSK (0): Frequency Shift Keyed
 '       MOD_OOK (1): On-Off Keyed
 '   Any other value polls the chip and returns the current setting
-    curr_mode := 0
-    readreg(core.DATAMOD, 1, @curr_mode)
+    curr_mode := readreg(core.DATAMOD)
     case mode
         MOD_FSK, MOD_OOK:
             mode <<= core.MODTYPE
             mode := ((curr_mode & core.MODTYPE_MASK) | mode)
-            writereg(core.DATAMOD, 1, @mode)
+            writereg(core.DATAMOD, 1, mode)
         other:
             return (curr_mode >> core.MODTYPE) & core.MODTYPE_BITS
 
@@ -1102,11 +1065,9 @@ PUB node_addr(addr=-2): curr_addr
 '   Any other value polls the chip and returns the current setting
     case addr
         $00..$FF:
-            writereg(core.NODEADRS, 1, @addr)
+            writereg(core.NODEADRS, 1, addr)
         other:
-            curr_addr := 0
-            readreg(core.NODEADRS, 1, @curr_addr)
-            return
+            return readreg(core.NODEADRS)
 
 
 PUB ocp_current(lvl=-2): curr_lvl
@@ -1115,13 +1076,12 @@ PUB ocp_current(lvl=-2): curr_lvl
 '       45..120 (Default: 95)
 '   NOTE: Set value will be rounded to the nearest 5mA
 '   Any other value polls the chip and returns the current setting
-    curr_lvl := 0
-    readreg(core.OCP, 1, @curr_lvl)
+    curr_lvl := readreg(core.OCP)
     case lvl
         45..120:
             lvl := (((lvl-45) / 5) & core.OCPTRIM)
             lvl := ((curr_lvl & core.OCPTRIM_MASK) | lvl)
-            writereg(core.OCP, 1, @lvl)
+            writereg(core.OCP, 1, lvl)
         other:
             return ((5 * (curr_lvl & core.OCPTRIM_BITS)) + 45)
 
@@ -1135,13 +1095,12 @@ PUB opmode(mode=-2): curr_mode
 '       OPMODE_TX (3): Transmitter mode
 '       OPMODE_RX (4): Receiver mode
 '   Any other value polls the chip and returns the current setting
-    curr_mode := 0
-    readreg(core.OPMODE, 1, @curr_mode)
+    curr_mode := readreg(core.OPMODE)
     case mode
         OPMODE_SLEEP..OPMODE_RX:
             mode <<= core.MODE
             mode := ((curr_mode & core.MODE_MASK) | mode)
-            writereg(core.OPMODE, 1, @mode)
+            writereg(core.OPMODE, 1, mode)
         other:
             return ((curr_mode >> core.MODE) & core.MODE_BITS)
 
@@ -1150,13 +1109,12 @@ PUB over_current_prot_ena(state=-2): curr_state
 ' Enable PA overcurrent protection
 '   Valid values: *TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := 0
-    readreg(core.OCP, 1, @curr_state)
+    curr_state := readreg(core.OCP)
     case ||(state)
         0, 1:
             state := ||(state) << core.OCPON
             state := ((curr_state & core.OCPON_MASK) | state)
-            writereg(core.OCP, 1, @state)
+            writereg(core.OCP, 1, state)
         other:
             return (((curr_state >> core.OCPON) & 1) == 1)
 
@@ -1170,11 +1128,9 @@ PUB payld_len(length=-2): curr_len
 '   If PKTLEN_VAR, this sets max length in RX, and is ignored in TX
     case length
         0..66:
-            writereg(core.PAYLOADLENGTH, 1, @length)
+            writereg(core.PAYLOADLENGTH, 1, length)
         other:
-            curr_len := 0
-            readreg(core.PAYLOADLENGTH, 1, @curr_len)
-            return
+            return readreg(core.PAYLOADLENGTH)
 
 
 PUB payld_len_cfg(mode=-2): curr_mode
@@ -1183,13 +1139,12 @@ PUB payld_len_cfg(mode=-2): curr_mode
 '       PKTLEN_FIXED: fixed payload length
 '       PKTLEN_VAR: variable payload length
 '   Any other value polls the chip and returns the current setting
-    curr_mode := 0
-    readreg(core.PKTCFG1, 1, @curr_mode)
+    curr_mode := readreg(core.PKTCFG1)
     case mode
         PKTLEN_FIXED, PKTLEN_VAR:
             mode <<= core.PKTFORMAT
             mode := ((curr_mode & core.PKTFORMAT_MASK) | mode)
-            writereg(core.PKTCFG1, 1, @mode)
+            writereg(core.PKTCFG1, 1, mode)
         other:
             return ((curr_mode >> core.PKTFORMAT) & 1)
 
@@ -1200,16 +1155,14 @@ PUB payld_sent(): flag
 '       TRUE (-1): payload sent
 '       FALSE (0): payload not sent
 '   NOTE: Once set, this flag clears when exiting TX mode
-    flag := 0
-    readreg(core.IRQFLAGS2, 1, @flag)
+    flag := readreg(core.IRQFLAGS2)
     return (((flag >> core.PKTSENT) & 1) == 1)
 
 
 PUB pll_locked(): flag
 ' Flag indicating PLL is locked
 '   Returns: TRUE (-1) or FALSE (0)
-    flag := 0
-    readreg(core.IRQFLAGS1, 1, @flag)
+    flag := readreg(core.IRQFLAGS1)
     return (((flag >> core.PLLLOCK) & 1) == 1)
 
 
@@ -1219,11 +1172,9 @@ PUB preamble_len(length=-2): curr_len
 '   Any other value polls the chip and returns the current setting
     case length
         0..65535:
-            writereg(core.PREAMBLEMSB, 2, @length)
+            writereg(core.PREAMBLEMSB, 2, length)
         other:
-            curr_len := 0
-            readreg(core.PREAMBLEMSB, 2, @curr_len)
-            return
+            return readreg(core.PREAMBLEMSB, 2)
 
 
 PUB pa_ramp_time(rtime=-2): curr_rtime
@@ -1235,9 +1186,9 @@ PUB pa_ramp_time(rtime=-2): curr_rtime
         3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10:
             rtime := lookdownz(rtime:   3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, ...
                                         25, 20, 15, 12, 10)
-            writereg(core.PARAMP, 1, @rtime)
+            writereg(core.PARAMP, 1, rtime)
         other:
-            readreg(core.PARAMP, 1, @curr_rtime)
+            curr_rtime := readreg(core.PARAMP)
             curr_rtime &= core.PA_RAMP_BITS
             return lookupz(curr_rtime:  3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, ...
                                         25, 20, 15, 12, 10)
@@ -1251,20 +1202,19 @@ PUB rc_osc_cal(state=-2): curr_state
 '   Returns:
 '       FALSE: RC calibration in progress
 '       TRUE: RC calibration complete
-    curr_state := 0
-    readreg(core.OSC1, 1, @curr_state)
+    curr_state := readreg(core.OSC1)
     case ||(state)
         1:
             state := ||(state) << core.RCCALSTART
             state := (curr_state & core.RCCALSTART_MASK | state) | core.OSC1_RSVD
-            writereg(core.OSC1, 1, @state)
+            writereg(core.OSC1, 1, state)
         other:
             return (((curr_state >> core.RCCALDONE) & 1) == 1)
 
 
 PUB reset()
 ' Perform soft-reset
-    if ( lookdown(_RST: 0..31) )                   ' if a valid pin is set,
+    if ( lookdown(_RST: 0..31) )                ' if a valid pin is set,
         outa[_RST] := 1                         ' pull RESET high for 100uS,
         dira[_RST] := 1
         time.usleep(core.T_RESACTIVE)
@@ -1277,12 +1227,12 @@ PUB rssi(): level | tmp
 ' Received Signal Strength Indicator
 '   Returns: Signal strength seen by transceiver, in dBm
     tmp := 1
-    writereg(core.RSSICFG, 1, @tmp)             ' trigger an RSSI measurement
+    writereg(core.RSSICFG, 1, tmp)              ' trigger an RSSI measurement
     repeat
-        readreg(core.RSSICFG, 1, @tmp)
+        tmp := readreg(core.RSSICFG)
     until (tmp & core.RSSIDONE)                 ' wait until it's updated
 
-    readreg(core.RSSIVALUE, 1, @level)
+    level := readreg(core.RSSIVALUE)
     return -(level >> 1)                        ' div by 2 and negate
 
 
@@ -1293,10 +1243,9 @@ PUB rssi_int_thresh(thresh=-255): curr_thr
     case thresh
         -127..0:
             thresh := ||(thresh) * 2
-            writereg(core.RSSITHRESH, 1, @thresh)
+            writereg(core.RSSITHRESH, 1, thresh)
         other:
-            curr_thr := 0
-            readreg(core.RSSITHRESH, 1, @curr_thr)
+            curr_thr := readreg(core.RSSITHRESH)
             return -(curr_thr / 2)
 
 
@@ -1307,8 +1256,7 @@ PUB rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
 '       20800, 25000, 31300, 41700, 50000, 62500, 83300, 100000, 125000,
 '       166700, 200000, 250000, 333300, 400000, 500000
 '   Any other value polls the chip and returns the current setting
-    curr_bw := 0
-    readreg(core.RXBW, 1, @curr_bw)
+    curr_bw := readreg(core.RXBW)
     ' exponent differs depending on FSK or OOK modulation
     exp_mod := lookupz(modulation(): 2, 3)
     case bw
@@ -1325,7 +1273,7 @@ PUB rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
                     quit
             bw := (mant << 3) | exp
             bw := ((curr_bw & core.RX_BW_MASK) | bw)
-            writereg(core.RXBW, 1, @bw)
+            writereg(core.RXBW, 1, bw)
         other:
             exp := (curr_bw & core.RXBWEXP_BITS)
             mant := ((curr_bw >> core.RXBWMANT) & core.RXBWMANT_BITS)
@@ -1355,11 +1303,9 @@ PUB sens_mode(mode=-2): curr_mode
 '   Any other value polls the chip and returns the current setting
     case mode
         SENS_NORM, SENS_HI:
-            writereg(core.TESTLNA, 1, @mode)
+            writereg(core.TESTLNA, 1, mode)
         other:
-            curr_mode := 0
-            readreg(core.TESTLNA, 1, @curr_mode)
-            return
+            return readreg(core.TESTLNA)
 
 
 PUB sequencer(mode=-2): curr_mode
@@ -1368,13 +1314,12 @@ PUB sequencer(mode=-2): curr_mode
 '       *OPMODE_AUTO (0): Automatic sequence, as selected by op_mode()
 '        OPMODE_MANUAL (1): Mode is forced
 '   Any other value polls the chip and returns the current setting
-    curr_mode := 0
-    readreg(core.OPMODE, 1, @curr_mode)
+    curr_mode := readreg(core.OPMODE)
     case mode
         OPMODE_AUTO, OPMODE_MANUAL:
             mode := mode << core.SEQOFF
             mode := ((curr_mode & core.SEQOFF_MASK) | mode)
-            writereg(core.OPMODE, 1, @mode)
+            writereg(core.OPMODE, 1, mode)
         other:
             return ((curr_mode >> core.SEQOFF) & 1)
 
@@ -1402,13 +1347,12 @@ PUB syncwd_ena(state=-2): curr_state
 ' Enable sync word generation (TX) and detection (RX)
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := 0
-    readreg(core.SYNCCFG, 1, @curr_state)
+    curr_state := readreg(core.SYNCCFG)
     case ||(state)
         0, 1:
             state := ||(state) << core.SYNCON
             state := ((curr_state & core.SYNCON_MASK) | state)
-            writereg(core.SYNCCFG, 1, @state)
+            writereg(core.SYNCCFG, 1, state)
         other:
             return (((curr_state >> core.SYNCON) & 1) == 1)
 
@@ -1417,13 +1361,12 @@ PUB syncwd_len(length=-2): curr_len
 ' Set length of sync word, in bytes
 '   Valid values: 1..8
 '   Any other value polls the chip and returns the current setting
-    curr_len := 0
-    readreg(core.SYNCCFG, 1, @curr_len)
+    curr_len := readreg(core.SYNCCFG)
     case length
         1..8:
             length := (length-1) << core.SYNCSIZE
             length := ((curr_len & core.SYNCSIZE_MASK) | length)
-            writereg(core.SYNCCFG, 1, @length)
+            writereg(core.SYNCCFG, 1, length)
         other:
             return (((curr_len >> core.SYNCSIZE) & core.SYNCSIZE_BITS) + 1)
 
@@ -1432,12 +1375,11 @@ PUB syncwd_max_bit_err(bits=-2): curr_bits
 ' Set maximum number of tolerated bit errors in sync word
 '   Valid values: 0..7
 '   Any other value polls the chip and returns the current setting
-    curr_bits := 0
-    readreg(core.SYNCCFG, 1, @curr_bits)
+    curr_bits := readreg(core.SYNCCFG)
     case bits
         0..7:
             bits := ((curr_bits & core.SYNCTOL_MASK) | bits)
-            writereg(core.SYNCCFG, 1, @bits)
+            writereg(core.SYNCCFG, 1, bits)
         other:
             return (curr_bits & core.SYNCTOL)
 
@@ -1447,14 +1389,12 @@ PUB temperature(): temp | tmp
 '   Returns: Hundredths of a degree C
 '   NOTE: The receiver can't be used while measuring temperature
     tmp := (1 << core.TEMPMEASSTART)            ' start measurement
-    writereg(core.TEMP1, 1, @tmp)
-    tmp := 0
+    writereg(core.TEMP1, 1, tmp)
     repeat
-        readreg(core.TEMP1, 1, @tmp)            ' wait until measurement
+        tmp := readreg(core.TEMP1)              ' wait until measurement
     while ((tmp >> core.TEMPMEASRUN) & 1)       '   complete
 
-    temp := 0
-    readreg(core.TEMP2, 1, @temp)
+    temp := readreg(core.TEMP2)
     return (~temp * 100)
 
 
@@ -1475,8 +1415,7 @@ PUB tx_pwr(pwr=-255): curr_pwr | pa1, pa2
 '   Valid values:
 '       -18..20
 '   Any other value polls the chip and returns the current setting
-    curr_pwr := 0
-    readreg(core.PALVL, 1, @curr_pwr)
+    curr_pwr := readreg(core.PALVL)
     case pwr
         -18..13:                                ' PA0 on, PA1 and PA2 off
             pwr := (pwr + 18) | (1 << core.PA0ON)
@@ -1496,18 +1435,18 @@ PUB tx_pwr(pwr=-255): curr_pwr | pa1, pa2
                     curr_pwr &= core.OUTPWR_BITS
                     curr_pwr -= 18
                 %011, %010:                     ' PA1, PA2
-                    readreg(core.TESTPA1, 1, @pa1)
-                    readreg(core.TESTPA2, 1, @pa2)
+                    pa1 := readreg(core.TESTPA1)
+                    pa2 := readreg(core.TESTPA2)
                     curr_pwr &= core.OUTPWR_BITS
-                    if pa1 == core.PA1_BOOST and pa2 == core.PA2_BOOST
+                    if ( (pa1 == core.PA1_BOOST) and (pa2 == core.PA2_BOOST) )
                         curr_pwr -= 11          ' pwr offset with PA_BOOST
                     else
                         curr_pwr -= 14          ' pwr offset without PA_BOOST
             return
 
-    writereg(core.PALVL, 1, @pwr)
-    writereg(core.TESTPA1, 1, @pa1)
-    writereg(core.TESTPA2, 1, @pa2)
+    writereg(core.PALVL, 1, pwr)
+    writereg(core.TESTPA1, 1, pa1)
+    writereg(core.TESTPA2, 1, pa2)
 
 
 PUB tx_start_cond(cond=-2): curr_cond
@@ -1516,54 +1455,51 @@ PUB tx_start_cond(cond=-2): curr_cond
 '       TXSTART_FIFOLVL (0): If the number of bytes in the FIFO exceeds fifo_thresh()
 '      *TXSTART_FIFONOTEMPTY (1): If there's at least one byte in the FIFO
 '   Any other value polls the chip and returns the current setting
-    curr_cond := 0
-    readreg(core.FIFOTHRESH, 1, @curr_cond)
+    curr_cond := readreg(core.FIFOTHRESH)
     case cond
         TXSTART_FIFOLVL, TXSTART_FIFONOTEMPTY:
             cond <<= core.TXSTARTCOND
             cond := ((curr_cond & core.TXSTARTCOND_MASK) | cond)
-            writereg(core.FIFOTHRESH, 1, @cond)
+            writereg(core.FIFOTHRESH, 1, cond)
         other:
             return ((curr_cond >> core.TXSTARTCOND) & 1)
 
 
 PUB wait_rx() | tmp
 ' Force the receiver in wait mode (continuous RX)
-    tmp := 0
-    readreg(core.PKTCFG2, 1, @tmp)
+    tmp := readreg(core.PKTCFG2)
 
     tmp &= core.RSTARTRX_MASK
     tmp := (tmp | (1 << core.RSTARTRX)) & core.PKTCFG2_MASK
-    writereg(core.PKTCFG2, 1, @tmp)
+    writereg(core.PKTCFG2, 1, tmp)
 
 
-PRI readreg(reg_nr, nr_bytes, ptr_buff)
-' Read nr_bytes from device into ptr_buff
-    case reg_nr                                 ' validate register #
-        $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
-            outa[_CS] := 0
-                spi.wr_byte(reg_nr)
-                spi.rdblock_msbf(ptr_buff, nr_bytes)
-            outa[_CS] := 1
-        other:
-            return
+PRI readreg(reg_nr, len=1, p_dest=0): v
+' Read current value of register(s)
+    v := 0
+    outa[_CS] := 0
+        spi.wr_byte(reg_nr)
+        if ( len > 4 )
+            spi.rdblock_msbf(p_dest, len)
+        else
+            spi.rdblock_msbf(@v, len)
+    outa[_CS] := 1
 
 
-PRI writereg(reg_nr, nr_bytes, ptr_buff)
-' Write nr_bytes to device from ptr_buff
-    case reg_nr                                 ' validate register #
-        $00..$13, $18..$4F, $58..$59, $5F, $6F, $71:
-            outa[_CS] := 0
-                spi.wr_byte(reg_nr | core.SPI_WR)   ' add write bit to reg #
-                spi.wrblock_msbf(ptr_buff, nr_bytes)
-            outa[_CS] := 1
-        other:
-            return
+PRI writereg(reg_nr, len=1, val=0)
+' Write value to register(s)
+    outa[_CS] := 0
+        spi.wr_byte(reg_nr | core.SPI_WR)       ' add write bit to reg #
+        if ( len > 4 )
+            spi.wrblock_msbf(val, len)
+        else
+            spi.wrblock_msbf(@val, len)
+    outa[_CS] := 1
 
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
