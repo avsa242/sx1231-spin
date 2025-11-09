@@ -1,7 +1,8 @@
 {
 ----------------------------------------------------------------------------------------------------
     Filename:       SX1231-RXDemo.spin
-    Description:    Simple receive demo of the SX1231 driver
+    Description:    Demo of the SX1231 driver
+        * Receiver
     Author:         Jesse Burt
     Started:        Dec 15, 2020
     Updated:        Nov 8, 2025

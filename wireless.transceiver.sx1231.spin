@@ -121,24 +121,6 @@ CON
     SENS_NORM               = $1b
     SENS_HI                 = $2d
 
-    ' Interrupts
-    INT_OPMODE_RDY          = 1 << 15
-    INT_RXRDY               = 1 << 14
-    INT_TXRDY               = 1 << 13
-    INT_PLL_LOCKED          = 1 << 12
-    INT_RSSI_THR            = 1 << 11
-    INT_TIMEOUT             = 1 << 10
-    INT_INTERM_MODE         = 1 << 9
-    INT_SYNC_ADDR_MATCH     = 1 << 8
-    INT_FIFO_FULL           = 1 << 7
-    INT_FIFO_NOTEMPTY       = 1 << 6
-    INT_FIFO_THR            = 1 << 5
-    INT_FIFO_OVER           = 1 << 4
-    INT_PAYLD_SENT          = 1 << 3
-    INT_PAYLD_RDY           = 1 << 2
-    INT_PAYLD_CRCOK         = 1 << 1
-    INT_BATT_LO             = 1
-
     ' Clock output modes
     CLKOUT_RC               = 6
     CLKOUT_OFF              = 7
@@ -330,6 +312,19 @@ PUB addr_check(mode=-2): curr_mode
             return ((curr_mode >> core.ADDRFILT) & core.ADDRFILT_BITS)
 
 
+PUB afc_auto_clear(s): c
+' Enable automatic clearing of previous AFC measurement before a new one is performed
+'   s:  TRUE (-1 or 1), FALSE (0)
+'       other values return the current setting
+    c := readreg(core.AFCFEI)
+    case abs(s)
+        0, 1:
+            s := (c & core.AFCAUTOCLRON_MASK) | (s << core.AFCAUTOCLRON)
+            writereg(core.AFCFEI, 1, s)
+        other:
+            return ( ( (c >> core.AFCAUTOCLRON) & 1) == 1)
+
+
 PUB afc_auto_ena(state=-2): curr_state
 ' Enable automatic AFC
 '   Valid values: TRUE (-1 or 1), FALSE (0)
@@ -391,9 +386,9 @@ PUB afc_rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
                 repeat mant from 2 to 0
                     mant_tmp := lookupz(mant: 16, 20, 24)
                     rxb_calc := FXOSC / (mant_tmp * (1 << (exp + exp_mod)))
-                    if ( rxb_calc >= bw )
+                    if ( rxb_calc => bw )
                         quit
-                if ( rxb_calc >= bw )
+                if ( rxb_calc => bw )
                     quit
             bw := (mant << 3) | exp
             bw := ((curr_bw & core.RX_BW_MASK) | bw)
@@ -949,6 +944,26 @@ PUB interm_mode(mode=-2): curr_mode
         other:
             return (curr_mode & core.INTMDTMODE_BITS)
 
+con
+
+    ' Interrupts
+    INT_OPMODE_RDY          = 1 << 15
+    INT_RXRDY               = 1 << 14
+    INT_TXRDY               = 1 << 13
+    INT_PLL_LOCKED          = 1 << 12
+    INT_RSSI_THR            = 1 << 11
+    INT_TIMEOUT             = 1 << 10
+    INT_INTERM_MODE         = 1 << 9
+    INT_SYNC_ADDR_MATCH     = 1 << 8
+    INT_FIFO_FULL           = 1 << 7
+    INT_FIFO_NOTEMPTY       = 1 << 6
+    INT_FIFO_THR            = 1 << 5
+    INT_FIFO_OVER           = 1 << 4
+    INT_PAYLD_SENT          = 1 << 3
+    INT_PAYLD_RDY           = 1 << 2
+    INT_PAYLD_CRCOK         = 1 << 1
+    INT_BATT_LO             = 1
+
 
 PUB interrupt(): mask
 ' Read interrupt state
@@ -1312,13 +1327,13 @@ PUB rx_bw(bw=-2): curr_bw | exp_mod, exp, mant, mant_tmp, rxb_calc
             return (FXOSC / (mant * (1 << (exp + exp_mod))))
 
 
-PUB rx_payld(nr_bytes, ptr_buff)
+PUB rx_payld(len, p_dest)
 ' Read data queued in the RX FIFO
 '   nr_bytes Valid values: 1..66
 '   Any other value is ignored
 '   NOTE: Buffer at ptr_buff must be at least as large as value
 '       nr_bytes is set to
-    readreg(core.FIFO, nr_bytes, ptr_buff)
+    readreg(core.FIFO, len, p_dest)
 
 
 PUB rx_mode()
@@ -1360,18 +1375,25 @@ PUB sleep()
     opmode(OPMODE_SLEEP)
 
 
-PUB set_syncwd(ptr_syncwd)
-' Set sync word to value at ptr_buff
-'   ptr_syncwd: pointer to copy syncword data from
-'   NOTE: 8 bytes will be copied from buffer
-    writereg(core.SYNCVALUE1, 8, ptr_syncwd)
+PUB set_syncwd(p_swd)
+' Set sync word
+'   p_swd:  pointer to array to copy syncword byte(s) from
+'   NOTE: The number of bytes written from the array will be what is currently set by syncwd_len()
+
+    ifnot ( _syncword_len )                     ' get the current syncword length setting if it
+        _syncword_len := syncwd_len()           '   isn't already known
+
+    writereg(core.SYNCVALUE1, _syncword_len, p_swd)
 
 
-PUB syncwd(ptr_syncwd)
+PUB syncwd(p_swd)
 ' Get current sync word
-'   ptr_syncwd: pointer to copy syncword data to
-'   NOTE: Variable pointed to by ptr_syncwd must be at least 8 bytes in length
-    readreg(core.SYNCVALUE1, 8, ptr_syncwd)
+'   p_swd:  pointer to copy syncword byte(s) to
+'   NOTE: The array pointed to must be at least the value currently set by syncwd_len()
+    ifnot ( _syncword_len )
+        _syncword_len := syncwd_len()
+
+    readreg(core.SYNCVALUE1, _syncword_len, p_swd)
 
 
 PUB syncwd_ena(state=-2): curr_state
@@ -1388,6 +1410,7 @@ PUB syncwd_ena(state=-2): curr_state
             return (((curr_state >> core.SYNCON) & 1) == 1)
 
 
+var byte _syncword_len
 PUB syncwd_len(length=-2): curr_len
 ' Set length of sync word, in bytes
 '   Valid values: 1..8
@@ -1395,6 +1418,7 @@ PUB syncwd_len(length=-2): curr_len
     curr_len := readreg(core.SYNCCFG)
     case length
         1..8:
+            _syncword_len := length
             length := (length-1) << core.SYNCSIZE
             length := ((curr_len & core.SYNCSIZE_MASK) | length)
             writereg(core.SYNCCFG, 1, length)
@@ -1434,11 +1458,11 @@ PUB tx_mode()
     opmode(OPMODE_TX)
 
 
-PUB tx_payld(nr_bytes, ptr_buff)
+PUB tx_payld(len, p_src)
 ' Queue data to transmit in the TX FIFO
 '   nr_bytes Valid values: 1..66
 '   Any other value is ignored
-    writereg(core.FIFO, nr_bytes, ptr_buff)
+    writereg(core.FIFO, len, p_src)
 
 
 PUB tx_pwr(pwr=-255): curr_pwr | pa1, pa2
@@ -1510,9 +1534,12 @@ PRI readreg(reg_nr, len=1, p_dest=0): v
     v := 0
     outa[_CS] := 0
         spi.wr_byte(reg_nr)
-        if ( len > 4 )
-            spi.rdblock_msbf(p_dest, len)
+        if ( (reg_nr == core.SYNCVALUE1) or (reg_nr == core.FIFO) or (reg_nr == core.AESKEY1) )
+            ' these regs are an array of values, not a discrete multi-byte value, so we write
+            '   the data to the regs in the same order as it is in RAM
+            spi.rdblock_lsbf(p_dest, len)
         else
+            ' the rest are one or more big-endian byte values
             spi.rdblock_msbf(@v, len)
     outa[_CS] := 1
 
@@ -1521,9 +1548,12 @@ PRI writereg(reg_nr, len=1, val=0)
 ' Write value to register(s)
     outa[_CS] := 0
         spi.wr_byte(reg_nr | core.SPI_WR)       ' add write bit to reg #
-        if ( len > 4 )
-            spi.wrblock_msbf(val, len)
+        if ( (reg_nr == core.SYNCVALUE1) or (reg_nr == core.FIFO) or (reg_nr == core.AESKEY1) )
+            ' these regs are an array of values, not a discrete multi-byte value, so we write
+            '   the data to the regs in the same order as it is in RAM
+            spi.wrblock_lsbf(val, len)
         else
+            ' the rest are one or more big-endian byte values
             spi.wrblock_msbf(@val, len)
     outa[_CS] := 1
 

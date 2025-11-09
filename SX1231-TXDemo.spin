@@ -1,10 +1,11 @@
 {
 ----------------------------------------------------------------------------------------------------
-    Filename:       SX1231-RXDemo.spin
-    Description:    Simple receive demo of the SX1231 driver
+    Filename:       SX1231-TXDemo.spin
+    Description:    Demo of the SX1231 driver
+        * Transmitter
     Author:         Jesse Burt
     Started:        Dec 15, 2020
-    Updated:        Nov 8, 2025
+    Updated:        Nov 9, 2025
     Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -18,9 +19,9 @@ CON
 OBJ
 
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    time:   "time"
     radio:  "wireless.transceiver.sx1231" | CS=0, SCK=1, MOSI=2, MISO=3, RST=4
     str:    "string"
+    time:   "time"
 
 
 VAR
@@ -65,11 +66,11 @@ PUB main() | count, sz, user_str
 
         ' show what will be transmitted
         ser.pos_xy(0, 5)
-        ser.printf1(@"Transmitting %d bytes:\n\r", sz)
+        ser.printf(@"Transmitting %d bytes:\n\r", sz)
         ser.hexdump(@_txbuff, 0, 4, sz, 16 <# sz)
 
         ' queue and transmit it
-        radio.tx_payld(8, @_txbuff)             ' queue the data
+        radio.tx_payld(sz, @_txbuff)            ' queue the data
 
         time.msleep(1000)                       ' wait in between packets
                                                 ' (don't abuse the airwaves)
