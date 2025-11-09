@@ -4,8 +4,8 @@
     Description:    SX1231-specific constants
     Author:         Jesse Burt
     Started:        Apr 19, 2019
-    Updated:        Oct 14, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Nov 9, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -163,6 +163,7 @@ CON
         AFCAUTOON_MASK          = (1 << AFCAUTOON) ^ AFCFEI_MASK
         AFCCLR_MASK             = (1 << AFCCLR) ^ AFCFEI_MASK
         AFCSTART_MASK           = 1 ^ AFCFEI_MASK
+        START_FEI               = (1 << FEISTART)
 
     AFCMSB                      = $1F
     AFCLSB                      = $20
@@ -237,8 +238,8 @@ CON
         SYNCSIZE_MASK           = (SYNCSIZE_BITS << SYNCSIZE) ^ SYNCCFG_MASK
         SYNCTOL_MASK            = SYNCTOL_BITS ^ SYNCCFG_MASK
 
-    #$2F, SYNCVALUE1, SYNCVALUE2, SYNCVALUE3, SYNCVALUE4, SYNCVALUE5,{
-}   SYNCVALUE6, SYNCVALUE7, SYNCVALUE8
+    #$2F, SYNCVALUE1, SYNCVALUE2, SYNCVALUE3, SYNCVALUE4, SYNCVALUE5, SYNCVALUE6, SYNCVALUE7, ...
+    SYNCVALUE8
 
     PKTCFG1                     = $37
     PKTCFG1_MASK                = $FE
@@ -292,14 +293,16 @@ CON
         AUTORSTARTRXON_MASK     = (1 << AUTORSTARTRXON) ^ PKTCFG2_MASK
         AESON_MASK              = 1 ^ PKTCFG2_MASK
 
-    #$3E, AESKEY1, AESKEY2, AESKEY3, AESKEY4, AESKEY5, AESKEY6, AESKEY7,{
-}   AESKEY8, AESKEY9, AESKEY10, AESKEY11, AESKEY12, AESKEY13, AESKEY14,{
-}   AESKEY15, AESKEY16
+    #$3E, AESKEY1, AESKEY2, AESKEY3, AESKEY4, AESKEY5, AESKEY6, AESKEY7, ...
+    AESKEY8, AESKEY9, AESKEY10, AESKEY11, AESKEY12, AESKEY13, AESKEY14, ...
+    AESKEY15, AESKEY16
 
     TEMP1                       = $4E
     TEMP1_MASK                  = $0C
         TEMPMEASSTART           = 3
         TEMPMEASRUN             = 2
+        START_TEMP_MEAS         = 1 << TEMPMEASSTART
+        TEMP_MEAS_RUNNING       = 1 << TEMPMEASRUN
 
     TEMP2                       = $4F
 
@@ -326,7 +329,7 @@ PUB null()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
