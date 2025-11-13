@@ -17,7 +17,7 @@ CON
     SCK                     = 1
     MOSI                    = 2
     MISO                    = 3
-    SPI_FREQ                = 1_000_000
+    SPI_FREQ                = 1_000_000         ' 10_000_000 max
     RST                     = 4
 
     ' limits

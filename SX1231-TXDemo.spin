@@ -2,21 +2,21 @@
 ----------------------------------------------------------------------------------------------------
     Filename:       SX1231-TXDemo.spin
     Description:    Demo of the SX1231 driver
-        * Transmitter
+        * transmit role
     Author:         Jesse Burt
     Started:        Dec 15, 2020
-    Updated:        Nov 9, 2025
+    Updated:        Nov 13, 2025
     Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
-CON
+con
 
     _clkmode = xtal1+pll16x
     _xinfreq = 5_000_000
 
 
-OBJ
+obj
 
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
     radio:  "wireless.transceiver.sx1231" | CS=0, SCK=1, MOSI=2, MISO=3, RST=4
@@ -24,59 +24,62 @@ OBJ
     time:   "time"
 
 
-VAR
+var
 
     byte _txbuff[radio.PAYLD_LEN_MAX]
 
 
-PUB main() | count, sz, user_str
+dat
+
+    ' define up to an 8 byte syncword (no zeroes allowed; a zero will be interpreted as the end)
+    syncword    byte $2d, $d4, $e7, $c6, 0
+
+
+pub main() | count, sz, user_str, sw[2], sl, w
 
     setup()
-    ser.pos_xy(0, 3)
-    ser.strln(@"Transmit mode")
 
-    ' user-modifiable string to send over the air
-    ' NOTE: the format should match the parameters in the sprintf() call below
-    user_str := @"This is message # $%04.4x"
+    user_str := @"TEST%04.4x"
 
+    radio.preset_tx4k8()                        ' preset: transmit role, 4.8kbps
 
-' -- TX/RX settings
-    radio.preset_tx4k8()                        ' preset settings: FSK, 4800bps
-    radio.carrier_freq(902_300_000)             ' US 902.3MHz
-    radio.syncwd_len(8)                         ' syncword bytes 1..8 (set syncword accordingly)
-    radio.set_syncwd( string($E7, $E7, $E7, $E7, $E7, $E7, $E7, $E7) )
-' --
+    radio.opmode(radio.OPMODE_STDBY)
+    radio.carrier_freq(902_300_000)             ' set transmit frequency
+    radio.tx_pwr(14)                            ' transmit power: -18..20dBm
 
-' -- TX-specific settings
-    ' transmit power
-    ' (-18..13 is routed to RFO pin, higher is routed to PABOOST pin)
-    radio.tx_pwr(13)                            ' -18..20dBm
-' --
+    radio.syncwd_len( strsize(@syncword) )
+    radio.set_syncwd(@syncword)
+    sl := radio.syncwd_len()
+    bytefill(@sw, 0, 8)
+    radio.syncwd(@sw)                           ' read the syncword back out
+    ser.printf(@"Carrier freq: %dHz  syncword: ", radio.carrier_freq() )
+    repeat w from 0 to sl-1
+        ser.printf(@"%02.2x ", sw.byte[w])
+
+    radio.payld_len_cfg(radio.PKTLEN_FIXED)
+    radio.payld_len(8)                          ' set length of test packet
 
     count := 0
+
     repeat
-        ' clear the temporary string buffer and copy the user string with a counter to it
         bytefill(@_txbuff, 0, radio.PAYLD_LEN_MAX)
         str.sprintf1(@_txbuff, user_str, count++)
-
-        ' get the final size of the string and tell the radio about it
         sz := strsize(@_txbuff)
-        radio.payld_len(sz)
-        radio.fifo_thresh(radio.payld_len()-1)
 
-        ' show what will be transmitted
+        radio.fifo_thresh(sz-1)                 ' trigger transmit when nearly the whole packet
+                                                '   has been queued
+
         ser.pos_xy(0, 5)
         ser.printf(@"Transmitting %d bytes:\n\r", sz)
         ser.hexdump(@_txbuff, 0, 4, sz, 16 <# sz)
 
-        ' queue and transmit it
         radio.tx_payld(sz, @_txbuff)            ' queue the data
 
         time.msleep(1000)                       ' wait in between packets
                                                 ' (don't abuse the airwaves)
 
 
-PUB setup()
+pub setup()
 
     ser.start()
     time.msleep(30)
@@ -90,7 +93,7 @@ PUB setup()
         repeat
 
 
-DAT
+dat
 {
 Copyright 2025 Jesse Burt
 

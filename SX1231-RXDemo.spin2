@@ -2,76 +2,96 @@
 ----------------------------------------------------------------------------------------------------
     Filename:       SX1231-RXDemo.spin2
     Description:    Demo of the SX1231 driver
-        * Receiver
+        * receive role
     Author:         Jesse Burt
     Started:        Dec 15, 2020
-    Updated:        Nov 8, 2025
+    Updated:        Nov 13, 2025
     Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
-CON
+con
 
     _clkfreq = 180_000_000
     _xtlfreq = 20_000_000
 
 
-OBJ
+obj
 
-    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
     radio:  "wireless.transceiver.sx1231" | CS=0, SCK=1, MOSI=2, MISO=3, RST=4, SPI_FREQ=1_000_000
 
 
-VAR
+var
 
     byte _buffer[radio.PAYLD_LEN_MAX]
 
 
-PUB main() | sw[2], payld_len
+dat
+
+    ' define up to an 8 byte syncword (no zeroes allowed; a zero will be interpreted as the end)
+    syncword    byte $2d, $d4, $e7, $c6, 0
+
+
+pub main() | payld_len, rssi, sw[2], sl, w
 
     setup()
-    ser.pos_xy(0, 3)
-    ser.strln(@"Receive mode")
 
-    radio.preset_rx4k8()                        ' 4800bps, use Automodes to
-                                                ' handle transition between
-                                                ' RX-sleep-RX opmodes
-
-' -- TX/RX settings
-    radio.carrier_freq(902_300_000)             ' US 902.3MHz
-    radio.payld_len(8)                          ' test packet size
-    payld_len := radio.payld_len()              ' read back from radio
-    radio.fifo_thresh(payld_len-1)              ' trigger int at payld len-1
-    radio.syncwd_len(8)                         ' syncword bytes 1..8 (set syncword accordingly)
-    radio.set_syncwd( string($E7, $E7, $E7, $E7, $E7, $E7, $E7, $E7) )
-' --
-
-' -- RX-specific settings
-    radio.rx_mode()
-
-    ' change these if having difficulty with reception
-    radio.lna_gain(0)                           ' -6, -12, -24, -26, -48 dB
+    radio.opmode(radio.OPMODE_STDBY)
+    radio.carrier_freq(902_300_000)
+    radio.lna_gain(radio.LNA_AGC)               ' -6, -12, -24, -26, -48 dB
                                                 ' or LNA_AGC (0), LNA_HIGH (1)
-    radio.rssi_int_thresh(-80)                  ' set rcvd signal level threshold
+    radio.rssi_int_thresh(-80)                  ' set received signal level threshold
                                                 '   considered a valid signal
                                                 ' -127..0 (dBm)
-' --
 
+
+    radio.syncwd_len( strsize(@syncword) )      ' determine the length of the syncword
+    radio.set_syncwd(@syncword)                 '   and set it
+    bytefill(@sw, 0, 8)
+    radio.syncwd(@sw)
+
+    ser.printf(@"Carrier freq: %dHz  syncword: ", radio.carrier_freq() )
+    sl := radio.syncwd_len()
+    repeat w from 0 to sl-1
+        ser.printf(@"%02.2x ", sw.byte[w])
+
+    radio.afc_rx_bw(20_800)                     ' use AFC to help adjust for errors in the
+    radio.afc_auto_ena(true)                    '   transmitter's carrier frequency
+    radio.afc_auto_clear(true)
+
+    payld_len := 8
+    radio.payld_len_cfg(radio.PKTLEN_FIXED)
+    radio.payld_len(payld_len)                  ' set length of test packet
+    radio.fifo_thresh(payld_len-1)
+    radio.rx_mode()
     repeat
-        bytefill(@_buffer, 0, radio.PAYLD_LEN_MAX)
-        ' if the FIFO fill level reaches the set threshold,
-        '   read the payload in from the radio
-        if ( radio.interrupt() & radio.INT_FIFO_THR )
-            radio.rx_payld(payld_len, @_buffer)
-
-        ' display the received payload on the terminal
-        ser.pos_xy(0, 5)
-        ser.hexdump(@_buffer, 0, 4, payld_len, 16 <# payld_len)
+        ' put the radio into receive mode
+        radio.rx_mode()
         repeat
-        until (radio.opmode() == radio.OPMODE_SLEEP)
+        until ( radio.interrupt() & radio.INT_OPMODE_RDY )
+
+        ' wait for a payload to be ready
+        ' (waits for: RSSI >= threshold, a preamble, matching syncword)
+        repeat
+            rssi := radio.rssi()
+        until ( radio.interrupt() & radio.INT_PAYLD_RDY )
+
+        ' put the radio to sleep while we read the payload
+        radio.opmode(radio.OPMODE_SLEEP)
+        repeat
+        until ( radio.interrupt() & radio.INT_OPMODE_RDY )
+
+        ' read the payload into RAM and display it
+        bytefill(@_buffer, 0, radio.PAYLD_LEN_MAX)
+        radio.rx_payld(payld_len, @_buffer)
+        ser.pos_xy(0, 5)
+        ser.printf(@"RSSI: %d  ", rssi)
+        ser.hexdump(@_buffer, 0, 4, payld_len, 16 <# payld_len)
 
 
-PUB setup()
+
+pub setup()
 
     ser.start()
 
@@ -84,7 +104,7 @@ PUB setup()
         ser.strln(@"SX1231 driver failed to start - halting")
         repeat
 
-DAT
+dat
 {
 Copyright 2025 Jesse Burt
 
