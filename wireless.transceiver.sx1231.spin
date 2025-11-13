@@ -4,7 +4,7 @@
     Description:    Driver for the Semtech SX1231 UHF Transceiver IC
     Author:         Jesse Burt
     Started:        Apr 19, 2019
-    Updated:        Nov 8, 2025
+    Updated:        Nov 12, 2025
     Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -298,7 +298,7 @@ PUB abort_listen() | tmp
 PUB addr_check(m=-2): c
 ' Enable address checking/matching/filtering
 '   Valid values:
-'       ADDRCHK_NONE (%00): No address check
+'       ADDRCHK_NONE (%00):         No address check (default)
 '       ADDRCHK_CHK_NO_BCAST (%01): Check address, but ignore broadcast addresses
 '       ADDRCHK_CHK_00_BCAST (%10): Check address, and also respond to broadcast address
 '   Any other value polls the chip and returns the current setting
@@ -312,7 +312,7 @@ PUB addr_check(m=-2): c
             return ( (c >> core.ADDRFILT) & core.ADDRFILT_BITS)
 
 
-PUB afc_auto_clear(s): c
+PUB afc_auto_clear(s=-2): c
 ' Enable automatic clearing of previous AFC measurement before a new one is performed
 '   s:  TRUE (-1 or 1), FALSE (0)
 '       other values return the current setting
@@ -349,7 +349,7 @@ PUB afc_complete(): c
 PUB afc_method(m=-2): c
 ' Set AFC mode/routine
 '   Valid values:
-'       AFC_STANDARD (0): Standard AFC routine
+'       AFC_STANDARD (0): Standard AFC routine (default)
 '       AFC_IMPROVED (1): Improved AFC routine, for signals with modulation index < 2
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.AFCCTRL)
@@ -364,7 +364,7 @@ PUB afc_method(m=-2): c
 
 PUB afc_offset(): o
 ' Read AFC frequency offset
-'   Returns: Frequency offset in Hz
+'   Returns: Frequency offset in milli-Hz (i.e., 1_234 = 1.234Hz)
     o := readreg(core.AFCMSB, 2)
     return (~~o) * FSTEP
 
@@ -453,9 +453,12 @@ PUB bcast_addr(addr=-2): c
 PUB carrier_freq(freq=-2): c
 ' Set Carrier frequency, in Hz
 '   Valid values:
-'       290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000
+'       290_000_000..340_000_000
+'       424_000_000..510_000_000
+'       862_000_000..1_020_000_000
+'       (default: 915_000_000 if the SX1231's XO is 32MHz)
 '   Any other value polls the chip and returns the current setting
-'   NOTE: Set value will be rounded
+'   NOTE: Set value will be rounded to the nearest multiple of FSTEP/1000
     case freq
         290_000_000..340_000_000, 424_000_000..510_000_000, 862_000_000..1_020_000_000:
             freq := u64.multdiv(freq, 1_000, FSTEP)
@@ -468,7 +471,7 @@ PUB carrier_freq(freq=-2): c
 PUB clk_out(fdiv=-2): c
 ' Set clkout frequency, as a divisor of FXOSC
 '   Valid values:
-'       1, 2, 4, 8, 16, 32, CLKOUT_RC (6), CLKOUT_OFF (7)
+'       1, 2, 4, 8, 16, 32, CLKOUT_RC (6), CLKOUT_OFF (7) (default: CLKOUT_OFF)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: For optimal efficiency, it is recommended to disable the
 '       clock output (CLKOUT_OFF) unless needed
@@ -500,9 +503,9 @@ PUB crc_check_ena(e=-2): c
 PUB data_mode(md=-2): c
 ' Set data processing mode
 '   Valid values:
-'       DATAMODE_PKT (0): Packet mode
-'       DATAMODE_CONT_W_SYNC (2): Continuous mode with bit synchronizer
-'       DATAMODE_CONT_WO_SYNC (3): Continuous mode without bit synchronizer
+'       DATAMODE_PKT (0):           Packet mode
+'       DATAMODE_CONT_W_SYNC (2):   Continuous mode with bit synchronizer
+'       DATAMODE_CONT_WO_SYNC (3):  Continuous mode without bit synchronizer
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.DATAMOD)
     case md
@@ -540,7 +543,7 @@ PUB data_whiten_ena(e=-2): c
     case abs(e)
         0:
         1:
-            e := DCFREE_WHITE << core.DCFREE
+            e := DCFREE_WHITE << core.DCFREE    ' %10
         other:
             c := ( (c >> core.DCFREE) & core.DCFREE_BITS)
             return (c == DCFREE_WHITE)
@@ -561,7 +564,7 @@ PUB dev_id(): id
 
 
 PUB encrypt_ena(e=-2): c
-' Enable AES encrypt_ena/decryption
+' Enable AES (128) encryption/decryption
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Encryption is limited to payloads of a maximum of 66 bytes
@@ -581,7 +584,7 @@ PUB encrypt_key(rw, p_key)
 '       rw:     KEY_RD (0), KEY_WR (1)
 '       p_key:  All bytes at address may be $00..$FF
 '   NOTE: Buffer at p_key must be at least 16 bytes
-'       1st byte of key is MSB
+'       1st byte of key is MSB (bits 127:120)
     case rw
         KEY_WR:
             writereg(core.AESKEY1, 16, p_key)
@@ -644,7 +647,7 @@ PUB fei_complete(): c
 
 PUB fei_error(): e
 ' Frequency error
-'   Returns: FEI measurement, in Hz (signed)
+'   Returns: FEI measurement, in milli-Hz (i.e., 1_234 = 1.234Hz; result is signed)
     e := readreg(core.AFCFEI, 2)
     return ( (~~e) * FSTEP)
 
@@ -706,10 +709,10 @@ PUB freq_dev(f=-2): c
 PUB gaussian_filt(md=-2): c
 ' Set Gaussian filter/data shaping filter
 '   Valid values:
-'       BT_NONE (0): No shaping
-'       BT_1_0 (1): Gaussian filter, BT = 1.0
-'       BT_0_5 (2): Gaussian filter, BT = 0.5
-'       BT_0_3 (3): Gaussian filter, BT = 0.3
+'       BT_NONE (0):    No shaping
+'       BT_1_0 (1):     Gaussian filter, BT = 1.0
+'       BT_0_5 (2):     Gaussian filter, BT = 0.5
+'       BT_0_3 (3):     Gaussian filter, BT = 0.3
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.DATAMOD)
     case md
@@ -927,10 +930,10 @@ PUB idle()
 PUB interm_mode(md=-2): c
 ' Set intermediate operating mode
 '   Valid values:
-'       IMODE_SLEEP (%00): Sleep
-'       IMODE_STBY (%01): Standby
-'       IMODE_RX (%10): Receive
-'       IMODE_TX (%11): Transmit
+'       IMODE_SLEEP (%00):  Sleep
+'       IMODE_STBY (%01):   Standby
+'       IMODE_RX (%10):     Receive
+'       IMODE_TX (%11):     Transmit
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.AUTOMODES)
     case md
@@ -988,7 +991,7 @@ PUB listen(md=-2): c
 ' Enable listen mode
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-'   NOTE: Should be enable when in standby mode
+'   NOTE: This should be enabled when in standby mode
     c := readreg(core.OPMODE)
     case abs(md)
         0, 1:
@@ -1002,13 +1005,13 @@ PUB listen(md=-2): c
 PUB lna_gain(g=-255): c
 ' Set LNA gain, in dB relative to highest gain
 '   Valid values:
-'      *LNA_AGC (0): Gain is set by the internal AGC loop
-'       LNA_HIGH (1): Highest gain
-'       -6: (Highest gain - 6dB)
-'       -12: (Highest gain - 12dB)
-'       -24: (Highest gain - 24dB)
-'       -36: (Highest gain - 36dB)
-'       -48: (Highest gain - 48dB)
+'       LNA_AGC (0):    Gain is set by the internal AGC loop (default)
+'       LNA_HIGH (1):   Highest gain
+'       -6:             Highest gain - 6dB
+'       -12:            Highest gain - 12dB
+'       -24:            Highest gain - 24dB
+'       -36:            Highest gain - 36dB
+'       -48:            Highest gain - 48dB
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.LNA)
     case g
@@ -1024,7 +1027,7 @@ PUB lna_gain(g=-255): c
 PUB lna_z_input(z=-2): c
 ' Set LNA's input impedance, in ohms
 '   Valid values:
-'       50, *200
+'       50, 200 (default: 200)
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.LNA)
     case z
@@ -1040,7 +1043,7 @@ PUB lna_z_input(z=-2): c
 PUB low_batt_lvl(t=-2): c
 ' Set low battery threshold, in millivolts
 '   Valid values:
-'       1695, 1764, *1835, 1905, 1976, 2045, 2116, 2185
+'       1695, 1764, 1835, 1905, 1976, 2045, 2116, 2185 (default: 1835)
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.LOWBAT)
     case t
@@ -1077,7 +1080,7 @@ PUB manchest_enc_ena(m=-2): c
     case abs(m)
         0:                                      ' disabled m is just 0, so
         1:                                      '   just leave it as-is
-            m := DCFREE_MANCH << core.DCFREE
+            m := DCFREE_MANCH << core.DCFREE    ' %01
         other:
             c := ( (c >> core.DCFREE) & core.DCFREE_BITS)
             return (c == DCFREE_MANCH)
@@ -1132,11 +1135,11 @@ PUB ocp_current(i=-2): c
 PUB opmode(md=-2): c
 ' Set operating mode
 '   Valid values:
-'       OPMODE_SLEEP (0): Sleep mode
-'       OPMODE_STDBY (1): Standby mode
-'       OPMODE_FS (2): Frequency Synthesizer mode
-'       OPMODE_TX (3): Transmitter mode
-'       OPMODE_RX (4): Receiver mode
+'       OPMODE_SLEEP (0):   Sleep mode
+'       OPMODE_STDBY (1):   Standby mode (default)
+'       OPMODE_FS (2):      Frequency Synthesizer mode
+'       OPMODE_TX (3):      Transmitter mode
+'       OPMODE_RX (4):      Receiver mode
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.OPMODE)
     case md
@@ -1150,7 +1153,7 @@ PUB opmode(md=-2): c
 
 PUB over_current_prot_ena(e=-2): c
 ' Enable PA overcurrent protection
-'   Valid values: *TRUE (-1 or 1), FALSE (0)
+'   Valid values: TRUE (-1 or 1), FALSE (0) (default: true)
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.OCP)
     case abs(e)
@@ -1167,8 +1170,8 @@ PUB payld_len(l=-2): c
 '   Valid values: 0..66
 '   Any other value polls the chip and returns the current setting
 ' NOTE: Behavior differs depending on setting of payld_len_cfg():
-'   If PKTLEN_FIXED, this sets payload length
-'   If PKTLEN_VAR, this sets max length in RX, and is ignored in TX
+'   If PKTLEN_FIXED (0), this sets payload length
+'   If PKTLEN_VAR (1), this sets max length in RX, and is ignored in TX
     case l
         0..66:
             writereg(core.PAYLOADLENGTH, 1, l)
@@ -1179,8 +1182,8 @@ PUB payld_len(l=-2): c
 PUB payld_len_cfg(md=-2): c
 ' Set payload/packet length mode
 '   Valid values:
-'       PKTLEN_FIXED: fixed payload length
-'       PKTLEN_VAR: variable payload length
+'       PKTLEN_FIXED (0):   fixed payload length (default)
+'       PKTLEN_VAR (1):     variable payload length
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.PKTCFG1)
     case md
@@ -1210,8 +1213,8 @@ PUB pll_locked(): l
 
 
 PUB preamble_len(l=-2): c
-' Set length of preamble, in bytes
-'   Valid values: 0..65535
+' Set length of preamble
+'   Valid values: 0..65535 (bytes; default: 3)
 '   Any other value polls the chip and returns the current setting
     case l
         0..65535:
@@ -1223,7 +1226,7 @@ PUB preamble_len(l=-2): c
 PUB pa_ramp_time(t=-2): c
 ' Set rise/fall time of ramp up/down in FSK, in microseconds
 '   Valid values:
-'       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
+'       3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10 (default: 40)
 '   Any other value polls the chip and returns the current setting
     case t
         3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10:
@@ -1340,8 +1343,8 @@ PUB rx_mode()
 PUB sens_mode(md=-2): c
 ' Set receiver sensitivity level/mode
 '   Valid values:
-'      *SENS_NORM: normal sensitivity
-'       SENS_HI: high sensitivity
+'       SENS_NORM:  normal sensitivity (default)
+'       SENS_HI:    high sensitivity
 '   Any other value polls the chip and returns the current setting
     case md
         SENS_NORM, SENS_HI:
@@ -1353,8 +1356,8 @@ PUB sens_mode(md=-2): c
 PUB sequencer(md=-2): c
 ' Control automatic sequencer
 '   Valid values:
-'       *OPMODE_AUTO (0): Automatic sequence, as selected by op_mode()
-'        OPMODE_MANUAL (1): Mode is forced
+'       OPMODE_AUTO (0):    Automatic sequence, as selected by op_mode() (default)
+'       OPMODE_MANUAL (1):  Mode is forced
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.OPMODE)
     case md
@@ -1373,8 +1376,10 @@ PUB sleep()
 
 PUB set_syncwd(p_swd)
 ' Set sync word
-'   p_swd:  pointer to array to copy syncword byte(s) from
-'   NOTE: The number of bytes written from the array will be what is currently set by syncwd_len()
+'   p_swd:      pointer to array to copy syncword byte(s) from
+'   default:    $01, $01, $01, $01, $01, $01, $01, $01
+'   NOTE:       The number of bytes written from the array will be what is currently set by
+'                   syncwd_len()
 
     ifnot ( _syncword_len )                     ' get the current syncword length setting if it
         _syncword_len := syncwd_len()           '   isn't already known
@@ -1385,7 +1390,7 @@ PUB set_syncwd(p_swd)
 PUB syncwd(p_swd)
 ' Get current sync word
 '   p_swd:  pointer to copy syncword byte(s) to
-'   NOTE: The array pointed to must be at least the value currently set by syncwd_len()
+'   NOTE:   The array pointed to must be at least the value currently set by syncwd_len()
     ifnot ( _syncword_len )
         _syncword_len := syncwd_len()
 
@@ -1442,7 +1447,7 @@ PUB temperature(): t | tmp
     writereg(core.TEMP1, 1, core.START_TEMP_MEAS)
     repeat
         tmp := readreg(core.TEMP1)              ' wait until measurement
-    while (tmp & core.TEMP_MEAS_RUNNING )       '   complete
+    while (tmp & core.TEMP_MEAS_RUNNING)        '   complete
 
     t := readreg(core.TEMP2)
     return (~t * 100)
@@ -1455,8 +1460,9 @@ PUB tx_mode()
 
 PUB tx_payld(len, p_src)
 ' Queue data to transmit in the TX FIFO
-'   nr_bytes Valid values: 1..66
-'   Any other value is ignored
+'   len:    1..66
+'           other values ignored
+'   p_src:  pointer to source data to transmit
     writereg(core.FIFO, len, p_src)
 
 
@@ -1502,8 +1508,8 @@ PUB tx_pwr(pwr=-255): c | pa1, pa2
 PUB tx_start_cond(cnd=-2): c
 ' Define condition required to begin packet transmission
 '   Valid values:
-'       TXSTART_FIFOLVL (0): If the number of bytes in the FIFO exceeds fifo_thresh()
-'      *TXSTART_FIFONOTEMPTY (1): If there's at least one byte in the FIFO
+'       TXSTART_FIFOLVL (0):        If the number of bytes in the FIFO exceeds fifo_thresh()
+'       TXSTART_FIFONOTEMPTY (1):   If there's at least one byte in the FIFO (default)
 '   Any other value polls the chip and returns the current setting
     c := readreg(core.FIFOTHRESH)
     case cnd
